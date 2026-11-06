@@ -1,1 +1,1 @@
-# liquid-glass-gallery
+liquid-glass-galery-app
