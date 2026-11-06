@@ -189,29 +189,19 @@
   <script>
     const items = [
       {
-        title: "Pegunungan",
-        description: "Udara pagi yang tenang",
-        image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=85"
+        image: "https://images.unsplash.com/photo-1793605300952-49cbebdc3d49?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
       },
       {
-        title: "Hutan",
-        description: "Cahaya di antara pepohonan",
-        image: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=85"
+        image: "https://images.unsplash.com/photo-1793363562541-f27fa7e52688?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
       },
       {
-        title: "Pantai",
-        description: "Garis pantai saat senja",
-        image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=85"
+        image: "https://images.unsplash.com/photo-1793443196021-12939c7dac83?q=80&w=1365&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
       },
       {
-        title: "Danau",
-        description: "Pantulan di permukaan air",
-        image: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1000&q=85"
+        image: "https://plus.unsplash.com/premium_photo-1792411651238-b1ad8610446b?q=80&w=1285&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
       },
       {
-        title: "Kota",
-        description: "Lampu kota menjelang malam",
-        image: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=85"
+        image: "https://plus.unsplash.com/premium_photo-1792949574922-fc83c916d106?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
       }
     ];
 
@@ -539,14 +529,15 @@ if (uResolution.x < uResolution.y) {
 
     const distance = Math.abs(offset);
     const scale = 1 - Math.min(distance, 1) * 0.16;
-    const w = cardWidth * scale;
-    const h = cardHeight * scale;
+    const cardSizeMultiplier = 1; // perbesar semua kartu 12%
+    const w = cardWidth * scale * cardSizeMultiplier;
+    const h = cardHeight * scale * cardSizeMultiplier;
    const zoomPush =
   index === activeIndex
     ? 0
     : Math.sign(offset) * cardWidth * (activeZoom - 1) / 2;
 
-const x = centerX + offset * slot - w / 2 + zoomPush;
+    const x = centerX + offset * slot * cardSizeMultiplier - w / 2;
     const y = centerY - h / 2;
     const image = images[index];
 
@@ -644,8 +635,8 @@ const x = centerX + offset * slot - w / 2 + zoomPush;
   wasSettled: true,
   lastIndex: 0,
   startTime: 0,
-  duration: 250,
-  amount: 0.01
+  duration: 350,
+  amount: 0.02
 };
 
 function getActiveZoom(now = performance.now()) {
@@ -769,6 +760,7 @@ function getActiveZoom(now = performance.now()) {
 
       try {
         images = await Promise.all(items.map((item) => loadImage(item.image)));
+        
 
         program = createProgram();
         gl.useProgram(program);
