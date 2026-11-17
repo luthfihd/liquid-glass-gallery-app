@@ -252,7 +252,7 @@
       precision highp float;
 
       out vec4 outColor;
-
+      uniform float uDirection;
       uniform sampler2D uScene;
       uniform vec2 uResolution;
       uniform vec2 uCardSize;
@@ -292,75 +292,63 @@
 
         vec4 original = sampleScene(uv);
 
-        // Area kartu tetap jernih; refraksi hanya muncul di luarnya.
-        if (clearDistance <= 0.0) {
-          outColor = original;
-          return;
-        }
+float horizontalPosition =
+  abs(clearPoint.x) / max(clearHalfSize.x, 0.001);
 
-        float verticalPosition =
-          abs(clearPoint.y) / max(clearHalfSize.y, 0.001);
+float distancePx = abs(clearDistance * uResolution.y);
 
-        float horizontalPosition =
-          abs(clearPoint.x) / max(clearHalfSize.x, 0.001);
+// Fokuskan efek pada tepi atas dan bawah, bukan sisi kiri/kanan.
+float topBottomMask =
+  1.0 - smoothstep(0.72, 1.08, horizontalPosition);
 
-        // Batasi efek pada pita atas dan bawah kartu.
-        float topBottomBand =
-          smoothstep(0.96, 1.015, verticalPosition) *
-          (1.0 - smoothstep(1.16, 1.42, verticalPosition));
+// Pita refraksi sedikit meluas ke dalam dan luar tepi kartu.
+float edgeBand = exp(
+  -distancePx / (10.0 + uMotion * 34.0)
+);
 
-        // Kurangi efek di sisi kiri dan kanan kartu.
-        float horizontalMask =
-          1.0 - smoothstep(0.84, 1.18, horizontalPosition);
+float field = edgeBand * topBottomMask;
 
-        float outsideCard = smoothstep(0.0, 0.035, clearDistance);
-        float field = topBottomBand * horizontalMask * outsideCard;
+if (field <= 0.001) {
+  outColor = original;
+  return;
+}
 
-        if (field <= 0.001) {
-          outColor = original;
-          return;
-        }
+float wave =
+  sin(clearPoint.x * 18.0 + uTime * 2.0) * 0.6 +
+  sin(clearPoint.x * 31.0 - uTime * 1.3) * 0.25;
 
-        float wave =
-          sin(clearPoint.x * 17.0 + uTime * 1.7) * 0.58 +
-          sin(clearPoint.x * 31.0 - uTime * 1.1) * 0.24 +
-          sin(uTime * 0.8) * 0.18;
+float pullDirection = clamp(uDirection, -1.0, 1.0);
 
-        float motionBoost = 1.0 + uMotion * 2.8;
+// Arah refraksi mengikuti arah swipe/scroll.
+// uDirection positif berarti carousel bergerak ke foto berikutnya.
+float pullAmount =
+  pullDirection * field * (0.008 + uMotion * 0.045);
 
-        // Perubahan koordinat hanya pada sumbu vertikal.
-        float verticalShift =
-          -sign(offset.y) *
-          field *
-          (0.012 + uMotion * 0.028) *
-          motionBoost;
+float waveAmount =
+  wave * field * (0.002 + uMotion * 0.009);
 
-        verticalShift +=
-          wave *
-          field *
-          (0.004 + uMotion * 0.012) *
-          motionBoost;
+vec2 shift = vec2(
+  waveAmount,
+  -pullAmount + waveAmount
+);
 
-        vec2 shift = vec2(0.0, verticalShift);
-        vec2 spread = vec2(
-          0.0,
-          abs(verticalShift) * (0.12 + uMotion * 0.06)
-        );
+// Sedikit pemisahan warna membuat pinggirnya terasa seperti kaca.
+vec2 spread = vec2(
+  0.0,
+  abs(pullAmount) * 0.14
+);
 
-        vec2 redUv = uv + shift + spread;
-        vec2 greenUv = uv + shift;
-        vec2 blueUv = uv + shift - spread;
+vec4 refracted;
+refracted.r = sampleScene(uv + shift + spread).r;
+refracted.g = sampleScene(uv + shift).g;
+refracted.b = sampleScene(uv + shift - spread).b;
+refracted.a = 1.0;
 
-        vec4 refracted;
-        refracted.r = sampleScene(redUv).r;
-        refracted.g = sampleScene(greenUv).g;
-        refracted.b = sampleScene(blueUv).b;
-        refracted.a = 1.0;
+// Kilau tipis di sepanjang tepi atas/bawah.
+float rim = exp(-distancePx / 2.5);
+refracted.rgb += vec3(0.18, 0.23, 0.30) * rim * field;
 
-        float rim = exp(-abs(clearDistance * uResolution.y) / 2.2);
-        refracted.rgb += vec3(0.18, 0.23, 0.30) * rim * field;
-
-        outColor = vec4(refracted.rgb, 1.0);
+outColor = vec4(refracted.rgb, 1.0);
       }
     `;
 
@@ -634,6 +622,8 @@
     }
 
     function renderFrame(time) {
+      const movementDirection = dragging ? pointerVelocity : velocity;
+gl.uniform1f(uniforms.direction, Math.sign(movementDirection));
       const now = time || performance.now();
 
       if (!previousFrameTime) previousFrameTime = now;
@@ -679,7 +669,8 @@
       gl.uniform1f(uniforms.time, now / 1000);
       gl.uniform1f(uniforms.radius, 35 * dpr);
       gl.uniform1f(uniforms.motion, liquidMotion);
-
+      direction: gl.getUniformLocation(program, "uDirection")
+      
       gl.clearColor(0, 0, 0, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
