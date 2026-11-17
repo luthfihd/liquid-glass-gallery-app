@@ -264,118 +264,87 @@
     `;
 
     const fragmentSource = `#version 300 es
-      precision highp float;
+    #version 300 es
+precision highp float;
 
-      out vec4 outColor;
+out vec4 outColor;
 
-      uniform sampler2D uScene;
-      uniform vec2 uResolution;
-      uniform vec2 uCardSize;
-      uniform vec2 uCardCenter;
-      uniform float uTime;
-      uniform float uRadius;
-      uniform float uMotion;
-      uniform float uDirection;
+uniform sampler2D uScene;
+uniform vec2 uResolution;
+uniform float uTime;
+uniform float uMotion;
+uniform float uDirection;
 
-      float roundedBoxDistance(vec2 point, vec2 halfSize, float radius) {
-        vec2 q = abs(point) - halfSize + radius;
+vec4 sampleScene(vec2 uv) {
+  return texture(uScene, clamp(uv, 0.001, 0.999));
+}
 
-        return length(max(q, 0.0))
-          + min(max(q.x, q.y), 0.0)
-          - radius;
-      }
+void main() {
+  vec2 uv = gl_FragCoord.xy / uResolution;
+  vec4 original = sampleScene(uv);
 
-      vec4 sampleScene(vec2 uv) {
-        return texture(uScene, clamp(uv, 0.001, 0.999));
-      }
+  // Di koordinat WebGL, y=1 adalah bagian atas layar dan y=0 bagian bawah.
+  float distanceTop = (1.0 - uv.y) * uResolution.y;
+  float distanceBottom = uv.y * uResolution.y;
 
-      void main() {
-        vec2 uv = gl_FragCoord.xy / uResolution;
-        float aspect = uResolution.x / uResolution.y;
+  // Efek terkunci ke tepi layar, melebar saat scroll makin cepat.
+  float edgeReach = 28.0 + uMotion * 150.0;
+  float topEdge = exp(-distanceTop / edgeReach);
+  float bottomEdge = exp(-distanceBottom / edgeReach);
+  float edgeField = max(topEdge, bottomEdge);
 
-        // Pusat kartu utama di koordinat tekstur WebGL.
-        vec2 offset = uv - uCardCenter;
-        vec2 cardPoint = vec2(offset.x * aspect, offset.y);
+  // Hanya aktif saat carousel bergerak.
+  float motionAmount = smoothstep(0.015, 0.18, uMotion);
+  if (motionAmount <= 0.001) {
+    outColor = original;
+    return;
+  }
 
-        vec2 halfSize = vec2(
-          uCardSize.x / (2.0 * uResolution.y),
-          uCardSize.y / (2.0 * uResolution.y)
-        );
+  float x = uv.x * (uResolution.x / uResolution.y);
 
-        float distanceToCard = roundedBoxDistance(
-          cardPoint,
-          halfSize,
-          uRadius / uResolution.y
-        );
+  // Riak horizontal membuat tarikan terasa cair, sementara perpindahannya vertikal.
+  float wave =
+    sin(x * 25.0 + uTime * 2.4) * 0.55 +
+    sin(x * 41.0 - uTime * 1.7) * 0.30 +
+    sin(x * 13.0 + uTime) * 0.15;
 
-        vec4 original = sampleScene(uv);
+  // Arah scroll positif menggerakkan gambar ke atas.
+  float pullPixels =
+    uDirection *
+    (12.0 + motionAmount * 135.0) *
+    edgeField;
 
-        // Area dalam kartu tidak didistorsi.
-        if (distanceToCard <= 0.0) {
-          outColor = original;
-          return;
-        }
+  float ripplePixels =
+    wave *
+    (2.0 + motionAmount * 20.0) *
+    edgeField;
 
-        float distancePx = distanceToCard * uResolution.y;
-        float horizontalPosition =
-          abs(cardPoint.x) / max(halfSize.x, 0.001);
-        float verticalPosition =
-          abs(cardPoint.y) / max(halfSize.y, 0.001);
+  // Menggeser sumber tekstur pada sumbu vertikal menghasilkan efek tarik.
+  float shiftY = (pullPixels + ripplePixels) / uResolution.y;
+  float chromaticPixels = abs(pullPixels) * 0.16;
 
-        // Efek terkonsentrasi di atas dan bawah kartu.
-        float topBottomMask =
-          smoothstep(0.99, 1.045, verticalPosition) *
-          (1.0 - smoothstep(1.20, 1.48, verticalPosition));
+  vec4 liquid;
+  liquid.r = sampleScene(
+    uv - vec2(0.0, shiftY + chromaticPixels / uResolution.y)
+  ).r;
+  liquid.g = sampleScene(
+    uv - vec2(0.0, shiftY)
+  ).g;
+  liquid.b = sampleScene(
+    uv - vec2(0.0, shiftY - chromaticPixels / uResolution.y)
+  ).b;
+  liquid.a = 1.0;
 
-        // Kurangi efek di tepi kiri dan kanan.
-        float horizontalMask =
-          1.0 - smoothstep(0.80, 1.16, horizontalPosition);
+  // Highlight di tepi layar saat gerakan berlangsung.
+  float rim = max(
+    exp(-distanceTop / 3.0),
+    exp(-distanceBottom / 3.0)
+  );
 
-        // Perlebar pita refraksi saat kartu sedang bergerak.
-        float edgeWidth = 8.0 + uMotion * 36.0;
-        float edgeBand = exp(-distancePx / edgeWidth);
-        float field = topBottomMask * horizontalMask * edgeBand;
+  liquid.rgb += vec3(0.20, 0.25, 0.34) * rim * motionAmount;
 
-        if (field <= 0.001) {
-          outColor = original;
-          return;
-        }
-
-        float wave =
-          sin(cardPoint.x * 22.0 + uTime * 2.2) * 0.58 +
-          sin(cardPoint.x * 37.0 - uTime * 1.5) * 0.27 +
-          sin(cardPoint.x * 11.0 + uTime * 0.9) * 0.15;
-
-        // uDirection mengikuti arah gerakan carousel.
-        float pull =
-          uDirection * field * (0.008 + uMotion * 0.055);
-
-        float ripple =
-          wave * field * (0.002 + uMotion * 0.012);
-
-        // Tarikan dan riak bergerak pada sumbu vertikal.
-        vec2 shift = vec2(
-          ripple,
-          -pull + ripple
-        );
-
-        // Dispersi warna di tepi kaca, juga vertikal.
-        vec2 spread = vec2(
-          0.0,
-          abs(pull) * 0.16
-        );
-
-        vec4 refracted;
-        refracted.r = sampleScene(uv + shift + spread).r;
-        refracted.g = sampleScene(uv + shift).g;
-        refracted.b = sampleScene(uv + shift - spread).b;
-        refracted.a = 1.0;
-
-        float rim = exp(-distancePx / 2.4);
-        refracted.rgb += vec3(0.18, 0.23, 0.30) * rim * field;
-
-        outColor = vec4(refracted.rgb, 1.0);
-      }
+  outColor = liquid;
+}
     `;
 
     function compileShader(type, source) {
