@@ -16,7 +16,10 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    html, body {
+    html,
+    body {
+      position: fixed;
+      inset: 0;
       width: 100%;
       height: 100%;
       height: 100dvh;
@@ -28,19 +31,14 @@
     body {
       color: #f3f8ff;
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      background:
-        linear-gradient(
-          to bottom,
-          rgba(11, 24, 36, 0) 0%,
-          rgba(11, 24, 36, 0.14) 28%,
-          rgba(11, 24, 36, 0.72) 100%
-        );
+      overscroll-behavior: none;
     }
 
     .app {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       height: 100dvh;
       overflow: hidden;
       background: #0b1824;
@@ -49,6 +47,8 @@
     .stage {
       position: absolute;
       inset: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
       touch-action: none;
       user-select: none;
@@ -67,24 +67,54 @@
       height: 100%;
     }
 
+    /* Floating pill: kontennya jernih, efek refraksi digambar di canvas-nya. */
     .topbar {
       position: absolute;
       z-index: 3;
-      top: max(54px, env(safe-area-inset-top));
-      left: 24px;
-      right: 24px;
+      top: auto;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      left: 14px;
+      right: 14px;
+      min-height: 72px;
+      padding: 9px 11px 9px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 10px;
+      overflow: hidden;
+      isolation: isolate;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      border-radius: 999px;
+      background: transparent;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.16);
+      pointer-events: auto;
+    }
+
+    #glassLens {
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
       pointer-events: none;
-      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+    }
+
+    .topbar h1,
+    .top-actions {
+      position: relative;
+      z-index: 1;
     }
 
     .topbar h1 {
       margin: 0;
-      font-size: clamp(2rem, 7vw, 3.3rem);
+      color: #fff;
+      font-size: clamp(1.4rem, 6vw, 2rem);
       font-weight: 650;
       letter-spacing: -0.055em;
+      white-space: nowrap;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
     }
 
     .chevron {
@@ -96,170 +126,8 @@
 
     .top-actions {
       display: flex;
-      align-items: center;
-      gap: 10px;
-      pointer-events: auto;
-    }
-
-    .add-button,
-    .avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.28);
-    }
-
-    .add-button {
-      display: grid;
-      place-items: center;
-      background: rgba(255,255,255,0.12);
-      color: white;
-      font-size: 2rem;
-      line-height: 1;
-      padding: 0 0 4px;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-    }
-
-    .avatar {
-      display: block;
-      object-fit: cover;
-      background: rgba(255,255,255,0.2);
-    }
-
-    #counter {
-      position: absolute;
-      z-index: 3;
-      right: 16px;
-      bottom: max(20px, env(safe-area-inset-bottom));
-      min-width: 62px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.22);
-      text-align: center;
-      font-size: 0.86rem;
-      background: rgba(255,255,255,0.12);
-      color: rgba(243,248,255,0.9);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      pointer-events: none;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 2px 12px rgba(0,0,0,0.8);
-    }
-
-    /* Floating Liquid Glass pill */
-    .topbar {
-      position: absolute;
-      z-index: 3;
-      top: auto;
-      bottom: max(14px, env(safe-area-inset-bottom));
-      left: 14px;
-      right: 14px;
-
-      min-height: 72px;
-      padding: 9px 11px 9px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-
-      overflow: hidden;
-      isolation: isolate;
-      border: 1px solid rgba(255, 255, 255, 0.36);
-      border-radius: 999px;
-
-      background:
-        linear-gradient(
-          135deg,
-          rgba(255, 255, 255, 0.24),
-          rgba(255, 255, 255, 0.055) 48%,
-          rgba(255, 255, 255, 0.16)
-        ),
-        rgba(34, 41, 50, 0.42);
-
-      box-shadow:
-        0 12px 34px rgba(0, 0, 0, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.42),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.10);
-
-      -webkit-backdrop-filter: blur(28px) saturate(1.7);
-      backdrop-filter: blur(28px) saturate(1.7);
-
-      pointer-events: auto;
-      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.42);
-    }
-
-    .topbar::before {
-      content: "";
-      position: absolute;
-      z-index: -1;
-      inset: 0;
-      border-radius: inherit;
-      pointer-events: none;
-      background:
-        radial-gradient(
-          ellipse at 18% -45%,
-          rgba(255, 255, 255, 0.58),
-          transparent 55%
-        ),
-        radial-gradient(
-          ellipse at 88% 145%,
-          rgba(173, 211, 255, 0.24),
-          transparent 54%
-        ),
-        linear-gradient(
-          110deg,
-          transparent 25%,
-          rgba(255, 255, 255, 0.09) 50%,
-          transparent 74%
-        );
-    }
-
-    .topbar::after {
-      content: "";
-      position: absolute;
-      z-index: -1;
-      top: -70%;
-      left: -45%;
-      width: 35%;
-      height: 240%;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.16);
-      filter: blur(12px);
-      transform: rotate(18deg);
-      pointer-events: none;
-      animation: pillSheen 7s ease-in-out infinite;
-    }
-
-    @keyframes pillSheen {
-      0%, 35% {
-        left: -45%;
-        opacity: 0;
-      }
-
-      48% {
-        opacity: 0.8;
-      }
-
-      72%, 100% {
-        left: 115%;
-        opacity: 0;
-      }
-    }
-
-    .topbar h1,
-    .top-actions {
-      position: relative;
-      z-index: 1;
-    }
-
-    .topbar h1 {
-      font-size: clamp(1.4rem, 6vw, 2rem);
-      white-space: nowrap;
-    }
-
-    .top-actions {
       flex: 0 0 auto;
+      align-items: center;
       gap: 8px;
     }
 
@@ -267,16 +135,26 @@
     .avatar {
       width: 46px;
       height: 46px;
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      border-radius: 50%;
     }
 
     .add-button {
-      border: 1px solid rgba(255, 255, 255, 0.42);
-      background: rgba(255, 255, 255, 0.18);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.32),
-        0 3px 10px rgba(0, 0, 0, 0.14);
-      -webkit-backdrop-filter: blur(14px) saturate(1.6);
-      backdrop-filter: blur(14px) saturate(1.6);
+      display: grid;
+      place-items: center;
+      padding: 0 0 4px;
+      color: white;
+      font: inherit;
+      font-size: 2rem;
+      line-height: 1;
+      background: rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+    }
+
+    .avatar {
+      display: block;
+      object-fit: cover;
+      background: rgba(255, 255, 255, 0.12);
     }
 
     #counter {
@@ -290,7 +168,7 @@
       }
 
       .topbar h1 {
-        font-size: clamp(1.4rem, 7vw, 1.9rem);
+        font-size: clamp(1.35rem, 6.5vw, 1.9rem);
       }
 
       .add-button,
@@ -300,9 +178,26 @@
       }
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      .topbar::after {
-        animation: none;
+    @media (max-width: 360px) {
+      .topbar {
+        left: 9px;
+        right: 9px;
+        padding-left: 15px;
+        padding-right: 8px;
+      }
+
+      .topbar h1 {
+        font-size: 1.28rem;
+      }
+
+      .top-actions {
+        gap: 6px;
+      }
+
+      .add-button,
+      .avatar {
+        width: 39px;
+        height: 39px;
       }
     }
   </style>
@@ -310,7 +205,13 @@
 
 <body>
   <main class="app">
-    <header class="topbar">
+    <section class="stage" id="stage" aria-label="Galeri foto vertikal">
+      <canvas id="gl"></canvas>
+    </section>
+
+    <header class="topbar" id="topbar">
+      <canvas id="glassLens" aria-hidden="true"></canvas>
+
       <h1>Upcoming <span class="chevron">⌄</span></h1>
 
       <div class="top-actions">
@@ -322,10 +223,6 @@
         >
       </div>
     </header>
-
-    <section class="stage" id="stage" aria-label="Galeri foto vertikal">
-      <canvas id="gl"></canvas>
-    </section>
 
     <span id="counter" aria-live="polite">1 / 5</span>
   </main>
@@ -352,9 +249,12 @@
     const stage = document.getElementById("stage");
     const visibleCanvas = document.getElementById("gl");
     const counter = document.getElementById("counter");
+    const glassCanvas = document.getElementById("glassLens");
+    const topbar = document.getElementById("topbar");
 
     const sceneCanvas = document.createElement("canvas");
     const ctx = sceneCanvas.getContext("2d");
+    const glassCtx = glassCanvas.getContext("2d", { willReadFrequently: true });
 
     let gl;
     let program;
@@ -386,6 +286,8 @@
 
     let wheelDelta = 0;
     let wheelTimer = 0;
+    let lastGlassDraw = 0;
+    let glassImageData = null;
 
     const wrapIndex = (index) =>
       ((index % items.length) + items.length) % items.length;
@@ -402,6 +304,7 @@
       }
     `;
 
+    // Shader scroll/liquid tetap seperti base code.
     const fragmentSource = `#version 300 es
       precision highp float;
 
@@ -545,10 +448,146 @@
       const cardGap = (isMobile ? 150 : 50) * dpr;
       slot = cardHeight + cardGap;
 
-      // Kartu dinaikkan agar menu bawah tidak menutupi foto.
+      // Posisi kartu dinaikkan agar tidak bertabrakan dengan pill bawah.
       cardCenterY = pixelHeight * (isMobile ? 0.46 : 0.53);
 
-      if (gl) gl.viewport(0, 0, pixelWidth, pixelHeight);
+      if (gl) {
+        gl.viewport(0, 0, pixelWidth, pixelHeight);
+      }
+
+      resizeGlassCanvas();
+    }
+
+    function resizeGlassCanvas() {
+      const rect = topbar.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const newWidth = Math.max(1, Math.round(rect.width * dpr));
+      const newHeight = Math.max(1, Math.round(rect.height * dpr));
+
+      if (glassCanvas.width !== newWidth || glassCanvas.height !== newHeight) {
+        glassCanvas.width = newWidth;
+        glassCanvas.height = newHeight;
+        glassImageData = glassCtx.createImageData(newWidth, newHeight);
+      }
+    }
+
+    /*
+      Menggambar refraksi pill dari scene di belakangnya:
+      piksel di sekitar lensa dipetakan ulang dengan sedikit pembelokan.
+      Tidak menambahkan blur atau highlight/lighting buatan.
+    */
+    function drawLiquidPill(now) {
+      if (now - lastGlassDraw < 30) return;
+      lastGlassDraw = now;
+
+      const rect = topbar.getBoundingClientRect();
+      if (!rect.width || !rect.height || !sceneCanvas.width) return;
+
+      resizeGlassCanvas();
+
+      const lensWidth = glassCanvas.width;
+      const lensHeight = glassCanvas.height;
+      if (!lensWidth || !lensHeight || !glassImageData) return;
+
+      const left = Math.round(rect.left * dpr);
+      const top = Math.round(rect.top * dpr);
+
+      const pad = Math.round(14 * dpr);
+      const sourceLeft = Math.max(0, left - pad);
+      const sourceTop = Math.max(0, top - pad);
+      const sourceRight = Math.min(
+        sceneCanvas.width,
+        left + lensWidth + pad
+      );
+      const sourceBottom = Math.min(
+        sceneCanvas.height,
+        top + lensHeight + pad
+      );
+
+      const sourceWidth = sourceRight - sourceLeft;
+      const sourceHeight = sourceBottom - sourceTop;
+      if (sourceWidth <= 0 || sourceHeight <= 0) return;
+
+      let source;
+      try {
+        source = ctx.getImageData(
+          sourceLeft,
+          sourceTop,
+          sourceWidth,
+          sourceHeight
+        ).data;
+      } catch (error) {
+        // Kalau browser menolak pembacaan piksel cross-origin,
+        // biarkan pill transparan daripada menampilkan strip gelap.
+        glassCtx.clearRect(0, 0, lensWidth, lensHeight);
+        return;
+      }
+
+      const output = glassImageData.data;
+      const centerX = lensWidth * 0.5;
+      const centerY = lensHeight * 0.5;
+      const halfW = Math.max(1, centerX);
+      const halfH = Math.max(1, centerY);
+      const maxOffset = 11 * dpr;
+
+      function smoothstep(edge0, edge1, value) {
+        const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
+        return t * t * (3 - 2 * t);
+      }
+
+      function readChannel(x, y, channel) {
+        const sx = Math.max(0, Math.min(sourceWidth - 1, x));
+        const sy = Math.max(0, Math.min(sourceHeight - 1, y));
+        return source[(sy * sourceWidth + sx) * 4 + channel];
+      }
+
+      for (let y = 0; y < lensHeight; y++) {
+        const ny = (y - centerY) / halfH;
+
+        for (let x = 0; x < lensWidth; x++) {
+          const nx = (x - centerX) / halfW;
+          const radius = Math.sqrt(nx * nx + ny * ny);
+
+          // Mask pill rounded, agar sumber tidak keluar dari bentuk lensa.
+          const cornerRadius = Math.min(lensHeight * 0.5, lensWidth * 0.5);
+          const cssX = x / dpr;
+          const cssY = y / dpr;
+          const cssW = lensWidth / dpr;
+          const cssH = lensHeight / dpr;
+          const cssRadius = cornerRadius / dpr;
+
+          const qx = Math.abs(cssX - cssW / 2) - (cssW / 2 - cssRadius);
+          const qy = Math.abs(cssY - cssH / 2) - (cssH / 2 - cssRadius);
+          const outsideCorner =
+            Math.max(qx, 0) * Math.max(qx, 0) +
+            Math.max(qy, 0) * Math.max(qy, 0) >
+            cssRadius * cssRadius;
+
+          const outIndex = (y * lensWidth + x) * 4;
+
+          if (outsideCorner) {
+            output[outIndex + 3] = 0;
+            continue;
+          }
+
+          // Efek lensa paling kuat dekat perimeter pill.
+          const edge = smoothstep(0.28, 1.12, radius);
+          const displacement = edge * maxOffset;
+
+          const sourceX =
+            Math.round(left + x + nx * displacement - sourceLeft);
+          const sourceY =
+            Math.round(top + y + ny * displacement - sourceTop);
+
+          output[outIndex] = readChannel(sourceX, sourceY, 0);
+          output[outIndex + 1] = readChannel(sourceX, sourceY, 1);
+          output[outIndex + 2] = readChannel(sourceX, sourceY, 2);
+          output[outIndex + 3] = 255;
+        }
+      }
+
+      glassCtx.putImageData(glassImageData, 0, 0);
     }
 
     function drawRoundedRect(context, x, y, w, h, radius) {
@@ -608,6 +647,7 @@
         ctx.save();
         ctx.globalAlpha = 0.78;
         ctx.filter = `blur(${32 * dpr}px) saturate(1.12)`;
+
         drawImageCover(
           activeImage,
           -50 * dpr,
@@ -615,6 +655,7 @@
           pixelWidth + 100 * dpr,
           pixelHeight + 100 * dpr
         );
+
         ctx.restore();
 
         ctx.fillStyle = "rgba(5, 14, 22, 0.24)";
@@ -652,7 +693,6 @@
 
         ctx.shadowColor = "transparent";
         ctx.save();
-
         drawRoundedRect(ctx, x, y, w, h, radius);
         ctx.clip();
 
@@ -692,6 +732,7 @@
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, sceneTexture);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
       gl.texImage2D(
         gl.TEXTURE_2D,
         0,
@@ -722,17 +763,25 @@
         }
       }
 
-      const movementSpeed = dragging ? Math.abs(pointerVelocity) : Math.abs(velocity);
+      const movementSpeed = dragging
+        ? Math.abs(pointerVelocity)
+        : Math.abs(velocity);
+
       const motionTarget = Math.min(1, movementSpeed * 0.35);
       const motionBlend = 1 - Math.exp(-dt * 9);
       liquidMotion += (motionTarget - liquidMotion) * motionBlend;
 
       drawScene();
+      drawLiquidPill(now);
       uploadSceneTexture();
 
       gl.useProgram(program);
       gl.uniform1i(uniforms.scene, 0);
-      gl.uniform2f(uniforms.resolution, visibleCanvas.width, visibleCanvas.height);
+      gl.uniform2f(
+        uniforms.resolution,
+        visibleCanvas.width,
+        visibleCanvas.height
+      );
       gl.uniform1f(uniforms.time, now / 1000);
       gl.uniform1f(uniforms.motion, liquidMotion);
 
@@ -838,10 +887,14 @@
     });
 
     async function init() {
-      gl = visibleCanvas.getContext("webgl2", { alpha: false, antialias: true });
+      gl = visibleCanvas.getContext("webgl2", {
+        alpha: false,
+        antialias: true
+      });
 
       if (!gl) {
-        stage.innerHTML = "<p style='padding:24px'>Browser ini tidak mendukung WebGL 2.</p>";
+        stage.innerHTML =
+          "<p style='padding:24px'>Browser ini tidak mendukung WebGL 2.</p>";
         return;
       }
 
@@ -876,7 +929,13 @@
       }
     }
 
+    const stageObserver = new ResizeObserver(resize);
+    stageObserver.observe(stage);
+
     window.addEventListener("resize", resize);
+    window.addEventListener("orientationchange", resize);
+    window.visualViewport?.addEventListener("resize", resize);
+
     init();
   </script>
 </body>
