@@ -16,29 +16,34 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    html,
-    body {
+    html, body {
       width: 100%;
       height: 100%;
       height: 100dvh;
       margin: 0;
       overflow: hidden;
+      background: #0b1824;
     }
 
     body {
       color: #f3f8ff;
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      background: #07121e;
+      background:
+        linear-gradient(
+          to bottom,
+          rgba(11, 24, 36, 0) 0%,
+          rgba(11, 24, 36, 0.14) 28%,
+          rgba(11, 24, 36, 0.72) 100%
+        );
     }
 
     .app {
       position: relative;
-      isolation: isolate;
       width: 100vw;
       height: 100vh;
       height: 100dvh;
       overflow: hidden;
-      background: #07121e;
+      background: #0b1824;
     }
 
     .stage {
@@ -64,10 +69,10 @@
 
     .topbar {
       position: absolute;
-      z-index: 2;
+      z-index: 3;
       top: max(54px, env(safe-area-inset-top));
-      left: 25px;
-      right: 25px;
+      left: 24px;
+      right: 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -77,16 +82,15 @@
 
     .topbar h1 {
       margin: 0;
-      font-size: clamp(2rem, 8vw, 3rem);
+      font-size: clamp(2rem, 7vw, 3.3rem);
       font-weight: 650;
-      letter-spacing: -0.045em;
+      letter-spacing: -0.055em;
     }
 
     .chevron {
       display: inline-block;
       margin-left: 4px;
       font-size: 0.72em;
-      font-weight: 400;
       vertical-align: 0.12em;
     }
 
@@ -99,21 +103,20 @@
 
     .add-button,
     .avatar {
-      width: 48px;
-      height: 48px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.28);
     }
 
     .add-button {
       display: grid;
       place-items: center;
-      padding: 0 0 4px;
+      background: rgba(255,255,255,0.12);
       color: white;
-      font: inherit;
       font-size: 2rem;
       line-height: 1;
-      background: rgba(255, 255, 255, 0.15);
+      padding: 0 0 4px;
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
     }
@@ -121,7 +124,7 @@
     .avatar {
       display: block;
       object-fit: cover;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255,255,255,0.2);
     }
 
     #counter {
@@ -131,37 +134,29 @@
       bottom: max(20px, env(safe-area-inset-bottom));
       min-width: 62px;
       padding: 8px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.26);
       border-radius: 999px;
-      color: rgba(243, 248, 255, 0.9);
+      border: 1px solid rgba(255,255,255,0.22);
       text-align: center;
       font-size: 0.86rem;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255,255,255,0.12);
+      color: rgba(243,248,255,0.9);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       pointer-events: none;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.8);
     }
 
     @media (max-width: 600px) {
       .topbar {
-        top: max(54px, env(safe-area-inset-top));
-        left: 22px;
-        right: 22px;
+        left: 20px;
+        right: 20px;
       }
 
-      .topbar h1 {
-        font-size: clamp(2rem, 8vw, 2.8rem);
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        transition-duration: 0.01ms !important;
+      .add-button,
+      .avatar {
+        width: 48px;
+        height: 48px;
       }
     }
   </style>
@@ -212,7 +207,6 @@
     const visibleCanvas = document.getElementById("gl");
     const counter = document.getElementById("counter");
 
-    // Seluruh carousel digambar ke canvas ini, lalu diproses dengan WebGL.
     const sceneCanvas = document.createElement("canvas");
     const ctx = sceneCanvas.getContext("2d");
 
@@ -225,9 +219,9 @@
     let width = 0;
     let height = 0;
     let dpr = 1;
+
     let cardWidth = 0;
     let cardHeight = 0;
-    let cardGap = 0;
     let slot = 0;
     let cardCenterY = 0;
 
@@ -258,109 +252,78 @@
           float((gl_VertexID << 1) & 2),
           float(gl_VertexID & 2)
         );
-
         gl_Position = vec4(point * 2.0 - 1.0, 0.0, 1.0);
       }
     `;
 
     const fragmentSource = `#version 300 es
-precision highp float;
+      precision highp float;
 
-out vec4 outColor;
+      out vec4 outColor;
 
-uniform sampler2D uScene;
-uniform vec2 uResolution;
-uniform float uTime;
-uniform float uMotion;
-uniform float uDirection;
+      uniform sampler2D uScene;
+      uniform vec2 uResolution;
+      uniform float uTime;
+      uniform float uMotion;
+      uniform float uDirection;
 
-vec4 sampleScene(vec2 uv) {
-  return texture(uScene, clamp(uv, 0.001, 0.999));
-}
+      vec4 sampleScene(vec2 uv) {
+        return texture(uScene, clamp(uv, 0.001, 0.999));
+      }
 
-void main() {
-  vec2 uv = gl_FragCoord.xy / uResolution;
-  vec4 original = sampleScene(uv);
+      void main() {
+        vec2 uv = gl_FragCoord.xy / uResolution;
+        vec4 original = sampleScene(uv);
 
-  // Di koordinat WebGL, y=1 adalah bagian atas layar dan y=0 bagian bawah.
-  float distanceTop = (1.0 - uv.y) * uResolution.y;
-  float distanceBottom = uv.y * uResolution.y;
+        float distanceTop = (1.0 - uv.y) * uResolution.y;
+        float distanceBottom = uv.y * uResolution.y;
 
-  // Efek terkunci ke tepi layar, melebar saat scroll makin cepat.
-  float edgeReach = 28.0 + uMotion * 150.0;
-  float topEdge = exp(-distanceTop / edgeReach);
-  float bottomEdge = exp(-distanceBottom / edgeReach);
-  float edgeField = max(topEdge, bottomEdge);
+        float edgeReach = 26.0 + uMotion * 180.0;
+        float topEdge = exp(-distanceTop / edgeReach);
+        float bottomEdge = exp(-distanceBottom / edgeReach);
+        float edgeField = max(topEdge, bottomEdge);
 
-  // Hanya aktif saat carousel bergerak.
-  float motionAmount = smoothstep(0.015, 0.18, uMotion);
-  if (motionAmount <= 0.001) {
-    outColor = original;
-    return;
-  }
+        float motionAmount = smoothstep(0.01, 0.22, uMotion);
+        if (motionAmount <= 0.001) {
+          outColor = original;
+          return;
+        }
 
-  float x = uv.x * (uResolution.x / uResolution.y);
+        float x = uv.x * (uResolution.x / uResolution.y);
+        float wave =
+          sin(x * 26.0 + uTime * 2.6) * 0.55 +
+          sin(x * 41.0 - uTime * 1.8) * 0.28 +
+          sin(x * 12.0 + uTime) * 0.14;
 
-  // Riak horizontal membuat tarikan terasa cair, sementara perpindahannya vertikal.
-  float wave =
-    sin(x * 25.0 + uTime * 2.4) * 0.55 +
-    sin(x * 41.0 - uTime * 1.7) * 0.30 +
-    sin(x * 13.0 + uTime) * 0.15;
+        float pullPixels = uDirection * (10.0 + motionAmount * 140.0) * edgeField;
+        float ripplePixels = wave * (2.0 + motionAmount * 20.0) * edgeField;
 
-  // Arah scroll positif menggerakkan gambar ke atas.
-  float pullPixels =
-    uDirection *
-    (12.0 + motionAmount * 135.0) *
-    edgeField;
+        float shiftY = (pullPixels + ripplePixels) / uResolution.y;
+        float spread = abs(pullPixels) * 0.17;
 
-  float ripplePixels =
-    wave *
-    (2.0 + motionAmount * 20.0) *
-    edgeField;
+        vec4 liquid;
+        liquid.r = sampleScene(uv - vec2(0.0, (shiftY + spread / uResolution.y))).r;
+        liquid.g = sampleScene(uv - vec2(0.0, shiftY)).g;
+        liquid.b = sampleScene(uv - vec2(0.0, (shiftY - spread / uResolution.y))).b;
+        liquid.a = 1.0;
 
-  // Menggeser sumber tekstur pada sumbu vertikal menghasilkan efek tarik.
-  float shiftY = (pullPixels + ripplePixels) / uResolution.y;
-  float chromaticPixels = abs(pullPixels) * 0.16;
+        float rim = max(exp(-distanceTop / 3.0), exp(-distanceBottom / 3.0));
+        liquid.rgb += vec3(0.20, 0.25, 0.34) * rim * motionAmount;
 
-  vec4 liquid;
-  liquid.r = sampleScene(
-    uv - vec2(0.0, shiftY + chromaticPixels / uResolution.y)
-  ).r;
-  liquid.g = sampleScene(
-    uv - vec2(0.0, shiftY)
-  ).g;
-  liquid.b = sampleScene(
-    uv - vec2(0.0, shiftY - chromaticPixels / uResolution.y)
-  ).b;
-  liquid.a = 1.0;
+        float bottomFade = exp(-distanceBottom / 180.0);
+        vec2 blurOffset = vec2(0.0, 0.012 + bottomFade * 0.024);
 
-  // Highlight di tepi layar saat gerakan berlangsung.
-  float rim = max(
-    exp(-distanceTop / 3.0),
-    exp(-distanceBottom / 3.0)
-  );
+        vec3 blurred =
+          0.40 * sampleScene(uv).rgb +
+          0.20 * sampleScene(uv + blurOffset).rgb +
+          0.20 * sampleScene(uv - blurOffset).rgb +
+          0.10 * sampleScene(uv + blurOffset * 2.0).rgb +
+          0.10 * sampleScene(uv - blurOffset * 2.0).rgb;
 
-  liquid.rgb += vec3(0.20, 0.25, 0.34) * rim * motionAmount;
+        liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
 
-  // Progressive blur yang paling kuat di tepi bawah layar.
-float bottomFade = exp(-distanceBottom / 220.0);
-float blurRadius = mix(2.0, 30.0, bottomFade);
-
-// Offset dinormalisasi terhadap tinggi layar.
-float blurY = blurRadius / uResolution.y;
-float blurX = blurRadius / uResolution.x;
-
-vec3 blurred =
-    sampleScene(uv).rgb * 0.40 +
-    sampleScene(uv + vec2( blurX, 0.0)).rgb * 0.15 +
-    sampleScene(uv + vec2(-blurX, 0.0)).rgb * 0.15 +
-    sampleScene(uv + vec2(0.0,  blurY)).rgb * 0.15 +
-    sampleScene(uv + vec2(0.0, -blurY)).rgb * 0.15;
-
-liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
-
-  outColor = liquid;
-}
+        outColor = liquid;
+      }
     `;
 
     function compileShader(type, source) {
@@ -400,8 +363,7 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
         const image = new Image();
         image.crossOrigin = "anonymous";
         image.onload = () => resolve(image);
-        image.onerror = () =>
-          reject(new Error(`Gagal memuat gambar: ${url}`));
+        image.onerror = () => reject(new Error(`Gagal memuat gambar: ${url}`));
         image.src = url;
       });
     }
@@ -424,29 +386,22 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
 
       const isMobile = window.matchMedia("(max-width: 600px)").matches;
 
-      // Jarak antar foto sesuai permintaan.
-      const cardGap = (isMobile ? 170 : 50) * dpr;
-
-      const aspectRatio = isMobile ? 0.68 : 0.72;
-      cardWidth = pixelWidth * (isMobile ? 0.94 : 0.68);
+      const aspectRatio = 0.72;
+      cardWidth = pixelWidth * (isMobile ? 0.94 : 0.74);
       cardHeight = cardWidth / aspectRatio;
 
-      // Sisakan ruang layar agar sedikit bagian kartu tetangga terlihat.
-      const maxCardHeight = pixelHeight * (isMobile ? 0.59 : 0.66);
-
+      const maxCardHeight = pixelHeight * (isMobile ? 0.62 : 0.66);
       if (cardHeight > maxCardHeight) {
         cardHeight = maxCardHeight;
         cardWidth = cardHeight * aspectRatio;
       }
 
+      const cardGap = (isMobile ? 130 : 50) * dpr;
       slot = cardHeight + cardGap;
 
-      // Turunkan sedikit pusat kartu agar judul tetap berada di atasnya.
-      cardCenterY = pixelHeight * (isMobile ? 0.56 : 0.54);
+      cardCenterY = pixelHeight * (isMobile ? 0.54 : 0.53);
 
-      if (gl) {
-        gl.viewport(0, 0, pixelWidth, pixelHeight);
-      }
+      if (gl) gl.viewport(0, 0, pixelWidth, pixelHeight);
     }
 
     function drawRoundedRect(context, x, y, w, h, radius) {
@@ -484,10 +439,7 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
     function getOffset(index) {
       const count = items.length;
       let offset = index - scroll;
-
-      offset =
-        ((offset + count / 2) % count + count) % count - count / 2;
-
+      offset = ((offset + count / 2) % count + count) % count - count / 2;
       return offset;
     }
 
@@ -495,39 +447,31 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
       const pixelWidth = sceneCanvas.width;
       const pixelHeight = sceneCanvas.height;
 
-      const background = ctx.createLinearGradient(
-        0,
-        0,
-        pixelWidth,
-        pixelHeight
-      );
-
-      background.addColorStop(0, "#1c3548");
-      background.addColorStop(0.52, "#152638");
+      const background = ctx.createLinearGradient(0, 0, pixelWidth, pixelHeight);
+      background.addColorStop(0, "#1d2d3b");
+      background.addColorStop(0.52, "#182838");
       background.addColorStop(1, "#07121e");
-
       ctx.fillStyle = background;
       ctx.fillRect(0, 0, pixelWidth, pixelHeight);
+
+      const bottomFade = ctx.createLinearGradient(0, pixelHeight * 0.72, 0, pixelHeight);
+      bottomFade.addColorStop(0, "rgba(7, 18, 30, 0)");
+      bottomFade.addColorStop(0.4, "rgba(7, 18, 30, 0.18)");
+      bottomFade.addColorStop(1, "rgba(7, 18, 30, 0.75)");
+      ctx.fillStyle = bottomFade;
+      ctx.fillRect(0, pixelHeight * 0.72, pixelWidth, pixelHeight * 0.28);
 
       const activeIndex = wrapIndex(Math.round(scroll));
       const activeImage = images[activeIndex];
 
       if (activeImage) {
         ctx.save();
-        ctx.globalAlpha = 0.3;
+        ctx.globalAlpha = 0.28;
         ctx.filter = `blur(${24 * dpr}px) saturate(1.15)`;
-
-        drawImageCover(
-          activeImage,
-          -20 * dpr,
-          -20 * dpr,
-          pixelWidth + 40 * dpr,
-          pixelHeight + 40 * dpr
-        );
-
+        drawImageCover(activeImage, -20 * dpr, -20 * dpr, pixelWidth + 40 * dpr, pixelHeight + 40 * dpr);
         ctx.restore();
 
-        ctx.fillStyle = "rgba(5, 14, 24, 0.42)";
+        ctx.fillStyle = "rgba(5, 14, 24, 0.38)";
         ctx.fillRect(0, 0, pixelWidth, pixelHeight);
       }
 
@@ -536,10 +480,7 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
       const radius = 35 * dpr;
 
       const visibleItems = items
-        .map((item, index) => ({
-          index,
-          offset: getOffset(index)
-        }))
+        .map((item, index) => ({ index, offset: getOffset(index) }))
         .filter(({ offset }) => Math.abs(offset) <= 2.6)
         .sort((a, b) => Math.abs(b.offset) - Math.abs(a.offset));
 
@@ -553,7 +494,7 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
         const image = images[index];
 
         ctx.save();
-        ctx.globalAlpha = Math.max(0.76, 1 - distance * 0.12);
+        ctx.globalAlpha = Math.max(0.75, 1 - distance * 0.12);
 
         ctx.shadowColor = "rgba(0, 0, 0, 0.42)";
         ctx.shadowBlur = 28 * dpr;
@@ -565,7 +506,6 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
 
         ctx.shadowColor = "transparent";
         ctx.save();
-
         drawRoundedRect(ctx, x, y, w, h, radius);
         ctx.clip();
 
@@ -573,30 +513,18 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
           drawImageCover(image, x, y, w, h);
         }
 
-        const shade = ctx.createLinearGradient(
-          0,
-          y + h * 0.58,
-          0,
-          y + h
-        );
-
-        shade.addColorStop(0, "rgba(0, 0, 0, 0)");
-        shade.addColorStop(1, "rgba(0, 0, 0, 0.22)");
-
+        const shade = ctx.createLinearGradient(0, y + h * 0.58, 0, y + h);
+        shade.addColorStop(0, "rgba(0,0,0,0)");
+        shade.addColorStop(1, "rgba(0,0,0,0.20)");
         ctx.fillStyle = shade;
         ctx.fillRect(x, y, w, h);
+
         ctx.restore();
 
-        const gloss = ctx.createLinearGradient(
-          x,
-          y,
-          x + w,
-          y + h * 0.55
-        );
-
-        gloss.addColorStop(0, "rgba(255, 255, 255, 0.18)");
-        gloss.addColorStop(0.38, "rgba(255, 255, 255, 0.035)");
-        gloss.addColorStop(1, "rgba(255, 255, 255, 0)");
+        const gloss = ctx.createLinearGradient(x, y, x + w, y + h * 0.55);
+        gloss.addColorStop(0, "rgba(255,255,255,0.18)");
+        gloss.addColorStop(0.38, "rgba(255,255,255,0.035)");
+        gloss.addColorStop(1, "rgba(255,255,255,0)");
 
         drawRoundedRect(ctx, x, y, w, h, radius);
         ctx.fillStyle = gloss;
@@ -604,7 +532,7 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
 
         drawRoundedRect(ctx, x, y, w, h, radius);
         ctx.lineWidth = 1.2 * dpr;
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.38)";
+        ctx.strokeStyle = "rgba(255,255,255,0.38)";
         ctx.stroke();
 
         ctx.restore();
@@ -617,7 +545,6 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, sceneTexture);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-
       gl.texImage2D(
         gl.TEXTURE_2D,
         0,
@@ -632,7 +559,6 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
       const now = time || performance.now();
 
       if (!previousFrameTime) previousFrameTime = now;
-
       const dt = Math.min((now - previousFrameTime) / 1000, 0.032);
       previousFrameTime = now;
 
@@ -640,8 +566,7 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
         const stiffness = 170;
         const damping = 2 * Math.sqrt(stiffness) * 0.92;
 
-        velocity +=
-          (-stiffness * (scroll - target) - damping * velocity) * dt;
+        velocity += (-stiffness * (scroll - target) - damping * velocity) * dt;
         scroll += velocity * dt;
 
         if (Math.abs(target - scroll) < 0.001 && Math.abs(velocity) < 0.01) {
@@ -650,13 +575,9 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
         }
       }
 
-      const movementSpeed = dragging
-        ? Math.abs(pointerVelocity)
-        : Math.abs(velocity);
-
+      const movementSpeed = dragging ? Math.abs(pointerVelocity) : Math.abs(velocity);
       const motionTarget = Math.min(1, movementSpeed * 0.35);
       const motionBlend = 1 - Math.exp(-dt * 9);
-
       liquidMotion += (motionTarget - liquidMotion) * motionBlend;
 
       drawScene();
@@ -664,22 +585,8 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
 
       gl.useProgram(program);
       gl.uniform1i(uniforms.scene, 0);
-      gl.uniform2f(
-        uniforms.resolution,
-        visibleCanvas.width,
-        visibleCanvas.height
-      );
-      gl.uniform2f(uniforms.cardSize, cardWidth, cardHeight);
-
-      // Koordinat Y untuk WebGL dimulai dari bawah.
-      gl.uniform2f(
-        uniforms.cardCenter,
-        0.5,
-        1 - cardCenterY / visibleCanvas.height
-      );
-
+      gl.uniform2f(uniforms.resolution, visibleCanvas.width, visibleCanvas.height);
       gl.uniform1f(uniforms.time, now / 1000);
-      gl.uniform1f(uniforms.radius, 35 * dpr);
       gl.uniform1f(uniforms.motion, liquidMotion);
 
       const movementDirection = dragging ? pointerVelocity : velocity;
@@ -708,7 +615,6 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
       dragStartScroll = scroll;
       lastPointerY = event.clientY;
       lastPointerTime = performance.now();
-
       pointerVelocity = 0;
       velocity = 0;
       target = scroll;
@@ -742,9 +648,7 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
       target = Math.round(projected);
 
       if (Math.abs(pointerVelocity) > 1.1) {
-        target = Math.round(
-          target + Math.sign(pointerVelocity) * 0.15
-        );
+        target = Math.round(target + Math.sign(pointerVelocity) * 0.15);
       }
 
       velocity = pointerVelocity;
@@ -756,10 +660,9 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
     stage.addEventListener("wheel", (event) => {
       event.preventDefault();
 
-      const delta =
-        Math.abs(event.deltaY) >= Math.abs(event.deltaX)
-          ? event.deltaY
-          : event.deltaX;
+      const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+        ? event.deltaY
+        : event.deltaX;
 
       if (!delta) return;
 
@@ -788,21 +691,15 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
     });
 
     async function init() {
-      gl = visibleCanvas.getContext("webgl2", {
-        alpha: false,
-        antialias: true
-      });
+      gl = visibleCanvas.getContext("webgl2", { alpha: false, antialias: true });
 
       if (!gl) {
-        stage.innerHTML =
-          "<p style='padding:24px'>Browser ini tidak mendukung WebGL 2.</p>";
+        stage.innerHTML = "<p style='padding:24px'>Browser ini tidak mendukung WebGL 2.</p>";
         return;
       }
 
       try {
-        images = await Promise.all(
-          items.map((item) => loadImage(item.image))
-        );
+        images = await Promise.all(items.map((item) => loadImage(item.image)));
 
         program = createProgram();
         gl.useProgram(program);
@@ -810,7 +707,6 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
 
         sceneTexture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, sceneTexture);
-
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -819,10 +715,7 @@ liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
         uniforms = {
           scene: gl.getUniformLocation(program, "uScene"),
           resolution: gl.getUniformLocation(program, "uResolution"),
-          cardSize: gl.getUniformLocation(program, "uCardSize"),
-          cardCenter: gl.getUniformLocation(program, "uCardCenter"),
           time: gl.getUniformLocation(program, "uTime"),
-          radius: gl.getUniformLocation(program, "uRadius"),
           motion: gl.getUniformLocation(program, "uMotion"),
           direction: gl.getUniformLocation(program, "uDirection")
         };
