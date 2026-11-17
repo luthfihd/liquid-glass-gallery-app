@@ -1,9 +1,10 @@
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Liquid Glass Gallery</title>
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   <meta name="theme-color" content="#141218">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -87,58 +88,23 @@
       font-size: 0.88rem;
     }
 
-    .controls {
+    #counter {
       position: absolute;
       z-index: 3;
-      right: 0;
-      bottom: max(24px, env(safe-area-inset-bottom));
-      left: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 18px;
-    }
-
-    button {
-      width: 46px;
-      height: 46px;
-      border: 1px solid rgba(255, 255, 255, 0.26);
-      border-radius: 50%;
-      color: #f3f8ff;
-      background: rgba(255, 255, 255, 0.12);
-      font: inherit;
-      font-size: 1.35rem;
-      cursor: pointer;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      transition: background 160ms ease, transform 160ms ease;
-    }
-
-    button:hover {
-      transform: scale(1.06);
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    #counter {
+      right: 16px;
+      bottom: max(20px, env(safe-area-inset-bottom));
       min-width: 62px;
-      color: rgba(243, 248, 255, 0.82);
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      border-radius: 999px;
+      color: rgba(243, 248, 255, 0.9);
       text-align: center;
       font-size: 0.86rem;
       font-variant-numeric: tabular-nums;
       text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
-    }
-
-    .hint {
-      position: absolute;
-      z-index: 3;
-      right: 12px;
-      bottom: max(82px, calc(env(safe-area-inset-bottom) + 76px));
-      left: 12px;
-      margin: 0;
-      color: rgba(243, 248, 255, 0.78);
-      text-align: center;
-      font-size: 0.78rem;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       pointer-events: none;
     }
 
@@ -172,45 +138,29 @@
       <p>Extracted code by lhd</p>
     </header>
 
-    <section class="stage" id="stage" aria-label="Carousel foto">
-      <canvas id="gl" width="880" height="1912"></canvas>
+    <section class="stage" id="stage" aria-label="Galeri foto vertikal">
+      <canvas id="gl"></canvas>
     </section>
 
-    <nav class="controls" aria-label="Kontrol carousel">
-      <button id="previous" type="button" aria-label="Foto sebelumnya">↑</button>
-      <span id="counter" aria-live="polite">1 / 5</span>
-      <button id="next" type="button" aria-label="Foto berikutnya">↓</button>
-    </nav>
-
-    <p class="hint">Scroll atau geser ke atas/bawah · Tombol panah untuk navigasi</p>
+    <span id="counter" aria-live="polite">1 / 5</span>
   </main>
 
   <script>
     const items = [
       {
-        title: "Pegunungan",
-        description: "Udara pagi yang tenang",
-        image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=85"
+        image: "https://images.unsplash.com/photo-1793605300952-49cbebdc3d49?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
       },
       {
-        title: "Hutan",
-        description: "Cahaya di antara pepohonan",
-        image: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=85"
+        image: "https://images.unsplash.com/photo-1793363562541-f27fa7e52688?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
       },
       {
-        title: "Pantai",
-        description: "Garis pantai saat senja",
-        image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=85"
+        image: "https://images.unsplash.com/photo-1793443196021-12939c7dac83?q=80&w=1365&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
       },
       {
-        title: "Danau",
-        description: "Pantulan di permukaan air",
-        image: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1000&q=85"
+        image: "https://plus.unsplash.com/premium_photo-1792411651238-b1ad8610446b?q=80&w=1285&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
       },
       {
-        title: "Kota",
-        description: "Lampu kota menjelang malam",
-        image: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=85"
+        image: "https://plus.unsplash.com/premium_photo-1792949574922-fc83c916d106?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
       }
     ];
 
@@ -218,6 +168,7 @@
     const visibleCanvas = document.getElementById("gl");
     const counter = document.getElementById("counter");
 
+    // Seluruh carousel digambar ke canvas ini, lalu diproses sebagai tekstur WebGL.
     const sceneCanvas = document.createElement("canvas");
     const ctx = sceneCanvas.getContext("2d");
 
@@ -245,6 +196,7 @@
     let lastPointerTime = 0;
     let pointerVelocity = 0;
     let previousFrameTime = 0;
+    let liquidMotion = 0;
 
     let wheelDelta = 0;
     let wheelTimer = 0;
@@ -274,6 +226,7 @@
       uniform vec2 uCardSize;
       uniform float uTime;
       uniform float uRadius;
+      uniform float uMotion;
 
       float roundedBoxDistance(vec2 point, vec2 halfSize, float radius) {
         vec2 q = abs(point) - halfSize + radius;
@@ -312,12 +265,14 @@
           return;
         }
 
-        vec2 lensSize = vec2(aspect * 0.78, 0.82);
+        // Lensa lebih lebar agar efek kaca terlihat di sekitar kartu besar.
+        vec2 lensSize = vec2(aspect * 0.92, 0.95);
         float radialDistance = length(p / lensSize);
-        float field = smoothstep(0.30, 0.88, radialDistance);
+        float field = smoothstep(0.18, 0.76, radialDistance);
 
         float outsideCard = smoothstep(0.0, 0.055, clearDistance);
         field *= outsideCard;
+
         float verticalPosition =
           abs(clearPoint.y) / max(clearHalfSize.y, 0.001);
 
@@ -325,16 +280,6 @@
           1.0 - 0.98 * smoothstep(0.85, 1.20, verticalPosition);
 
         field *= verticalFade;
-
-        if (uResolution.x < uResolution.y) {
-          float horizontalPosition =
-            abs(clearPoint.x) / max(clearHalfSize.x, 0.001);
-
-          float horizontalFade =
-            1.0 - smoothstep(1.0, 1.5, horizontalPosition);
-
-          field *= horizontalFade;
-        }
 
         if (field <= 0.001) {
           outColor = original;
@@ -349,11 +294,18 @@
         vec2 radialDirection = normalize(offset + vec2(0.00001));
         vec2 tangentDirection = vec2(-radialDirection.y, radialDirection.x);
 
-        vec2 shift =
-          -offset * 0.45 * field +
-          tangentDirection * fluidWave * field * field * 0.012;
+        // Distorsi refraksi bertambah saat galeri digeser atau discroll.
+        float motionBoost = 1.0 + uMotion * 3.2;
 
-        vec2 spread = shift * 0.10;
+        vec2 shift =
+          -offset * (0.55 + uMotion * 0.28) * field +
+          tangentDirection * fluidWave * field * field
+            * (0.018 + uMotion * 0.035);
+
+        shift *= motionBoost;
+
+        // Dispersi warna di tepi refraksi.
+        vec2 spread = shift * (0.10 + uMotion * 0.07);
         vec2 redUv = uv + shift + spread;
         vec2 greenUv = uv + shift;
         vec2 blueUv = uv + shift - spread;
@@ -365,7 +317,7 @@
         refracted.a = 1.0;
 
         float rim = exp(-abs(clearDistance * uResolution.y) / 2.2);
-        refracted.rgb += vec3(0.15, 0.19, 0.23) * rim * field;
+        refracted.rgb += vec3(0.18, 0.23, 0.30) * rim * field;
 
         outColor = vec4(refracted.rgb, 1.0);
       }
@@ -416,6 +368,8 @@
     function resize() {
       const rect = stage.getBoundingClientRect();
 
+      if (!rect.width || !rect.height) return;
+
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       width = rect.width;
       height = rect.height;
@@ -428,16 +382,21 @@
       sceneCanvas.width = pixelWidth;
       sceneCanvas.height = pixelHeight;
 
-      cardHeight = pixelHeight * 0.62;
-      cardWidth = cardHeight * 0.75;
+      // Kartu besar untuk tampilan mobile, tetap dibatasi agar muat di layar.
+      const isMobile = window.matchMedia("(max-width: 600px)").matches;
+      const widthRatio = isMobile ? 0.94 : 0.78;
 
-      const maxCardWidth = pixelWidth * 0.8;
-      if (cardWidth > maxCardWidth) {
-        cardWidth = maxCardWidth;
-        cardHeight = cardWidth / 0.75;
+      cardWidth = pixelWidth * widthRatio;
+      cardHeight = cardWidth / 0.75;
+
+      const maxCardHeight = pixelHeight * 0.72;
+      if (cardHeight > maxCardHeight) {
+        cardHeight = maxCardHeight;
+        cardWidth = cardHeight * 0.75;
       }
 
-      slot = cardHeight * 0.95;
+      // Sisakan hanya sedikit bagian foto sebelum dan sesudah.
+      slot = pixelHeight * 0.5 + cardHeight * 0.5 - cardHeight * 0.08;
 
       if (gl) {
         gl.viewport(0, 0, pixelWidth, pixelHeight);
@@ -482,6 +441,50 @@
       return offset;
     }
 
+    const zoomState = {
+      wasSettled: true,
+      lastIndex: 0,
+      startTime: 0,
+      duration: 350,
+      amount: 0.02
+    };
+
+    function getActiveZoom(now = performance.now()) {
+      const activeIndex = wrapIndex(Math.round(scroll));
+      const settled =
+        !dragging &&
+        Math.abs(scroll - target) < 0.001 &&
+        Math.abs(velocity) < 0.01;
+
+      if (!settled) {
+        zoomState.wasSettled = false;
+        return 1;
+      }
+
+      if (!zoomState.wasSettled) {
+        zoomState.wasSettled = true;
+        if (activeIndex !== zoomState.lastIndex) {
+          zoomState.lastIndex = activeIndex;
+          zoomState.startTime = now;
+        }
+      }
+
+      if (activeIndex !== zoomState.lastIndex) {
+        zoomState.lastIndex = activeIndex;
+        zoomState.startTime = now;
+      }
+
+      if (!zoomState.startTime) return 1;
+
+      const progress = Math.min(
+        (now - zoomState.startTime) / zoomState.duration,
+        1
+      );
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      return 1 + zoomState.amount * eased;
+    }
+
     function drawScene() {
       const pixelWidth = sceneCanvas.width;
       const pixelHeight = sceneCanvas.height;
@@ -500,6 +503,7 @@
       ctx.fillRect(0, 0, pixelWidth, pixelHeight);
 
       const activeIndex = wrapIndex(Math.round(scroll));
+      const activeZoom = getActiveZoom();
       const activeImage = images[activeIndex];
 
       if (activeImage) {
@@ -528,18 +532,25 @@
         if (Math.abs(offset) > 2.6) return;
 
         const distance = Math.abs(offset);
-        const scale = 1 - Math.min(distance, 1) * 0.16;
+        const scale = 1 - Math.min(distance, 1) * 0.12;
         const w = cardWidth * scale;
         const h = cardHeight * scale;
-
         const x = centerX - w / 2;
         const y = centerY + offset * slot - h / 2;
         const image = images[index];
 
         ctx.save();
-        ctx.globalAlpha = Math.max(0.38, 1 - distance * 0.2);
 
-        ctx.shadowColor = "rgba(0, 0, 0, 0.38)";
+        // Pertahankan zoom kecil pada kartu aktif.
+        if (index === activeIndex) {
+          ctx.translate(x + w / 2, y + h / 2);
+          ctx.scale(activeZoom, activeZoom);
+          ctx.translate(-(x + w / 2), -(y + h / 2));
+        }
+
+        ctx.globalAlpha = Math.max(0.5, 1 - distance * 0.18);
+
+        ctx.shadowColor = "rgba(0, 0, 0, 0.42)";
         ctx.shadowBlur = 28 * dpr;
         ctx.shadowOffsetY = 12 * dpr;
 
@@ -556,49 +567,21 @@
           drawImageCover(image, x, y, w, h);
         }
 
-        const shade = ctx.createLinearGradient(
-          0,
-          y + h * 0.55,
-          0,
-          y + h
-        );
-        shade.addColorStop(0, "rgba(5, 10, 18, 0)");
-        shade.addColorStop(1, "rgba(5, 10, 18, 0.78)");
-        ctx.fillStyle = shade;
-        ctx.fillRect(x, y + h * 0.5, w, h * 0.5);
-
-        const gloss = ctx.createLinearGradient(x, y, x + w, y + h * 0.45);
-        gloss.addColorStop(0, "rgba(255, 255, 255, 0.19)");
-        gloss.addColorStop(0.34, "rgba(255, 255, 255, 0.035)");
-        gloss.addColorStop(1, "rgba(255, 255, 255, 0)");
-        ctx.fillStyle = gloss;
-        ctx.fillRect(x, y, w, h * 0.55);
-
-        const titleSize = Math.max(17, 22 * scale) * dpr;
-        ctx.font = `600 ${titleSize}px system-ui, sans-serif`;
-        ctx.fillStyle = "#fff";
-        ctx.textBaseline = "alphabetic";
-        ctx.fillText(
-          item.title,
-          x + 20 * dpr,
-          y + h - 54 * dpr,
-          w - 40 * dpr
-        );
-
-        ctx.font = `${12 * dpr}px system-ui, sans-serif`;
-        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-        ctx.fillText(
-          item.description,
-          x + 20 * dpr,
-          y + h - 31 * dpr,
-          w - 40 * dpr
-        );
-
         ctx.restore();
 
+        // Kilau dan garis pinggir Liquid Glass pada kartu.
+        const gloss = ctx.createLinearGradient(x, y, x + w, y + h * 0.55);
+        gloss.addColorStop(0, "rgba(255, 255, 255, 0.18)");
+        gloss.addColorStop(0.38, "rgba(255, 255, 255, 0.035)");
+        gloss.addColorStop(1, "rgba(255, 255, 255, 0)");
+
         drawRoundedRect(ctx, x, y, w, h, radius);
-        ctx.lineWidth = 1 * dpr;
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.36)";
+        ctx.fillStyle = gloss;
+        ctx.fill();
+
+        drawRoundedRect(ctx, x, y, w, h, radius);
+        ctx.lineWidth = 1.2 * dpr;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.38)";
         ctx.stroke();
 
         ctx.restore();
@@ -641,6 +624,15 @@
         }
       }
 
+      // Intensitas refraksi Liquid Glass naik ketika galeri bergerak.
+      const movementSpeed = dragging
+        ? Math.abs(pointerVelocity)
+        : Math.abs(velocity);
+
+      const motionTarget = Math.min(1, movementSpeed * 0.35);
+      const motionBlend = 1 - Math.exp(-dt * 9);
+      liquidMotion += (motionTarget - liquidMotion) * motionBlend;
+
       drawScene();
       uploadSceneTexture();
 
@@ -654,6 +646,7 @@
       gl.uniform2f(uniforms.cardSize, cardWidth, cardHeight);
       gl.uniform1f(uniforms.time, now / 1000);
       gl.uniform1f(uniforms.radius, 16 * dpr);
+      gl.uniform1f(uniforms.motion, liquidMotion);
 
       gl.clearColor(0, 0, 0, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
@@ -666,9 +659,6 @@
       target = Math.round(scroll) + direction;
       velocity = 0;
     }
-
-    document.getElementById("previous").addEventListener("click", () => moveBy(-1));
-    document.getElementById("next").addEventListener("click", () => moveBy(1));
 
     stage.addEventListener("pointerdown", (event) => {
       if (event.button !== undefined && event.button !== 0) return;
@@ -723,31 +713,36 @@
     stage.addEventListener("pointerup", finishDrag);
     stage.addEventListener("pointercancel", finishDrag);
 
+    // Scroll mouse/trackpad: satu gerakan akan berpindah satu atau beberapa foto.
     stage.addEventListener("wheel", (event) => {
       event.preventDefault();
 
-      const delta = event.deltaY;
+      const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+        ? event.deltaY
+        : event.deltaX;
+
       if (!delta) return;
 
       wheelDelta += delta;
+      window.clearTimeout(wheelTimer);
 
-      clearTimeout(wheelTimer);
-      wheelTimer = setTimeout(() => {
+      wheelTimer = window.setTimeout(() => {
         const direction = Math.sign(wheelDelta);
         const steps = Math.min(
           items.length,
           Math.max(1, Math.round(Math.abs(wheelDelta) / 120))
         );
 
-        if (direction !== 0) {
+        if (direction) {
           target = Math.round(scroll) + direction * steps;
           velocity = 0;
         }
 
         wheelDelta = 0;
-      }, 150);
+      }, 100);
     }, { passive: false });
 
+    // Keyboard tetap berfungsi, tanpa menampilkan tombol.
     document.addEventListener("keydown", (event) => {
       if (event.key === "ArrowDown") moveBy(1);
       if (event.key === "ArrowUp") moveBy(-1);
@@ -784,7 +779,8 @@
           resolution: gl.getUniformLocation(program, "uResolution"),
           cardSize: gl.getUniformLocation(program, "uCardSize"),
           time: gl.getUniformLocation(program, "uTime"),
-          radius: gl.getUniformLocation(program, "uRadius")
+          radius: gl.getUniformLocation(program, "uRadius"),
+          motion: gl.getUniformLocation(program, "uMotion")
         };
 
         resize();
@@ -799,6 +795,5 @@
     window.addEventListener("resize", resize);
     init();
   </script>
-
 </body>
 </html>
