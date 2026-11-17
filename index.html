@@ -454,26 +454,28 @@
       ctx.fillStyle = background;
       ctx.fillRect(0, 0, pixelWidth, pixelHeight);
 
-      const bottomFade = ctx.createLinearGradient(0, pixelHeight * 0.72, 0, pixelHeight);
-      bottomFade.addColorStop(0, "rgba(7, 18, 30, 0)");
-      bottomFade.addColorStop(0.4, "rgba(7, 18, 30, 0.18)");
-      bottomFade.addColorStop(1, "rgba(7, 18, 30, 0.75)");
-      ctx.fillStyle = bottomFade;
-      ctx.fillRect(0, pixelHeight * 0.72, pixelWidth, pixelHeight * 0.28);
-
       const activeIndex = wrapIndex(Math.round(scroll));
       const activeImage = images[activeIndex];
 
       if (activeImage) {
-        ctx.save();
-        ctx.globalAlpha = 0.28;
-        ctx.filter = `blur(${24 * dpr}px) saturate(1.15)`;
-        drawImageCover(activeImage, -20 * dpr, -20 * dpr, pixelWidth + 40 * dpr, pixelHeight + 40 * dpr);
-        ctx.restore();
+  ctx.save();
+  ctx.globalAlpha = 0.78;
+  ctx.filter = `blur(${32 * dpr}px) saturate(1.12)`;
 
-        ctx.fillStyle = "rgba(5, 14, 24, 0.38)";
-        ctx.fillRect(0, 0, pixelWidth, pixelHeight);
-      }
+  drawImageCover(
+    activeImage,
+    -50 * dpr,
+    -50 * dpr,
+    sceneCanvas.width + 100 * dpr,
+    sceneCanvas.height + 100 * dpr
+  );
+
+  ctx.restore();
+
+  // Tint tipis merata, bukan gradient gelap khusus di bawah.
+  ctx.fillStyle = "rgba(5, 14, 22, 0.24)";
+  ctx.fillRect(0, 0, sceneCanvas.width, sceneCanvas.height);
+}
 
       const centerX = pixelWidth / 2;
       const centerY = cardCenterY;
