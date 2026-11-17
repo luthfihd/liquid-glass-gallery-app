@@ -5,12 +5,11 @@
   <title>Liquid Glass Gallery</title>
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-<!-- PWA & Mobile Meta Tags -->
-    <meta name="theme-color" content="#141218">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="translucent">
-    <meta name="apple-mobile-web-app-title" content="Liquid Glass Gallery">
-    <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#141218">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="translucent">
+  <meta name="apple-mobile-web-app-title" content="Liquid Glass Gallery">
+  <meta name="mobile-web-app-capable" content="yes">
 
   <style>
     * {
@@ -50,7 +49,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      touch-action: pan-y;
+      touch-action: none;
       user-select: none;
       cursor: grab;
     }
@@ -178,30 +177,40 @@
     </section>
 
     <nav class="controls" aria-label="Kontrol carousel">
-      <button id="previous" type="button" aria-label="Foto sebelumnya">‹</button>
+      <button id="previous" type="button" aria-label="Foto sebelumnya">↑</button>
       <span id="counter" aria-live="polite">1 / 5</span>
-      <button id="next" type="button" aria-label="Foto berikutnya">›</button>
+      <button id="next" type="button" aria-label="Foto berikutnya">↓</button>
     </nav>
 
-    <p class="hint">Geser, atau gunakan tombol panah kiri/kanan</p>
+    <p class="hint">Scroll atau geser ke atas/bawah · Tombol panah untuk navigasi</p>
   </main>
 
   <script>
     const items = [
       {
-        image: "https://images.unsplash.com/photo-1793605300952-49cbebdc3d49?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
+        title: "Pegunungan",
+        description: "Udara pagi yang tenang",
+        image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=85"
       },
       {
-        image: "https://images.unsplash.com/photo-1793363562541-f27fa7e52688?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
+        title: "Hutan",
+        description: "Cahaya di antara pepohonan",
+        image: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=85"
       },
       {
-        image: "https://images.unsplash.com/photo-1793443196021-12939c7dac83?q=80&w=1365&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
+        title: "Pantai",
+        description: "Garis pantai saat senja",
+        image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=85"
       },
       {
-        image: "https://plus.unsplash.com/premium_photo-1792411651238-b1ad8610446b?q=80&w=1285&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
+        title: "Danau",
+        description: "Pantulan di permukaan air",
+        image: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1000&q=85"
       },
       {
-        image: "https://plus.unsplash.com/premium_photo-1792949574922-fc83c916d106?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
+        title: "Kota",
+        description: "Lampu kota menjelang malam",
+        image: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=85"
       }
     ];
 
@@ -209,7 +218,6 @@
     const visibleCanvas = document.getElementById("gl");
     const counter = document.getElementById("counter");
 
-    // Seluruh carousel digambar ke canvas ini, lalu diproses sebagai tekstur WebGL.
     const sceneCanvas = document.createElement("canvas");
     const ctx = sceneCanvas.getContext("2d");
 
@@ -230,12 +238,16 @@
     let target = 0;
     let velocity = 0;
     let dragging = false;
-    let dragStartX = 0;
+
+    let dragStartY = 0;
     let dragStartScroll = 0;
-    let lastPointerX = 0;
+    let lastPointerY = 0;
     let lastPointerTime = 0;
     let pointerVelocity = 0;
     let previousFrameTime = 0;
+
+    let wheelDelta = 0;
+    let wheelTimer = 0;
 
     const wrapIndex = (index) =>
       ((index % items.length) + items.length) % items.length;
@@ -278,11 +290,9 @@
         vec2 uv = gl_FragCoord.xy / uResolution;
         float aspect = uResolution.x / uResolution.y;
 
-        // Jarak dari pusat lensa, dikoreksi untuk rasio layar.
         vec2 offset = uv - vec2(0.5);
         vec2 p = vec2(offset.x * aspect, offset.y);
 
-        // Area kartu tengah tetap jernih.
         vec2 clearPoint = vec2(offset.x * aspect, offset.y);
         vec2 clearHalfSize = vec2(
           uCardSize.x / (2.0 * uResolution.y),
@@ -302,32 +312,30 @@
           return;
         }
 
-        // Bidang lensa elips di sekitar kartu aktif.
         vec2 lensSize = vec2(aspect * 0.78, 0.82);
         float radialDistance = length(p / lensSize);
         float field = smoothstep(0.30, 0.88, radialDistance);
 
-        // Distorsi mulai di luar kartu lalu memudar ke bagian luar lensa.
         float outsideCard = smoothstep(0.0, 0.055, clearDistance);
         field *= outsideCard;
         float verticalPosition =
-  abs(clearPoint.y) / max(clearHalfSize.y, 0.001);
+          abs(clearPoint.y) / max(clearHalfSize.y, 0.001);
 
-float verticalFade =
-  1.0 - 0.98 * smoothstep(0.85, 1.20, verticalPosition);
+        float verticalFade =
+          1.0 - 0.98 * smoothstep(0.85, 1.20, verticalPosition);
 
-field *= verticalFade;
-// Redam efek lensa di sisi kiri-kanan pada tampilan portrait.
-if (uResolution.x < uResolution.y) {
-  float horizontalPosition =
-    abs(clearPoint.x) / max(clearHalfSize.x, 0.001);
+        field *= verticalFade;
 
-  float horizontalFade =
-  1.0 - smoothstep(1.0, 1.5, horizontalPosition);
+        if (uResolution.x < uResolution.y) {
+          float horizontalPosition =
+            abs(clearPoint.x) / max(clearHalfSize.x, 0.001);
 
+          float horizontalFade =
+            1.0 - smoothstep(1.0, 1.5, horizontalPosition);
 
-  field *= horizontalFade;
-}
+          field *= horizontalFade;
+        }
+
         if (field <= 0.001) {
           outColor = original;
           return;
@@ -341,12 +349,10 @@ if (uResolution.x < uResolution.y) {
         vec2 radialDirection = normalize(offset + vec2(0.00001));
         vec2 tangentDirection = vec2(-radialDirection.y, radialDirection.x);
 
-        // Pembesaran dan lengkungan seperti lensa kaca.
         vec2 shift =
           -offset * 0.45 * field +
           tangentDirection * fluidWave * field * field * 0.012;
 
-        // Dispersi warna ringan di tepi refraksi.
         vec2 spread = shift * 0.10;
         vec2 redUv = uv + shift + spread;
         vec2 greenUv = uv + shift;
@@ -358,7 +364,6 @@ if (uResolution.x < uResolution.y) {
         refracted.b = sampleScene(blueUv).b;
         refracted.a = 1.0;
 
-        // Kilau tipis di tepi kartu.
         float rim = exp(-abs(clearDistance * uResolution.y) / 2.2);
         refracted.rgb += vec3(0.15, 0.19, 0.23) * rim * field;
 
@@ -423,18 +428,16 @@ if (uResolution.x < uResolution.y) {
       sceneCanvas.width = pixelWidth;
       sceneCanvas.height = pixelHeight;
 
-      // Kartu portrait besar, mengikuti ukuran viewport.
       cardHeight = pixelHeight * 0.62;
       cardWidth = cardHeight * 0.75;
 
-      // Jaga agar kartu tetap muat di layar sempit.
       const maxCardWidth = pixelWidth * 0.8;
       if (cardWidth > maxCardWidth) {
         cardWidth = maxCardWidth;
         cardHeight = cardWidth / 0.75;
       }
 
-      slot = cardWidth * 0.95;
+      slot = cardHeight * 0.95;
 
       if (gl) {
         gl.viewport(0, 0, pixelWidth, pixelHeight);
@@ -480,101 +483,129 @@ if (uResolution.x < uResolution.y) {
     }
 
     function drawScene() {
-  const pixelWidth = sceneCanvas.width;
-  const pixelHeight = sceneCanvas.height;
+      const pixelWidth = sceneCanvas.width;
+      const pixelHeight = sceneCanvas.height;
 
-  // Latar gradasi.
-  const background = ctx.createLinearGradient(
-    0,
-    0,
-    pixelWidth,
-    pixelHeight
-  );
-  background.addColorStop(0, "#1c3548");
-  background.addColorStop(0.52, "#152638");
-  background.addColorStop(1, "#07121e");
+      const background = ctx.createLinearGradient(
+        0,
+        0,
+        pixelWidth,
+        pixelHeight
+      );
+      background.addColorStop(0, "#1c3548");
+      background.addColorStop(0.52, "#152638");
+      background.addColorStop(1, "#07121e");
 
-  ctx.fillStyle = background;
-  ctx.fillRect(0, 0, pixelWidth, pixelHeight);
+      ctx.fillStyle = background;
+      ctx.fillRect(0, 0, pixelWidth, pixelHeight);
 
-  // Backdrop blur menggunakan gambar aktif.
-  const activeIndex = wrapIndex(Math.round(scroll));
-  const activeZoom = getActiveZoom();
-  const activeImage = images[activeIndex];
+      const activeIndex = wrapIndex(Math.round(scroll));
+      const activeImage = images[activeIndex];
 
-  if (activeImage) {
-    ctx.save();
-    ctx.globalAlpha = 0.3;
-    ctx.filter = `blur(${24 * dpr}px) saturate(1.15)`;
-    drawImageCover(
-      activeImage,
-      -20 * dpr,
-      -20 * dpr,
-      pixelWidth + 40 * dpr,
-      pixelHeight + 40 * dpr
-    );
-    ctx.restore();
+      if (activeImage) {
+        ctx.save();
+        ctx.globalAlpha = 0.3;
+        ctx.filter = `blur(${24 * dpr}px) saturate(1.15)`;
+        drawImageCover(
+          activeImage,
+          -20 * dpr,
+          -20 * dpr,
+          pixelWidth + 40 * dpr,
+          pixelHeight + 40 * dpr
+        );
+        ctx.restore();
 
-    ctx.fillStyle = "rgba(5, 14, 24, 0.42)";
-    ctx.fillRect(0, 0, pixelWidth, pixelHeight);
-  }
+        ctx.fillStyle = "rgba(5, 14, 24, 0.42)";
+        ctx.fillRect(0, 0, pixelWidth, pixelHeight);
+      }
 
-  const centerX = pixelWidth / 2;
-  const centerY = pixelHeight / 2;
-  const radius = 35 * dpr;
+      const centerX = pixelWidth / 2;
+      const centerY = pixelHeight / 2;
+      const radius = 35 * dpr;
 
-  items.forEach((item, index) => {
-    const offset = getOffset(index);
-    if (Math.abs(offset) > 2.6) return;
+      items.forEach((item, index) => {
+        const offset = getOffset(index);
+        if (Math.abs(offset) > 2.6) return;
 
-    const distance = Math.abs(offset);
-    const scale = 1 - Math.min(distance, 1) * 0.16;
-    const cardSizeMultiplier = 1; // perbesar semua kartu 12%
-    const w = cardWidth * scale * cardSizeMultiplier;
-    const h = cardHeight * scale * cardSizeMultiplier;
-   const zoomPush =
-  index === activeIndex
-    ? 0
-    : Math.sign(offset) * cardWidth * (activeZoom - 1) / 2;
+        const distance = Math.abs(offset);
+        const scale = 1 - Math.min(distance, 1) * 0.16;
+        const w = cardWidth * scale;
+        const h = cardHeight * scale;
 
-    const x = centerX + offset * slot * cardSizeMultiplier - w / 2;
-    const y = centerY - h / 2;
-    const image = images[index];
+        const x = centerX - w / 2;
+        const y = centerY + offset * slot - h / 2;
+        const image = images[index];
 
-    ctx.save();
+        ctx.save();
+        ctx.globalAlpha = Math.max(0.38, 1 - distance * 0.2);
 
-    // Zoom seluruh kartu aktif dari titik tengahnya.
-    if (index === activeIndex) {
-      ctx.translate(x + w / 2, y + h / 2);
-      ctx.scale(activeZoom, activeZoom);
-      ctx.translate(-(x + w / 2), -(y + h / 2));
+        ctx.shadowColor = "rgba(0, 0, 0, 0.38)";
+        ctx.shadowBlur = 28 * dpr;
+        ctx.shadowOffsetY = 12 * dpr;
+
+        drawRoundedRect(ctx, x, y, w, h, radius);
+        ctx.fillStyle = "#263646";
+        ctx.fill();
+
+        ctx.shadowColor = "transparent";
+        ctx.save();
+        drawRoundedRect(ctx, x, y, w, h, radius);
+        ctx.clip();
+
+        if (image) {
+          drawImageCover(image, x, y, w, h);
+        }
+
+        const shade = ctx.createLinearGradient(
+          0,
+          y + h * 0.55,
+          0,
+          y + h
+        );
+        shade.addColorStop(0, "rgba(5, 10, 18, 0)");
+        shade.addColorStop(1, "rgba(5, 10, 18, 0.78)");
+        ctx.fillStyle = shade;
+        ctx.fillRect(x, y + h * 0.5, w, h * 0.5);
+
+        const gloss = ctx.createLinearGradient(x, y, x + w, y + h * 0.45);
+        gloss.addColorStop(0, "rgba(255, 255, 255, 0.19)");
+        gloss.addColorStop(0.34, "rgba(255, 255, 255, 0.035)");
+        gloss.addColorStop(1, "rgba(255, 255, 255, 0)");
+        ctx.fillStyle = gloss;
+        ctx.fillRect(x, y, w, h * 0.55);
+
+        const titleSize = Math.max(17, 22 * scale) * dpr;
+        ctx.font = `600 ${titleSize}px system-ui, sans-serif`;
+        ctx.fillStyle = "#fff";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText(
+          item.title,
+          x + 20 * dpr,
+          y + h - 54 * dpr,
+          w - 40 * dpr
+        );
+
+        ctx.font = `${12 * dpr}px system-ui, sans-serif`;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.fillText(
+          item.description,
+          x + 20 * dpr,
+          y + h - 31 * dpr,
+          w - 40 * dpr
+        );
+
+        ctx.restore();
+
+        drawRoundedRect(ctx, x, y, w, h, radius);
+        ctx.lineWidth = 1 * dpr;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.36)";
+        ctx.stroke();
+
+        ctx.restore();
+      });
+
+      counter.textContent = `${activeIndex + 1} / ${items.length}`;
     }
-
-    ctx.globalAlpha = Math.max(0.38, 1 - distance * 0.2);
-
-    // Bayangan dan bentuk kartu.
-    ctx.shadowColor = "rgba(0, 0, 0, 0.38)";
-    ctx.shadowBlur = 28 * dpr;
-    ctx.shadowOffsetY = 12 * dpr;
-
-    drawRoundedRect(ctx, x, y, w, h, radius);
-    ctx.fillStyle = "#263646";
-    ctx.fill();
-
-    // Potong foto mengikuti sudut kartu.
-    ctx.shadowColor = "transparent";
-    ctx.save();
-    drawRoundedRect(ctx, x, y, w, h, radius);
-    ctx.clip();
-
-    if (image) {
-      drawImageCover(image, x, y, w, h);
-    }
-
-    ctx.restore(); // selesai clip
-    ctx.restore(); // selesai transform kartu
-  });
-}
 
     function uploadSceneTexture() {
       gl.activeTexture(gl.TEXTURE0);
@@ -598,7 +629,6 @@ if (uResolution.x < uResolution.y) {
       previousFrameTime = now;
 
       if (!dragging) {
-        // Pegas redam untuk perpindahan antar foto.
         const stiffness = 170;
         const damping = 2 * Math.sqrt(stiffness) * 0.92;
 
@@ -631,62 +661,14 @@ if (uResolution.x < uResolution.y) {
 
       requestAnimationFrame(renderFrame);
     }
-    const zoomState = {
-  wasSettled: true,
-  lastIndex: 0,
-  startTime: 0,
-  duration: 350,
-  amount: 0.02
-};
-
-function getActiveZoom(now = performance.now()) {
-  const activeIndex = wrapIndex(Math.round(scroll));
-  const settled =
-    !dragging &&
-    Math.abs(scroll - target) < 0.001 &&
-    Math.abs(velocity) < 0.01;
-
-  if (!settled) {
-    zoomState.wasSettled = false;
-    return 1;
-  }
-
-  if (!zoomState.wasSettled) {
-    zoomState.wasSettled = true;
-    if (activeIndex !== zoomState.lastIndex) {
-      zoomState.lastIndex = activeIndex;
-      zoomState.startTime = now;
-    }
-  }
-
-  if (activeIndex !== zoomState.lastIndex) {
-    zoomState.lastIndex = activeIndex;
-    zoomState.startTime = now;
-  }
-
-  if (!zoomState.startTime) return 1;
-
-  const progress = Math.min(
-    (now - zoomState.startTime) / zoomState.duration,
-    1
-  );
-  const eased = 1 - Math.pow(1 - progress, 3);
-
-  return 1 + zoomState.amount * eased;
-}
 
     function moveBy(direction) {
       target = Math.round(scroll) + direction;
       velocity = 0;
     }
 
-    document
-      .getElementById("previous")
-      .addEventListener("click", () => moveBy(-1));
-
-    document
-      .getElementById("next")
-      .addEventListener("click", () => moveBy(1));
+    document.getElementById("previous").addEventListener("click", () => moveBy(-1));
+    document.getElementById("next").addEventListener("click", () => moveBy(1));
 
     stage.addEventListener("pointerdown", (event) => {
       if (event.button !== undefined && event.button !== 0) return;
@@ -695,9 +677,9 @@ function getActiveZoom(now = performance.now()) {
       stage.classList.add("dragging");
       stage.setPointerCapture(event.pointerId);
 
-      dragStartX = event.clientX;
+      dragStartY = event.clientY;
       dragStartScroll = scroll;
-      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
       lastPointerTime = performance.now();
       pointerVelocity = 0;
       velocity = 0;
@@ -709,16 +691,16 @@ function getActiveZoom(now = performance.now()) {
 
       const now = performance.now();
       const elapsed = Math.max(1, now - lastPointerTime);
-      const dx = event.clientX - dragStartX;
+      const dy = event.clientY - dragStartY;
 
-      scroll = dragStartScroll - (dx * dpr) / slot;
+      scroll = dragStartScroll - (dy * dpr) / slot;
       target = scroll;
 
       pointerVelocity =
-        (-(event.clientX - lastPointerX) * dpr / slot) /
+        (-(event.clientY - lastPointerY) * dpr / slot) /
         (elapsed / 1000);
 
-      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
       lastPointerTime = now;
     });
 
@@ -741,9 +723,34 @@ function getActiveZoom(now = performance.now()) {
     stage.addEventListener("pointerup", finishDrag);
     stage.addEventListener("pointercancel", finishDrag);
 
+    stage.addEventListener("wheel", (event) => {
+      event.preventDefault();
+
+      const delta = event.deltaY;
+      if (!delta) return;
+
+      wheelDelta += delta;
+
+      clearTimeout(wheelTimer);
+      wheelTimer = setTimeout(() => {
+        const direction = Math.sign(wheelDelta);
+        const steps = Math.min(
+          items.length,
+          Math.max(1, Math.round(Math.abs(wheelDelta) / 120))
+        );
+
+        if (direction !== 0) {
+          target = Math.round(scroll) + direction * steps;
+          velocity = 0;
+        }
+
+        wheelDelta = 0;
+      }, 150);
+    }, { passive: false });
+
     document.addEventListener("keydown", (event) => {
-      if (event.key === "ArrowRight") moveBy(1);
-      if (event.key === "ArrowLeft") moveBy(-1);
+      if (event.key === "ArrowDown") moveBy(1);
+      if (event.key === "ArrowUp") moveBy(-1);
     });
 
     async function init() {
@@ -760,7 +767,6 @@ function getActiveZoom(now = performance.now()) {
 
       try {
         images = await Promise.all(items.map((item) => loadImage(item.image)));
-        
 
         program = createProgram();
         gl.useProgram(program);
@@ -794,4 +800,5 @@ function getActiveZoom(now = performance.now()) {
     init();
   </script>
 
-</body></html>
+</body>
+</html>
