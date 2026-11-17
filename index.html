@@ -147,63 +147,164 @@
       text-shadow: 0 2px 12px rgba(0,0,0,0.8);
     }
 
+    /* Floating Liquid Glass pill */
+    .topbar {
+      position: absolute;
+      z-index: 3;
+      top: auto;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      left: 14px;
+      right: 14px;
+
+      min-height: 72px;
+      padding: 9px 11px 9px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+
+      overflow: hidden;
+      isolation: isolate;
+      border: 1px solid rgba(255, 255, 255, 0.36);
+      border-radius: 999px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.24),
+          rgba(255, 255, 255, 0.055) 48%,
+          rgba(255, 255, 255, 0.16)
+        ),
+        rgba(34, 41, 50, 0.42);
+
+      box-shadow:
+        0 12px 34px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.42),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.10);
+
+      -webkit-backdrop-filter: blur(28px) saturate(1.7);
+      backdrop-filter: blur(28px) saturate(1.7);
+
+      pointer-events: auto;
+      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.42);
+    }
+
+    .topbar::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background:
+        radial-gradient(
+          ellipse at 18% -45%,
+          rgba(255, 255, 255, 0.58),
+          transparent 55%
+        ),
+        radial-gradient(
+          ellipse at 88% 145%,
+          rgba(173, 211, 255, 0.24),
+          transparent 54%
+        ),
+        linear-gradient(
+          110deg,
+          transparent 25%,
+          rgba(255, 255, 255, 0.09) 50%,
+          transparent 74%
+        );
+    }
+
+    .topbar::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: -70%;
+      left: -45%;
+      width: 35%;
+      height: 240%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.16);
+      filter: blur(12px);
+      transform: rotate(18deg);
+      pointer-events: none;
+      animation: pillSheen 7s ease-in-out infinite;
+    }
+
+    @keyframes pillSheen {
+      0%, 35% {
+        left: -45%;
+        opacity: 0;
+      }
+
+      48% {
+        opacity: 0.8;
+      }
+
+      72%, 100% {
+        left: 115%;
+        opacity: 0;
+      }
+    }
+
+    .topbar h1,
+    .top-actions {
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar h1 {
+      font-size: clamp(1.4rem, 6vw, 2rem);
+      white-space: nowrap;
+    }
+
+    .top-actions {
+      flex: 0 0 auto;
+      gap: 8px;
+    }
+
+    .add-button,
+    .avatar {
+      width: 46px;
+      height: 46px;
+    }
+
+    .add-button {
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.32),
+        0 3px 10px rgba(0, 0, 0, 0.14);
+      -webkit-backdrop-filter: blur(14px) saturate(1.6);
+      backdrop-filter: blur(14px) saturate(1.6);
+    }
+
+    #counter {
+      display: none;
+    }
+
     @media (max-width: 600px) {
       .topbar {
-        left: 20px;
-        right: 20px;
+        left: 12px;
+        right: 12px;
+      }
+
+      .topbar h1 {
+        font-size: clamp(1.4rem, 7vw, 1.9rem);
       }
 
       .add-button,
       .avatar {
-        width: 48px;
-        height: 48px;
+        width: 42px;
+        height: 42px;
       }
     }
-    /* Floating Liquid Glass menu di area bawah */
-.topbar {
-  top: auto;
-  bottom: max(12px, env(safe-area-inset-bottom));
-  left: 14px;
-  right: 14px;
-  min-height: 68px;
-  padding: 9px 11px 9px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  border-radius: 24px;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.20),
-      rgba(255, 255, 255, 0.06) 48%,
-      rgba(255, 255, 255, 0.11)
-    ),
-    rgba(30, 34, 42, 0.42);
-  box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(26px) saturate(1.45);
-  -webkit-backdrop-filter: blur(26px) saturate(1.45);
-  pointer-events: auto;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
-}
 
-.topbar h1 {
-  font-size: clamp(1.45rem, 6vw, 2rem);
-}
-
-.top-actions {
-  gap: 8px;
-}
-
-.add-button,
-.avatar {
-  width: 46px;
-  height: 46px;
-}
-
-/* Pindahkan counter agar tidak bertumpuk dengan menu */
-#counter {
-  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 78px);
-}
+    @media (prefers-reduced-motion: reduce) {
+      .topbar::after {
+        animation: none;
+      }
+    }
   </style>
 </head>
 
@@ -444,7 +545,8 @@
       const cardGap = (isMobile ? 150 : 50) * dpr;
       slot = cardHeight + cardGap;
 
-      cardCenterY = pixelHeight * (isMobile ? 0.54 : 0.53);
+      // Kartu dinaikkan agar menu bawah tidak menutupi foto.
+      cardCenterY = pixelHeight * (isMobile ? 0.46 : 0.53);
 
       if (gl) gl.viewport(0, 0, pixelWidth, pixelHeight);
     }
@@ -503,24 +605,21 @@
       const activeImage = images[activeIndex];
 
       if (activeImage) {
-  ctx.save();
-  ctx.globalAlpha = 0.78;
-  ctx.filter = `blur(${32 * dpr}px) saturate(1.12)`;
+        ctx.save();
+        ctx.globalAlpha = 0.78;
+        ctx.filter = `blur(${32 * dpr}px) saturate(1.12)`;
+        drawImageCover(
+          activeImage,
+          -50 * dpr,
+          -50 * dpr,
+          pixelWidth + 100 * dpr,
+          pixelHeight + 100 * dpr
+        );
+        ctx.restore();
 
-  drawImageCover(
-    activeImage,
-    -50 * dpr,
-    -50 * dpr,
-    sceneCanvas.width + 100 * dpr,
-    sceneCanvas.height + 100 * dpr
-  );
-
-  ctx.restore();
-
-  // Tint tipis merata, bukan gradient gelap khusus di bawah.
-  ctx.fillStyle = "rgba(5, 14, 22, 0.24)";
-  ctx.fillRect(0, 0, sceneCanvas.width, sceneCanvas.height);
-}
+        ctx.fillStyle = "rgba(5, 14, 22, 0.24)";
+        ctx.fillRect(0, 0, pixelWidth, pixelHeight);
+      }
 
       const centerX = pixelWidth / 2;
       const centerY = cardCenterY;
@@ -553,6 +652,7 @@
 
         ctx.shadowColor = "transparent";
         ctx.save();
+
         drawRoundedRect(ctx, x, y, w, h, radius);
         ctx.clip();
 
