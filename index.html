@@ -342,6 +342,23 @@ void main() {
 
   liquid.rgb += vec3(0.20, 0.25, 0.34) * rim * motionAmount;
 
+  // Progressive blur yang paling kuat di tepi bawah layar.
+float bottomFade = exp(-distanceBottom / 220.0);
+float blurRadius = mix(2.0, 30.0, bottomFade);
+
+// Offset dinormalisasi terhadap tinggi layar.
+float blurY = blurRadius / uResolution.y;
+float blurX = blurRadius / uResolution.x;
+
+vec3 blurred =
+    sampleScene(uv).rgb * 0.40 +
+    sampleScene(uv + vec2( blurX, 0.0)).rgb * 0.15 +
+    sampleScene(uv + vec2(-blurX, 0.0)).rgb * 0.15 +
+    sampleScene(uv + vec2(0.0,  blurY)).rgb * 0.15 +
+    sampleScene(uv + vec2(0.0, -blurY)).rgb * 0.15;
+
+liquid.rgb = mix(liquid.rgb, blurred, 0.65 * bottomFade);
+
   outColor = liquid;
 }
     `;
