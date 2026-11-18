@@ -20,18 +20,16 @@
 
     html,
     body {
-      position: fixed;
-      inset: 0;
       width: 100%;
       height: 100%;
-      height: 100dvh;
-      min-height: 100dvh;
       margin: 0;
       overflow: hidden;
       background: #0b1824;
     }
 
     body {
+      position: fixed;
+      inset: 0;
       color: #f3f8ff;
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
       overscroll-behavior: none;
@@ -40,9 +38,6 @@
     .app {
       position: fixed;
       inset: 0;
-      width: 100%;
-      height: 100%;
-      height: 100dvh;
       overflow: hidden;
       background: #0b1824;
     }
@@ -791,7 +786,7 @@
       const movementDirection = dragging ? pointerVelocity : velocity;
       gl.uniform1f(uniforms.direction, Math.sign(movementDirection));
 
-      gl.clearColor(0, 0, 0, 1);
+      gl.clearColor(11 / 255, 24 / 255, 36 / 255, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
 
