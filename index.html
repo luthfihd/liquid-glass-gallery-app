@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#0b1824">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Liquid Glass Gallery">
+  <meta name="apple-mobile-web-app-title" content="LiquidGlass Gallery">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href='data:application/manifest+json,{"name":"Liquid%20Glass%20Gallery","short_name":"Gallery","display":"fullscreen","background_color":"%230b1824","theme_color":"%230b1824"}'>
+  <link rel="manifest" href='data:application/manifest+json,{"name":"LiquidGlass%20Gallery","short_name":"Gallery","display":"fullscreen","background_color":"%230b1824","theme_color":"%230b1824"}'>
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-  <title>Liquid Glass Gallery</title>
+  <title>LiquidGlass Gallery</title>
 
   <style>
     *, *::before, *::after {
@@ -115,18 +115,13 @@
     .topbar h1 {
       margin: 0;
       color: #fff;
-      font-size: clamp(1.4rem, 6vw, 2rem);
+      font-size: clamp(1.25rem, 5vw, 1.75rem);
       font-weight: 650;
-      letter-spacing: -0.055em;
+      letter-spacing: -0.045em;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
-    }
-
-    .chevron {
-      display: inline-block;
-      margin-left: 4px;
-      font-size: 0.72em;
-      vertical-align: 0.12em;
     }
 
     .top-actions {
@@ -180,7 +175,7 @@
       }
 
       .topbar h1 {
-        font-size: clamp(1.35rem, 6.5vw, 1.9rem);
+        font-size: clamp(1.18rem, 5.2vw, 1.65rem);
       }
 
       .add-button,
@@ -199,7 +194,7 @@
       }
 
       .topbar h1 {
-        font-size: 1.28rem;
+        font-size: 1.08rem;
       }
 
       .top-actions {
@@ -224,7 +219,7 @@
     <header class="topbar" id="topbar">
       <canvas id="glassLens" aria-hidden="true"></canvas>
 
-      <h1>Upcoming <span class="chevron">⌄</span></h1>
+      <h1>LiquidGlass Gallery</h1>
 
       <div class="top-actions">
         <button class="add-button" id="addButton" type="button" aria-label="Tambah foto preview">+</button>
@@ -237,9 +232,7 @@
       </div>
     </header>
 
-    <!-- Input file tersembunyi untuk session preview dari galeri -->
     <input type="file" id="photoInput" accept="image/*" multiple>
-
     <span id="counter" aria-live="polite">1 / 5</span>
   </main>
 
@@ -351,6 +344,13 @@
         vec2 fragPos = gl_FragCoord.xy;
         vec2 uv = fragPos / uResolution;
 
+        // Saat diam di tengah, gambar 100% tajam, lurus, dan utuh tanpa distorsi
+        float motionAmount = smoothstep(0.008, 0.22, uMotion);
+        if (motionAmount <= 0.001) {
+          outColor = sampleScene(uv);
+          return;
+        }
+
         vec2 p = fragPos - uLensBox.xy;
         vec2 halfSize = uLensBox.zw;
         float dist = sdRoundedBox(p, halfSize, uLensRadius);
@@ -358,7 +358,7 @@
         vec2 normP = p / max(halfSize, vec2(1.0));
         float radialDist = length(normP);
 
-        float bevelWidth = 46.0 + uMotion * 38.0;
+        float bevelWidth = 38.0 + motionAmount * 46.0;
         float rimZone = exp(-abs(dist) / bevelWidth);
         float insideLens = 1.0 - smoothstep(-6.0, 6.0, dist);
 
@@ -368,16 +368,17 @@
           sdRoundedBox(p + eps.yx, halfSize, uLensRadius) - sdRoundedBox(p - eps.yx, halfSize, uLensRadius)
         ) + vec2(0.0001));
 
-        float pullStrength = (18.0 + uMotion * 54.0);
-        float innerBulge = insideLens * pow(clamp(radialDist, 0.0, 1.2), 2.4) * (10.0 + uMotion * 22.0);
+        // Seluruh refraksi lensa kaca aktif secara proporsional hanya saat transisi/digeser
+        float pullStrength = motionAmount * 68.0;
+        float innerBulge = insideLens * pow(clamp(radialDist, 0.0, 1.2), 2.4) * (motionAmount * 28.0);
         float edgeRefract = rimZone * pullStrength;
 
         float wave = sin(normP.x * 9.0 + uTime * 3.0) * 0.5 + sin(normP.x * 17.0 - uTime * 2.1) * 0.3;
-        float ripple = wave * rimZone * (2.5 + uMotion * 14.0);
+        float ripple = wave * rimZone * (motionAmount * 16.0);
 
         vec2 refractOffset = (grad * (edgeRefract + innerBulge) + vec2(0.0, uDirection * ripple)) / uResolution;
 
-        float dispersion = (0.0022 + uMotion * 0.0065) * rimZone;
+        float dispersion = (motionAmount * 0.008) * rimZone;
         vec2 dispDir = grad * dispersion;
 
         vec2 sampleUV = uv - refractOffset;
@@ -388,9 +389,9 @@
         color.b = sampleScene(sampleUV + dispDir).b;
         color.a = 1.0;
 
-        float outsideBlur = (1.0 - insideLens) * exp(-max(dist, 0.0) / 140.0) * (0.35 + uMotion * 0.55);
+        float outsideBlur = (1.0 - insideLens) * exp(-max(dist, 0.0) / 140.0) * (motionAmount * 0.72);
         if (outsideBlur > 0.01) {
-          vec2 bOff = vec2(0.004, 0.014) * (0.6 + uMotion);
+          vec2 bOff = vec2(0.004, 0.014) * (0.4 + motionAmount);
           vec3 frosted =
             0.36 * sampleScene(sampleUV).rgb +
             0.18 * sampleScene(sampleUV + vec2(0.0, bOff.y)).rgb +
@@ -402,7 +403,7 @@
 
         float fresnelLine = exp(-abs(dist) / 3.2);
         float lightAngle = clamp(0.55 + normP.y * 0.45 - normP.x * 0.15, 0.15, 1.0);
-        vec3 glassRim = vec3(0.75, 0.85, 0.96) * fresnelLine * lightAngle * (0.28 + uMotion * 0.32);
+        vec3 glassRim = vec3(0.75, 0.85, 0.96) * fresnelLine * lightAngle * (motionAmount * 0.55);
         color.rgb += glassRim;
 
         outColor = color;
@@ -503,8 +504,10 @@
       drawRoundedRect(sctx, 0, 0, w, h, radius);
       sctx.clip();
 
+      // 1. Gambar penuh kartu
       drawImageToContext(sctx, image, 0, 0, w, h);
 
+      // 2. Blur 80% gambar di bagian bawah kartu
       const blurBandHeight = h * 0.80;
       const blurBandY = h - blurBandHeight;
 
@@ -513,34 +516,21 @@
       sctx.rect(0, blurBandY, w, blurBandHeight);
       sctx.clip();
 
-      const bRadius = 50 * dpr;
+      const bRadius = 22 * dpr;
       sctx.filter = `blur(${bRadius}px) saturate(1.18)`;
       drawImageToContext(sctx, image, -bRadius, -bRadius, w + bRadius * 2, h + bRadius * 2);
       sctx.restore();
 
-      const shade = sctx.createLinearGradient(0, h * 0.56, 0, h);
+      const shade = sctx.createLinearGradient(0, h * 0.25, 0, h);
       shade.addColorStop(0, "rgba(5, 12, 20, 0)");
-      shade.addColorStop(0.55, "rgba(5, 12, 20, 0.14)");
-      shade.addColorStop(1, "rgba(5, 12, 20, 0.34)");
+      shade.addColorStop(0.60, "rgba(5, 12, 20, 0.14)");
+      shade.addColorStop(1, "rgba(5, 12, 20, 0.32)");
       sctx.fillStyle = shade;
       sctx.fillRect(0, 0, w, h);
 
       sctx.restore();
 
-      const gloss = sctx.createLinearGradient(0, 0, w, h * 0.55);
-      gloss.addColorStop(0, "rgba(255,255,255,0.20)");
-      gloss.addColorStop(0.38, "rgba(255,255,255,0.04)");
-      gloss.addColorStop(1, "rgba(255,255,255,0)");
-
-      drawRoundedRect(sctx, 0, 0, w, h, radius);
-      sctx.fillStyle = gloss;
-      sctx.fill();
-
-      drawRoundedRect(sctx, 0, 0, w, h, radius);
-      sctx.lineWidth = 1.2 * dpr;
-      sctx.strokeStyle = "rgba(255,255,255,0.40)";
-      sctx.stroke();
-
+      // Tanpa outline/stroke pada card
       return snap;
     }
 
@@ -549,7 +539,6 @@
       itemSnapshots = images.map((image) => createSnapshotForImage(image));
     }
 
-    // Handler tambah foto dari galeri sebagai session cache preview
     addButton.addEventListener("click", (event) => {
       event.stopPropagation();
       photoInput.click();
@@ -577,10 +566,8 @@
         }
       }
 
-      // Reset input agar file yang sama tetap bisa dipilih lagi jika mau
       photoInput.value = "";
 
-      // Gulir mulus (spring animation) menuju foto pertama yang baru ditambahkan
       if (items.length > firstNewIndex) {
         const currentRound = Math.round(scroll);
         const currentWrapped = wrapIndex(currentRound);
@@ -810,7 +797,7 @@
       if (activeImage) {
         ctx.save();
         ctx.globalAlpha = 0.78;
-        const blurAmount = 80 * dpr;
+        const blurAmount = 32 * dpr;
         const bleed = blurAmount * 2.5;
         ctx.filter = `blur(${blurAmount}px) saturate(1.12)`;
 
@@ -898,12 +885,13 @@
         }
       }
 
+      // Aktifkan efek lensa kaca sejak jari menyentuh (dragging) atau kartu sedang bergerak
       const movementSpeed = dragging
-        ? Math.abs(pointerVelocity)
+        ? Math.max(0.32, Math.abs(pointerVelocity))
         : Math.abs(velocity);
 
-      const motionTarget = Math.min(1, movementSpeed * 0.42);
-      const motionBlend = 1 - Math.exp(-dt * 10);
+      const motionTarget = Math.min(1, movementSpeed * 0.45);
+      const motionBlend = 1 - Math.exp(-dt * 11);
       liquidMotion += (motionTarget - liquidMotion) * motionBlend;
 
       drawScene();
