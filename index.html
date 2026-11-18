@@ -322,12 +322,13 @@
     `;
 
     /*
-      Shader Lensa Kaca Statis di Tepi Atas & Bawah Layar:
-      - Zona tengah layar (tempat kartu idle berada) 100% bebas lensa (field = 0.0),
-        sehingga saat idle kartu tampil bersih, lurus, dan tajam persis seperti Gambar 1.
-      - Lensa kaca hanya berada di tepi paling atas & tepi paling bawah layar (mulut hisap).
-      - Begitu kartu digeser mendekati tepi atas atau tepi bawah layar, ia masuk ke zona lensa
-        hisap tersebut, melengkung tersedot dengan dispersi kaca seperti Gambar 2.
+      Shader Lensa Kaca Vertikal (Rounded Concave Lens Frame):
+      1. Menggunakan roundedBoxDistance untuk menciptakan jendela tengah bening
+         dengan sudut melengkung ke dalam (concave pinch) mengikuti bingkai layar.
+      2. Jangkauan lensa melingkupi area atas & bawah kartu secara bertahap (tidak menumpuk
+         di bawah floating pill).
+      3. Pembiasan kaca melengkungkan sudut kartu ke dalam menuju pusat jendela bening
+         dengan dispersi RGB tipis di tepi lengkungan (tanpa garis pelangi lurus/streaking).
     */
     const fragmentSource = `#version 300 es
       precision highp float;
@@ -336,65 +337,81 @@
 
       uniform sampler2D uScene;
       uniform vec2 uResolution;
+      uniform vec2 uCardCenter;
+      uniform vec2 uCardSize;
       uniform float uTime;
 
+      float roundedBoxDistance(vec2 point, vec2 halfSize, float radius) {
+        vec2 q = abs(point) - halfSize + radius;
+        return length(max(q, 0.0))
+          + min(max(q.x, q.y), 0.0)
+          - radius;
+      }
+
       vec4 sampleScene(vec2 uv) {
-        return texture(uScene, clamp(uv, 0.001, 0.999));
+        return texture(uScene, clamp(uv, 0.002, 0.998));
       }
 
       void main() {
         vec2 uv = gl_FragCoord.xy / uResolution;
         float aspect = uResolution.x / uResolution.y;
 
-        // Jarak piksel dari tepi atas (uv.y = 1) dan tepi bawah (uv.y = 0)
-        float distTop = 1.0 - uv.y;
-        float distBottom = uv.y;
+        // Pusat jendela bening mengikuti posisi kartu saat idle
+        vec2 offset = uv - uCardCenter;
+        vec2 p = vec2(offset.x * aspect, offset.y);
 
-        // Lengkung mulut lensa di tepi atas & bawah:
-        // Lebih dalam di sudut kiri & kanan layar, dan 0 mutlak di area tengah layar!
-        float nx = (uv.x - 0.5) * 2.0;
-        float cornerCurve = nx * nx;
-        float lensReach = 0.095 + 0.075 * cornerCurve;
+        // Ukuran jendela bening sedikit lebih lebar di tengah agar kartu idle 100% bersih,
+        // namun melengkung masuk di sudut atas & bawah seperti lensa kaca di Gambar 2
+        vec2 clearHalfSize = vec2(
+          (uCardSize.x * 0.56) / uResolution.y,
+          (uCardSize.y * 0.52) / uResolution.y
+        );
+        float cornerRadius = (uCardSize.x * 0.24) / uResolution.y;
 
-        // smoothstep mengunci field = 0.0 di seluruh area tengah layar (saat idle)
-        float topField = 1.0 - smoothstep(0.0, lensReach, distTop);
-        float bottomField = 1.0 - smoothstep(0.0, lensReach, distBottom);
-
-        // Kuadratkan kurva agar transisi dari tengah ke mulut lensa super lembut
-        topField = topField * topField;
-        bottomField = bottomField * bottomField;
-
-        float field = max(topField, bottomField);
+        float clearDistance = roundedBoxDistance(p, clearHalfSize, cornerRadius);
 
         vec4 original = sampleScene(uv);
+        if (clearDistance <= 0.0) {
+          outColor = original;
+          return;
+        }
+
+        // Jangkauan bertahap dari bibir lengkung ke luar (tanpa menumpuk di tepi layar)
+        float field = smoothstep(0.0, 0.16, clearDistance);
+
+        // Fokuskan pembiasan di bagian atas & bawah (redam sisi kiri-kanan tengah)
+        float vertMask = smoothstep(
+          clearHalfSize.y * 0.55,
+          clearHalfSize.y * 1.05,
+          abs(p.y)
+        );
+        field *= vertMask;
+
+        // Redam lembut di 4% paling bawah/atas agar tidak terjadi clamping garis piksel
+        float edgeGuard = smoothstep(0.0, 0.045, uv.y) * smoothstep(0.0, 0.045, 1.0 - uv.y);
+        field *= edgeGuard;
+
         if (field <= 0.0005) {
           outColor = original;
           return;
         }
 
-        // Vektor arah dari mulut hisap atas (0.5, 1.08) dan bawah (0.5, -0.08)
-        vec2 topAnchor = vec2(0.5, 1.08);
-        vec2 bottomAnchor = vec2(0.5, -0.08);
-
-        vec2 anchor = topField >= bottomField ? topAnchor : bottomAnchor;
-        vec2 offset = uv - anchor;
-        vec2 p = vec2(offset.x * aspect, offset.y);
-
         float angle = atan(p.y, p.x);
         float fluidWave =
-          sin(angle * 2.0 + uTime * 0.55) * 0.55 +
-          sin(angle * 2.0 - uTime * 0.35) * 0.25;
+          sin(angle * 2.0 + uTime * 0.55) * 0.45 +
+          sin(angle * 3.0 - uTime * 0.35) * 0.25;
 
-        vec2 radialDirection = normalize(offset + vec2(0.00001));
-        vec2 tangentDirection = vec2(-radialDirection.y, radialDirection.x);
+        vec2 radialDir = normalize(offset + vec2(0.00001));
+        vec2 tangentDir = vec2(-radialDir.y, radialDir.x);
 
-        // Tarikan lensa radial ke arah mulut hisap atas & bawah + riak halus
+        // Pembiasan kaca: menarik sudut kartu melengkung masuk mengikuti bingkai lensa
+        // (+offset * field membuat gambar di zona lensa tampak mengecil/tersedot ke dalam lengkungan)
         vec2 shift =
-          -offset * 0.42 * field +
-          tangentDirection * fluidWave * field * field * 0.010;
+          offset * 0.24 * field +
+          tangentDir * fluidWave * field * field * 0.008;
 
-        // Dispersi warna kaca RGB di tepi lensa hisap
-        vec2 spread = shift * 0.11;
+        // Dispersi spektrum kaca halus hanya di sepanjang lengkungan lensa
+        vec2 spread = shift * 0.14;
         vec2 redUv = uv + shift + spread;
         vec2 greenUv = uv + shift;
         vec2 blueUv = uv + shift - spread;
@@ -404,6 +421,10 @@
         refracted.g = sampleScene(greenUv).g;
         refracted.b = sampleScene(blueUv).b;
         refracted.a = 1.0;
+
+        // Kilau tipis kaca di bibir lengkungan lensa
+        float rim = exp(-abs(clearDistance * uResolution.y) / 3.0) * vertMask;
+        refracted.rgb += vec3(0.08, 0.10, 0.13) * rim * field;
 
         outColor = refracted;
       }
@@ -907,6 +928,12 @@
         visibleCanvas.width,
         visibleCanvas.height
       );
+      gl.uniform2f(
+        uniforms.cardCenter,
+        0.5,
+        1.0 - cardCenterY / visibleCanvas.height
+      );
+      gl.uniform2f(uniforms.cardSize, cardWidth, cardHeight);
       gl.uniform1f(uniforms.time, now / 1000);
 
       gl.clearColor(11 / 255, 24 / 255, 36 / 255, 1);
@@ -1036,6 +1063,8 @@
         uniforms = {
           scene: gl.getUniformLocation(program, "uScene"),
           resolution: gl.getUniformLocation(program, "uResolution"),
+          cardCenter: gl.getUniformLocation(program, "uCardCenter"),
+          cardSize: gl.getUniformLocation(program, "uCardSize"),
           time: gl.getUniformLocation(program, "uTime")
         };
 
