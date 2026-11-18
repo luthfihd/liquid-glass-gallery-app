@@ -73,6 +73,7 @@
       height: 100%;
     }
 
+    /* Floating pill dengan layer frosted blur tipis + lensa refraksi */
     .topbar {
       position: fixed;
       z-index: 3;
@@ -90,7 +91,9 @@
       isolation: isolate;
       border: 1px solid rgba(255, 255, 255, 0.34);
       border-radius: 999px;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.08);
+      -webkit-backdrop-filter: blur(10px) saturate(1.18);
+      backdrop-filter: blur(10px) saturate(1.18);
       box-shadow: 0 8px 26px rgba(0, 0, 0, 0.16);
       pointer-events: auto;
     }
@@ -103,6 +106,7 @@
       width: 100%;
       height: 100%;
       border-radius: inherit;
+      opacity: 0.72;
       pointer-events: none;
     }
 
@@ -321,9 +325,12 @@
     `;
 
     /*
-      Shader tarik-menarik liquid organik:
-      - Tanpa hard cut-off & tanpa outline rim agar transisi kembali ke normal 100% mulus.
-      - Saat idle, liquidMotion turun perlahan ke 0 sehingga gambar kembali tajam & utuh.
+      Shader Efek Sedot Dua Arah (Suction Pinch Funnel):
+      - Zona atas & zona bawah layar membentuk lensa sedot melengkung (seperti Gambar 2).
+      - Sisi atas menyedot kartu keluar dengan tarikan ke atas (+Y) sambil menyempitkan
+        lebarnya ke tengah (suction pinch), dan sisi bawah menyedot masuk kartu baru dari bawah (-Y)
+        dengan lengkungan serupa.
+      - Saat berhenti di tengah (motionAmount -> 0), kembali 100% datar, tajam, dan utuh.
     */
     const fragmentSource = `#version 300 es
       precision highp float;
@@ -344,51 +351,55 @@
         vec2 uv = gl_FragCoord.xy / uResolution;
         vec4 original = sampleScene(uv);
 
-        float motionAmount = smoothstep(0.0, 0.35, uMotion);
+        float motionAmount = smoothstep(0.0, 0.30, uMotion);
         if (motionAmount <= 0.0001) {
           outColor = original;
           return;
         }
 
-        float distanceTop = (1.0 - uv.y) * uResolution.y;
-        float distanceBottom = uv.y * uResolution.y;
+        // Jarak dari tengah horizontal (-1 kiri .. 0 tengah .. +1 kanan)
+        float nx = (uv.x - 0.5) * 2.0;
+        float x2 = nx * nx;
 
-        float edgeReach = 24.0 + motionAmount * 190.0;
-        float topEdge = exp(-distanceTop / edgeReach);
-        float bottomEdge = exp(-distanceBottom / edgeReach);
-        float edgeField = max(topEdge, bottomEdge);
+        // Jarak ke tepi atas (uv.y = 1) dan tepi bawah (uv.y = 0)
+        float distTop = 1.0 - uv.y;
+        float distBottom = uv.y;
 
-        float x = uv.x * (uResolution.x / uResolution.y);
-        float wave =
-          sin(x * 22.0 + uTime * 2.4) * 0.55 +
-          sin(x * 37.0 - uTime * 1.7) * 0.28 +
-          sin(x * 11.0 + uTime) * 0.14;
+        // Profil corong sedot: di tengah mulut sedotan dalam, melengkung membulat ke sudut kiri/kanan
+        float funnelDepth = 0.20 - 0.07 * x2;
+        float topSuction = exp(-distTop / max(0.06, funnelDepth));
+        float bottomSuction = exp(-distBottom / max(0.06, funnelDepth));
 
-        float pullPixels = uDirection * (motionAmount * 150.0) * edgeField;
-        float ripplePixels = wave * (motionAmount * 22.0) * edgeField;
+        // Masking halus agar bagian tengah layar tetap tenang & jernih
+        float suctionField = clamp(topSuction + bottomSuction, 0.0, 1.0);
 
-        float shiftY = (pullPixels + ripplePixels) / uResolution.y;
-        float spread = abs(pullPixels) * 0.14;
+        // 1. Sedotan horizontal (+nx membuat sampling mengambil piksel lebih ke luar,
+        //    sehingga tampilan kartu menyempit/mengerucut masuk tersedot ke titik pusat atas & bawah)
+        float pinchAmount = (0.14 + 0.24 * x2) * motionAmount * suctionField;
+        float offsetX = nx * pinchAmount;
 
-        vec4 liquid;
-        liquid.r = sampleScene(uv - vec2(0.0, (shiftY + spread / uResolution.y))).r;
-        liquid.g = sampleScene(uv - vec2(0.0, shiftY)).g;
-        liquid.b = sampleScene(uv - vec2(0.0, (shiftY - spread / uResolution.y))).b;
-        liquid.a = 1.0;
+        // 2. Sedotan vertikal dua arah:
+        //    - Sisi atas menyedot piksel dari bawahnya ke atas (uv.y sampling digeser ke bawah -> kartu tertarik ke atas)
+        //    - Sisi bawah menyedot piksel dari atasnya ke bawah (uv.y sampling digeser ke atas -> kartu tertarik dari bawah)
+        float verticalStretch = (0.065 + 0.11 * x2) * motionAmount;
+        float topPull = -topSuction * verticalStretch;
+        float bottomPull = bottomSuction * verticalStretch;
 
-        float bottomFade = exp(-distanceBottom / 180.0) * motionAmount;
-        vec2 blurOffset = vec2(0.0, 0.010 + bottomFade * 0.022);
+        // Sedikit bias sesuai arah jari agar terasa responsif saat ditarik
+        float dirBias = -uDirection * 0.025 * motionAmount * suctionField;
 
-        vec3 blurred =
-          0.40 * sampleScene(uv).rgb +
-          0.20 * sampleScene(uv + blurOffset).rgb +
-          0.20 * sampleScene(uv - blurOffset).rgb +
-          0.10 * sampleScene(uv + blurOffset * 2.0).rgb +
-          0.10 * sampleScene(uv - blurOffset * 2.0).rgb;
+        vec2 warpedUV = uv + vec2(offsetX, topPull + bottomPull + dirBias);
+        vec4 color = sampleScene(warpedUV);
 
-        liquid.rgb = mix(liquid.rgb, blurred, 0.55 * bottomFade);
+        // Dispersi kromatik halus di bibir corong sedotan saat kecepatan tinggi
+        float fringe = motionAmount * suctionField * (0.002 + 0.004 * x2);
+        if (fringe > 0.0003) {
+          float vSign = topSuction >= bottomSuction ? -1.0 : 1.0;
+          color.r = sampleScene(warpedUV + vec2(fringe * nx, fringe * vSign)).r;
+          color.b = sampleScene(warpedUV - vec2(fringe * nx, fringe * vSign)).b;
+        }
 
-        outColor = liquid;
+        outColor = color;
       }
     `;
 
@@ -505,7 +516,6 @@
       return out;
     }
 
-    // Kartu utama: tajam penuh tanpa blur dan tanpa outline
     function createSnapshotForImage(image) {
       const w = Math.max(1, Math.round(cardWidth));
       const h = Math.max(1, Math.round(cardHeight));
@@ -533,7 +543,6 @@
       return snap;
     }
 
-    // Background layar penuh di belakang kartu: blur lembut (kompatibel iOS Safari)
     function createBackdropForImage(image) {
       const w = Math.max(1, Math.round(sceneCanvas.width / 2));
       const h = Math.max(1, Math.round(sceneCanvas.height / 2));
@@ -881,7 +890,6 @@
         }
       }
 
-      // Redam pointerVelocity perlahan saat jari berhenti di layar agar tidak loncat saat dilepas
       if (dragging) {
         pointerVelocity *= Math.exp(-dt * 12);
       }
@@ -889,8 +897,7 @@
       const rawVelocity = dragging ? pointerVelocity : velocity;
       const movementSpeed = Math.abs(rawVelocity);
 
-      // Kurva naik cepat saat ditarik, lalu melandai mulus hingga 0 saat berhenti
-      const motionTarget = Math.min(1, movementSpeed * 0.42);
+      const motionTarget = Math.min(1, movementSpeed * 0.45);
       const blendRate = motionTarget > liquidMotion ? 14 : 6.5;
       const motionBlend = 1 - Math.exp(-dt * blendRate);
       liquidMotion += (motionTarget - liquidMotion) * motionBlend;
@@ -899,7 +906,6 @@
         liquidMotion = 0;
       }
 
-      // Arah tarikan dihaluskan (bukan Math.sign patah) agar tidak membalik mendadak saat spring memantul
       const targetDir = Math.max(-1, Math.min(1, rawVelocity * 0.8));
       smoothDirection += (targetDir - smoothDirection) * (1 - Math.exp(-dt * 10));
 
