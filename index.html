@@ -10,10 +10,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-  <title>Liquid Glass Gallery</title>
+  <title>Liquid Glass Gallery Full</title>
 
   <style>
-    /* 1. Perbaikan selector dari '-' menjadi '*' */
     *, *::before, *::after {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
@@ -29,6 +28,7 @@
       width: 100%;
       min-height: 100vh;
       min-height: 100dvh;
+      min-height: -webkit-fill-available;
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -38,7 +38,6 @@
       overscroll-behavior: none;
     }
 
-    /* 2. Memaksa container utama menutup penuh hingga ke bawah home indicator */
     .app {
       position: fixed;
       top: 0;
@@ -79,7 +78,7 @@
       position: absolute;
       z-index: 3;
       top: auto;
-      bottom: calc(14px + env(safe-area-inset-bottom));
+      bottom: max(14px, calc(10px + env(safe-area-inset-bottom)));
       left: 14px;
       right: 14px;
       min-height: 72px;
@@ -311,7 +310,6 @@
       }
     `;
 
-    // Shader scroll/liquid tetap seperti base code.
     const fragmentSource = `#version 300 es
       precision highp float;
 
@@ -426,11 +424,16 @@
 
     function resize() {
       const rect = stage.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
+      // Menggunakan nilai terbesar antara rect, innerHeight, dan screen.height
+      // agar tidak terpotong bar bawah di iOS/Android PWA
+      const targetWidth = Math.max(rect.width, window.innerWidth);
+      const targetHeight = Math.max(rect.height, window.innerHeight);
+
+      if (!targetWidth || !targetHeight) return;
 
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = rect.width;
-      height = rect.height;
+      width = targetWidth;
+      height = targetHeight;
 
       const pixelWidth = Math.max(1, Math.round(width * dpr));
       const pixelHeight = Math.max(1, Math.round(height * dpr));
@@ -479,11 +482,6 @@
       }
     }
 
-    /*
-      Menggambar refraksi pill dari scene di belakangnya:
-      piksel di sekitar lensa dipetakan ulang dengan sedikit pembelokan.
-      Tidak menambahkan blur atau highlight/lighting buatan.
-    */
     function drawLiquidPill(now) {
       if (now - lastGlassDraw < 30) return;
       lastGlassDraw = now;
@@ -525,8 +523,6 @@
           sourceHeight
         ).data;
       } catch (error) {
-        // Kalau browser menolak pembacaan piksel cross-origin,
-        // biarkan pill transparan daripada menampilkan strip gelap.
         glassCtx.clearRect(0, 0, lensWidth, lensHeight);
         return;
       }
@@ -556,7 +552,6 @@
           const nx = (x - centerX) / halfW;
           const radius = Math.sqrt(nx * nx + ny * ny);
 
-          // Mask pill rounded, agar sumber tidak keluar dari bentuk lensa.
           const cornerRadius = Math.min(lensHeight * 0.5, lensWidth * 0.5);
           const cssX = x / dpr;
           const cssY = y / dpr;
@@ -578,7 +573,6 @@
             continue;
           }
 
-          // Efek lensa paling kuat dekat perimeter pill.
           const edge = smoothstep(0.28, 1.12, radius);
           const displacement = edge * maxOffset;
 
@@ -928,6 +922,8 @@
         };
 
         resize();
+        // Panggil ulang resize singkat setelah mount PWA selesai
+        setTimeout(resize, 150);
         requestAnimationFrame(renderFrame);
       } catch (error) {
         console.error(error);
@@ -940,7 +936,7 @@
     stageObserver.observe(stage);
 
     window.addEventListener("resize", resize);
-    window.addEventListener("orientationchange", resize);
+    window.addEventListener("orientationchange", () => setTimeout(resize, 100));
     window.visualViewport?.addEventListener("resize", resize);
 
     init();
