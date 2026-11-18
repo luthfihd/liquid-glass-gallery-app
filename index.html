@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Liquid Glass Gallery">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="./manifest.json">
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Liquid%20Glass%20Gallery","short_name":"Gallery","display":"fullscreen","background_color":"%230b1824","theme_color":"%230b1824"}'>
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <title>Liquid Glass Gallery</title>
 
@@ -16,11 +16,6 @@
     *, *::before, *::after {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-    }
-
-    :root {
-      --sat: env(safe-area-inset-top, 0px);
-      --sab: env(safe-area-inset-bottom, 0px);
     }
 
     html {
@@ -36,34 +31,29 @@
       margin: 0;
       padding: 0;
       width: 100%;
-      /* Memaksa body meluas melewati batas safe-area atas dan bawah iOS PWA */
+      /* Memastikan dokumen tidak tertahan di atas home indicator iOS */
       min-height: 100vh;
-      min-height: calc(100vh + var(--sat) + var(--sab));
+      min-height: 100lvh;
       background-color: #0b1824;
       color: #f3f8ff;
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
       overflow: hidden;
       overscroll-behavior: none;
-      position: fixed;
-      inset: 0;
     }
 
     .app {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: calc(-1 * var(--sab));
+      position: relative;
       width: 100vw;
       height: 100vh;
-      height: calc(100vh + var(--sat) + var(--sab));
+      height: 100lvh;
       overflow: hidden;
       background: #0b1824;
     }
 
     .stage {
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
@@ -89,7 +79,7 @@
       position: fixed;
       z-index: 3;
       top: auto;
-      bottom: max(16px, calc(12px + env(safe-area-inset-bottom, 0px)));
+      bottom: max(16px, calc(10px + env(safe-area-inset-bottom, 0px)));
       left: 14px;
       right: 14px;
       min-height: 72px;
@@ -440,20 +430,17 @@
         window.matchMedia("(display-mode: standalone)").matches ||
         window.matchMedia("(display-mode: fullscreen)").matches;
 
-      const rect = app.getBoundingClientRect();
-      let w = Math.max(rect.width, window.innerWidth, document.documentElement.clientWidth);
-      let h = Math.max(rect.height, window.innerHeight, document.documentElement.clientHeight);
+      let w = Math.max(window.innerWidth, document.documentElement.clientWidth);
+      let h = Math.max(window.innerHeight, document.documentElement.clientHeight);
 
-      // Pada mode Web App (Home Screen), iOS sering menahan innerHeight lebih pendek dari layar fisik
       if (isStandalone && window.screen) {
         const isPortrait = window.innerHeight >= window.innerWidth;
-        const physicalH = isPortrait
+        const screenH = isPortrait
           ? Math.max(window.screen.height, window.screen.width)
           : Math.min(window.screen.height, window.screen.width);
 
-        if (physicalH > h) {
-          h = physicalH;
-        }
+        // Ambil dimensi fisik penuh layar iPhone agar menembus area home indicator
+        h = Math.max(h, screenH);
       }
 
       return { w, h };
@@ -463,9 +450,12 @@
       const { w, h } = getFullScreenDimensions();
       if (!w || !h) return;
 
-      // Sinkronkan tinggi container DOM agar persis menyentuh tepi bawah fisik
+      // Paksa semua lapisan memiliki tinggi fisik layar penuh
+      document.documentElement.style.height = `${h}px`;
+      document.body.style.height = `${h}px`;
       app.style.height = `${h}px`;
       stage.style.height = `${h}px`;
+      visibleCanvas.style.height = `${h}px`;
 
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       width = w;
@@ -969,9 +959,6 @@
           "<p style='padding:24px'>Gambar atau shader gagal dimuat. Buka Console browser untuk detailnya.</p>";
       }
     }
-
-    const stageObserver = new ResizeObserver(resize);
-    stageObserver.observe(stage);
 
     window.addEventListener("resize", resize);
     window.addEventListener("orientationchange", () => setTimeout(resize, 150));
