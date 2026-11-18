@@ -274,6 +274,7 @@
     let uniforms;
     let images = [];
     let itemSnapshots = [];
+    let backdropSnapshots = [];
     const sessionObjectUrls = [];
 
     let width = 0;
@@ -318,6 +319,12 @@
       }
     `;
 
+    /*
+      Shader Lensa Kaca Vertikal (sesuai demo repo saat scroll):
+      - Saat idle (motionAmount == 0): 100% gambar asli, tajam, lurus, tanpa outline/prisma.
+      - Saat scroll/transisi: tepi atas & bawah layar bertindak sebagai lensa cembung
+        yang menarik & melengkungkan ujung kartu secara liquid.
+    */
     const fragmentSource = `#version 300 es
       precision highp float;
 
@@ -325,86 +332,54 @@
 
       uniform sampler2D uScene;
       uniform vec2 uResolution;
-      uniform vec4 uLensBox;
-      uniform float uLensRadius;
       uniform float uTime;
       uniform float uMotion;
       uniform float uDirection;
-
-      float sdRoundedBox(vec2 p, vec2 b, float r) {
-        vec2 q = abs(p) - b + r;
-        return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
-      }
 
       vec4 sampleScene(vec2 uv) {
         return texture(uScene, clamp(uv, 0.001, 0.999));
       }
 
       void main() {
-        vec2 fragPos = gl_FragCoord.xy;
-        vec2 uv = fragPos / uResolution;
+        vec2 uv = gl_FragCoord.xy / uResolution;
 
-        // Saat diam di tengah, gambar 100% tajam, lurus, dan utuh tanpa distorsi
-        float motionAmount = smoothstep(0.008, 0.22, uMotion);
+        float motionAmount = smoothstep(0.01, 0.25, uMotion);
         if (motionAmount <= 0.001) {
           outColor = sampleScene(uv);
           return;
         }
 
-        vec2 p = fragPos - uLensBox.xy;
-        vec2 halfSize = uLensBox.zw;
-        float dist = sdRoundedBox(p, halfSize, uLensRadius);
+        // Koordinat horizontal simetris dari tengah layar (-1 .. +1)
+        float nx = (uv.x - 0.5) * 2.0;
+        float xCurve = nx * nx;
 
-        vec2 normP = p / max(halfSize, vec2(1.0));
-        float radialDist = length(normP);
+        // Zona lensa di tepi atas dan tepi bawah layar (melengkung ke dalam di pinggir kiri/kanan)
+        float distTop = 1.0 - uv.y;
+        float distBottom = uv.y;
 
-        float bevelWidth = 38.0 + motionAmount * 46.0;
-        float rimZone = exp(-abs(dist) / bevelWidth);
-        float insideLens = 1.0 - smoothstep(-6.0, 6.0, dist);
+        // Kedalaman jangkauan lensa lebih dalam di sudut kiri & kanan seperti di demo
+        float cornerReach = 0.16 + 0.14 * xCurve;
+        float topLens = exp(-distTop / cornerReach);
+        float bottomLens = exp(-distBottom / cornerReach);
+        float edgeField = max(topLens, bottomLens);
 
-        vec2 eps = vec2(2.0, 0.0);
-        vec2 grad = normalize(vec2(
-          sdRoundedBox(p + eps.xy, halfSize, uLensRadius) - sdRoundedBox(p - eps.xy, halfSize, uLensRadius),
-          sdRoundedBox(p + eps.yx, halfSize, uLensRadius) - sdRoundedBox(p - eps.yx, halfSize, uLensRadius)
-        ) + vec2(0.0001));
+        // Tarikan liquid vertikal + pembengkokan sudut ke arah tengah
+        float pullY = uDirection * (0.045 + motionAmount * 0.13) * edgeField;
+        float pinchX = nx * (0.03 + motionAmount * 0.085) * edgeField;
 
-        // Seluruh refraksi lensa kaca aktif secara proporsional hanya saat transisi/digeser
-        float pullStrength = motionAmount * 68.0;
-        float innerBulge = insideLens * pow(clamp(radialDist, 0.0, 1.2), 2.4) * (motionAmount * 28.0);
-        float edgeRefract = rimZone * pullStrength;
+        // Riak gelombang air halus saat bergerak
+        float wave = sin(nx * 5.0 + uTime * 3.0) * 0.5 + sin(nx * 9.0 - uTime * 2.2) * 0.3;
+        float rippleY = wave * 0.012 * motionAmount * edgeField;
 
-        float wave = sin(normP.x * 9.0 + uTime * 3.0) * 0.5 + sin(normP.x * 17.0 - uTime * 2.1) * 0.3;
-        float ripple = wave * rimZone * (motionAmount * 16.0);
+        vec2 warpedUV = uv - vec2(pinchX, pullY + rippleY);
+        vec4 color = sampleScene(warpedUV);
 
-        vec2 refractOffset = (grad * (edgeRefract + innerBulge) + vec2(0.0, uDirection * ripple)) / uResolution;
-
-        float dispersion = (motionAmount * 0.008) * rimZone;
-        vec2 dispDir = grad * dispersion;
-
-        vec2 sampleUV = uv - refractOffset;
-
-        vec4 color;
-        color.r = sampleScene(sampleUV - dispDir).r;
-        color.g = sampleScene(sampleUV).g;
-        color.b = sampleScene(sampleUV + dispDir).b;
-        color.a = 1.0;
-
-        float outsideBlur = (1.0 - insideLens) * exp(-max(dist, 0.0) / 140.0) * (motionAmount * 0.72);
-        if (outsideBlur > 0.01) {
-          vec2 bOff = vec2(0.004, 0.014) * (0.4 + motionAmount);
-          vec3 frosted =
-            0.36 * sampleScene(sampleUV).rgb +
-            0.18 * sampleScene(sampleUV + vec2(0.0, bOff.y)).rgb +
-            0.18 * sampleScene(sampleUV - vec2(0.0, bOff.y)).rgb +
-            0.14 * sampleScene(sampleUV + vec2(bOff.x, 0.0)).rgb +
-            0.14 * sampleScene(sampleUV - vec2(bOff.x, 0.0)).rgb;
-          color.rgb = mix(color.rgb, frosted, clamp(outsideBlur, 0.0, 0.75));
+        // Sedikit pergeseran spektrum halus hanya di bibir terluar lensa saat ditarik kencang
+        float fringe = motionAmount * edgeField * 0.0045;
+        if (fringe > 0.0005) {
+          color.r = sampleScene(warpedUV - vec2(fringe * nx, fringe * uDirection)).r;
+          color.b = sampleScene(warpedUV + vec2(fringe * nx, fringe * uDirection)).b;
         }
-
-        float fresnelLine = exp(-abs(dist) / 3.2);
-        float lightAngle = clamp(0.55 + normP.y * 0.45 - normP.x * 0.15, 0.15, 1.0);
-        vec3 glassRim = vec3(0.75, 0.85, 0.96) * fresnelLine * lightAngle * (motionAmount * 0.55);
-        color.rgb += glassRim;
 
         outColor = color;
       }
@@ -486,6 +461,47 @@
       context.drawImage(image, sx, sy, sw, sh, x, y, w, h);
     }
 
+    /*
+      Multi-pass downscale/upscale blur yang bekerja 100% di Safari iOS maupun Android
+      (karena Safari iOS mengabaikan ctx.filter = 'blur(...)').
+    */
+    function createBlurredCanvas(image, targetW, targetH, passes = 4) {
+      const smallW = Math.max(16, Math.round(targetW / 18));
+      const smallH = Math.max(16, Math.round(targetH / 18));
+
+      const tempA = document.createElement("canvas");
+      tempA.width = smallW;
+      tempA.height = smallH;
+      const ctxA = tempA.getContext("2d");
+      ctxA.imageSmoothingEnabled = true;
+      ctxA.imageSmoothingQuality = "high";
+      drawImageToContext(ctxA, image, 0, 0, smallW, smallH);
+
+      const tempB = document.createElement("canvas");
+      tempB.width = Math.max(12, Math.round(smallW * 0.65));
+      tempB.height = Math.max(12, Math.round(smallH * 0.65));
+      const ctxB = tempB.getContext("2d");
+      ctxB.imageSmoothingEnabled = true;
+      ctxB.imageSmoothingQuality = "high";
+
+      for (let i = 0; i < passes; i++) {
+        ctxB.clearRect(0, 0, tempB.width, tempB.height);
+        ctxB.drawImage(tempA, 0, 0, tempB.width, tempB.height);
+        ctxA.clearRect(0, 0, tempA.width, tempA.height);
+        ctxA.drawImage(tempB, 0, 0, tempA.width, tempA.height);
+      }
+
+      const out = document.createElement("canvas");
+      out.width = targetW;
+      out.height = targetH;
+      const outCtx = out.getContext("2d");
+      outCtx.imageSmoothingEnabled = true;
+      outCtx.imageSmoothingQuality = "high";
+      outCtx.drawImage(tempA, 0, 0, targetW, targetH);
+
+      return out;
+    }
+
     function createSnapshotForImage(image) {
       const w = Math.max(1, Math.round(cardWidth));
       const h = Math.max(1, Math.round(cardHeight));
@@ -496,47 +512,56 @@
       snap.height = h;
       const sctx = snap.getContext("2d");
 
-      drawRoundedRect(sctx, 0, 0, w, h, radius);
-      sctx.fillStyle = "#263646";
-      sctx.fill();
-
       sctx.save();
       drawRoundedRect(sctx, 0, 0, w, h, radius);
       sctx.clip();
 
-      // 1. Gambar penuh kartu
+      // 1. Gambar penuh tajam di dasar kartu
       drawImageToContext(sctx, image, 0, 0, w, h);
 
-      // 2. Blur 80% gambar di bagian bawah kartu
-      const blurBandHeight = h * 0.80;
-      const blurBandY = h - blurBandHeight;
+      // 2. Layer blur halus untuk 80% bagian bawah kartu (20% atas tetap tajam, lalu memudar blur ke bawah)
+      const blurredLayer = createBlurredCanvas(image, w, h, 4);
+      const maskedBlur = document.createElement("canvas");
+      maskedBlur.width = w;
+      maskedBlur.height = h;
+      const mctx = maskedBlur.getContext("2d");
 
-      sctx.save();
-      sctx.beginPath();
-      sctx.rect(0, blurBandY, w, blurBandHeight);
-      sctx.clip();
+      mctx.drawImage(blurredLayer, 0, 0);
+      mctx.globalCompositeOperation = "destination-in";
 
-      const bRadius = 22 * dpr;
-      sctx.filter = `blur(${bRadius}px) saturate(1.18)`;
-      drawImageToContext(sctx, image, -bRadius, -bRadius, w + bRadius * 2, h + bRadius * 2);
-      sctx.restore();
+      // Mulai blur dari 20% posisi atas kartu (sehingga 80% area bawah tertutup gradasi blur lembut)
+      const maskGrad = mctx.createLinearGradient(0, h * 0.20, 0, h * 0.62);
+      maskGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
+      maskGrad.addColorStop(0.45, "rgba(0, 0, 0, 0.72)");
+      maskGrad.addColorStop(1, "rgba(0, 0, 0, 1)");
+      mctx.fillStyle = maskGrad;
+      mctx.fillRect(0, 0, w, h);
 
-      const shade = sctx.createLinearGradient(0, h * 0.25, 0, h);
-      shade.addColorStop(0, "rgba(5, 12, 20, 0)");
-      shade.addColorStop(0.60, "rgba(5, 12, 20, 0.14)");
-      shade.addColorStop(1, "rgba(5, 12, 20, 0.32)");
+      sctx.drawImage(maskedBlur, 0, 0);
+
+      // 3. Gradasi warna gelap tipis di dasar bawah untuk kedalaman kontras
+      const shade = sctx.createLinearGradient(0, h * 0.45, 0, h);
+      shade.addColorStop(0, "rgba(0, 0, 0, 0)");
+      shade.addColorStop(1, "rgba(0, 0, 0, 0.24)");
       sctx.fillStyle = shade;
       sctx.fillRect(0, 0, w, h);
 
       sctx.restore();
 
-      // Tanpa outline/stroke pada card
+      // Tanpa outline/stroke sama sekali pada card
       return snap;
+    }
+
+    function createBackdropForImage(image) {
+      const w = Math.max(1, Math.round(sceneCanvas.width / 2));
+      const h = Math.max(1, Math.round(sceneCanvas.height / 2));
+      return createBlurredCanvas(image, w, h, 5);
     }
 
     function buildItemSnapshots() {
       if (!images.length || !cardWidth || !cardHeight) return;
       itemSnapshots = images.map((image) => createSnapshotForImage(image));
+      backdropSnapshots = images.map((image) => createBackdropForImage(image));
     }
 
     addButton.addEventListener("click", (event) => {
@@ -561,6 +586,7 @@
           items.push({ image: objectUrl, isSession: true });
           images.push(loadedImg);
           itemSnapshots.push(createSnapshotForImage(loadedImg));
+          backdropSnapshots.push(createBackdropForImage(loadedImg));
         } catch (err) {
           console.error("Gagal memuat foto preview:", err);
         }
@@ -636,7 +662,7 @@
         cardWidth = cardHeight * aspectRatio;
       }
 
-      const cardGap = (isMobile ? 120 : 48) * dpr;
+      const cardGap = (isMobile ? 110 : 44) * dpr;
       slot = cardHeight + cardGap;
 
       cardCenterY = pixelHeight * (isMobile ? 0.45 : 0.53);
@@ -792,27 +818,16 @@
       ctx.fillRect(0, 0, pixelWidth, pixelHeight);
 
       const activeIndex = wrapIndex(Math.round(scroll));
-      const activeImage = images[activeIndex];
+      const activeBackdrop = backdropSnapshots[activeIndex];
 
-      if (activeImage) {
+      // Background blur layar penuh yang juga jalan mulus di Safari iOS
+      if (activeBackdrop) {
         ctx.save();
-        ctx.globalAlpha = 0.78;
-        const blurAmount = 32 * dpr;
-        const bleed = blurAmount * 2.5;
-        ctx.filter = `blur(${blurAmount}px) saturate(1.12)`;
-
-        drawImageToContext(
-          ctx,
-          activeImage,
-          -bleed,
-          -bleed,
-          pixelWidth + bleed * 2,
-          pixelHeight + bleed * 2
-        );
-
+        ctx.globalAlpha = 0.85;
+        ctx.drawImage(activeBackdrop, 0, 0, pixelWidth, pixelHeight);
         ctx.restore();
 
-        ctx.fillStyle = "rgba(5, 14, 22, 0.24)";
+        ctx.fillStyle = "rgba(5, 14, 22, 0.22)";
         ctx.fillRect(0, 0, pixelWidth, pixelHeight);
       }
 
@@ -826,7 +841,7 @@
 
       visibleItems.forEach(({ index, offset }) => {
         const distance = Math.abs(offset);
-        const scale = 1 - Math.min(distance, 1) * 0.04;
+        const scale = 1 - Math.min(distance, 1) * 0.035;
         const w = cardWidth * scale;
         const h = cardHeight * scale;
         const x = centerX - w / 2;
@@ -836,11 +851,11 @@
         if (!snapshot) return;
 
         ctx.save();
-        ctx.globalAlpha = Math.max(0.75, 1 - distance * 0.14);
+        ctx.globalAlpha = Math.max(0.82, 1 - distance * 0.10);
 
-        ctx.shadowColor = "rgba(0, 0, 0, 0.42)";
-        ctx.shadowBlur = 28 * dpr;
-        ctx.shadowOffsetY = 12 * dpr;
+        ctx.shadowColor = "rgba(0, 0, 0, 0.36)";
+        ctx.shadowBlur = 26 * dpr;
+        ctx.shadowOffsetY = 10 * dpr;
 
         ctx.drawImage(snapshot, x, y, w, h);
 
@@ -885,12 +900,11 @@
         }
       }
 
-      // Aktifkan efek lensa kaca sejak jari menyentuh (dragging) atau kartu sedang bergerak
       const movementSpeed = dragging
-        ? Math.max(0.32, Math.abs(pointerVelocity))
+        ? Math.max(0.28, Math.abs(pointerVelocity))
         : Math.abs(velocity);
 
-      const motionTarget = Math.min(1, movementSpeed * 0.45);
+      const motionTarget = Math.min(1, movementSpeed * 0.42);
       const motionBlend = 1 - Math.exp(-dt * 11);
       liquidMotion += (motionTarget - liquidMotion) * motionBlend;
 
@@ -905,20 +919,6 @@
         visibleCanvas.width,
         visibleCanvas.height
       );
-
-      const lensCenterX = visibleCanvas.width * 0.5;
-      const lensCenterY = visibleCanvas.height - cardCenterY;
-      const lensHalfW = cardWidth * 0.5;
-      const lensHalfH = cardHeight * 0.5;
-
-      gl.uniform4f(
-        uniforms.lensBox,
-        lensCenterX,
-        lensCenterY,
-        lensHalfW,
-        lensHalfH
-      );
-      gl.uniform1f(uniforms.lensRadius, 35 * dpr);
       gl.uniform1f(uniforms.time, now / 1000);
       gl.uniform1f(uniforms.motion, liquidMotion);
 
@@ -1052,8 +1052,6 @@
         uniforms = {
           scene: gl.getUniformLocation(program, "uScene"),
           resolution: gl.getUniformLocation(program, "uResolution"),
-          lensBox: gl.getUniformLocation(program, "uLensBox"),
-          lensRadius: gl.getUniformLocation(program, "uLensRadius"),
           time: gl.getUniformLocation(program, "uTime"),
           motion: gl.getUniformLocation(program, "uMotion"),
           direction: gl.getUniformLocation(program, "uDirection")
