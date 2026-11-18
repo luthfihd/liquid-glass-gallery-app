@@ -73,7 +73,6 @@
       height: 100%;
     }
 
-    /* Floating pill dengan layer frosted blur tipis + lensa refraksi */
     .topbar {
       position: fixed;
       z-index: 3;
@@ -300,9 +299,7 @@
     let lastPointerY = 0;
     let lastPointerTime = 0;
     let pointerVelocity = 0;
-    let smoothDirection = 0;
     let previousFrameTime = 0;
-    let liquidMotion = 0;
 
     let wheelDelta = 0;
     let wheelTimer = 0;
@@ -325,12 +322,12 @@
     `;
 
     /*
-      Shader Efek Sedot Dua Arah (Suction Pinch Funnel):
-      - Zona atas & zona bawah layar membentuk lensa sedot melengkung (seperti Gambar 2).
-      - Sisi atas menyedot kartu keluar dengan tarikan ke atas (+Y) sambil menyempitkan
-        lebarnya ke tengah (suction pinch), dan sisi bawah menyedot masuk kartu baru dari bawah (-Y)
-        dengan lengkungan serupa.
-      - Saat berhenti di tengah (motionAmount -> 0), kembali 100% datar, tajam, dan utuh.
+      Shader Lensa Kaca Statis di Tepi Atas & Bawah Layar:
+      - Zona tengah layar (tempat kartu idle berada) 100% bebas lensa (field = 0.0),
+        sehingga saat idle kartu tampil bersih, lurus, dan tajam persis seperti Gambar 1.
+      - Lensa kaca hanya berada di tepi paling atas & tepi paling bawah layar (mulut hisap).
+      - Begitu kartu digeser mendekati tepi atas atau tepi bawah layar, ia masuk ke zona lensa
+        hisap tersebut, melengkung tersedot dengan dispersi kaca seperti Gambar 2.
     */
     const fragmentSource = `#version 300 es
       precision highp float;
@@ -340,8 +337,6 @@
       uniform sampler2D uScene;
       uniform vec2 uResolution;
       uniform float uTime;
-      uniform float uMotion;
-      uniform float uDirection;
 
       vec4 sampleScene(vec2 uv) {
         return texture(uScene, clamp(uv, 0.001, 0.999));
@@ -349,57 +344,68 @@
 
       void main() {
         vec2 uv = gl_FragCoord.xy / uResolution;
-        vec4 original = sampleScene(uv);
+        float aspect = uResolution.x / uResolution.y;
 
-        float motionAmount = smoothstep(0.0, 0.30, uMotion);
-        if (motionAmount <= 0.0001) {
+        // Jarak piksel dari tepi atas (uv.y = 1) dan tepi bawah (uv.y = 0)
+        float distTop = 1.0 - uv.y;
+        float distBottom = uv.y;
+
+        // Lengkung mulut lensa di tepi atas & bawah:
+        // Lebih dalam di sudut kiri & kanan layar, dan 0 mutlak di area tengah layar!
+        float nx = (uv.x - 0.5) * 2.0;
+        float cornerCurve = nx * nx;
+        float lensReach = 0.095 + 0.075 * cornerCurve;
+
+        // smoothstep mengunci field = 0.0 di seluruh area tengah layar (saat idle)
+        float topField = 1.0 - smoothstep(0.0, lensReach, distTop);
+        float bottomField = 1.0 - smoothstep(0.0, lensReach, distBottom);
+
+        // Kuadratkan kurva agar transisi dari tengah ke mulut lensa super lembut
+        topField = topField * topField;
+        bottomField = bottomField * bottomField;
+
+        float field = max(topField, bottomField);
+
+        vec4 original = sampleScene(uv);
+        if (field <= 0.0005) {
           outColor = original;
           return;
         }
 
-        // Jarak dari tengah horizontal (-1 kiri .. 0 tengah .. +1 kanan)
-        float nx = (uv.x - 0.5) * 2.0;
-        float x2 = nx * nx;
+        // Vektor arah dari mulut hisap atas (0.5, 1.08) dan bawah (0.5, -0.08)
+        vec2 topAnchor = vec2(0.5, 1.08);
+        vec2 bottomAnchor = vec2(0.5, -0.08);
 
-        // Jarak ke tepi atas (uv.y = 1) dan tepi bawah (uv.y = 0)
-        float distTop = 1.0 - uv.y;
-        float distBottom = uv.y;
+        vec2 anchor = topField >= bottomField ? topAnchor : bottomAnchor;
+        vec2 offset = uv - anchor;
+        vec2 p = vec2(offset.x * aspect, offset.y);
 
-        // Profil corong sedot: di tengah mulut sedotan dalam, melengkung membulat ke sudut kiri/kanan
-        float funnelDepth = 0.20 - 0.07 * x2;
-        float topSuction = exp(-distTop / max(0.06, funnelDepth));
-        float bottomSuction = exp(-distBottom / max(0.06, funnelDepth));
+        float angle = atan(p.y, p.x);
+        float fluidWave =
+          sin(angle * 2.0 + uTime * 0.55) * 0.55 +
+          sin(angle * 2.0 - uTime * 0.35) * 0.25;
 
-        // Masking halus agar bagian tengah layar tetap tenang & jernih
-        float suctionField = clamp(topSuction + bottomSuction, 0.0, 1.0);
+        vec2 radialDirection = normalize(offset + vec2(0.00001));
+        vec2 tangentDirection = vec2(-radialDirection.y, radialDirection.x);
 
-        // 1. Sedotan horizontal (+nx membuat sampling mengambil piksel lebih ke luar,
-        //    sehingga tampilan kartu menyempit/mengerucut masuk tersedot ke titik pusat atas & bawah)
-        float pinchAmount = (0.14 + 0.24 * x2) * motionAmount * suctionField;
-        float offsetX = nx * pinchAmount;
+        // Tarikan lensa radial ke arah mulut hisap atas & bawah + riak halus
+        vec2 shift =
+          -offset * 0.42 * field +
+          tangentDirection * fluidWave * field * field * 0.010;
 
-        // 2. Sedotan vertikal dua arah:
-        //    - Sisi atas menyedot piksel dari bawahnya ke atas (uv.y sampling digeser ke bawah -> kartu tertarik ke atas)
-        //    - Sisi bawah menyedot piksel dari atasnya ke bawah (uv.y sampling digeser ke atas -> kartu tertarik dari bawah)
-        float verticalStretch = (0.065 + 0.11 * x2) * motionAmount;
-        float topPull = -topSuction * verticalStretch;
-        float bottomPull = bottomSuction * verticalStretch;
+        // Dispersi warna kaca RGB di tepi lensa hisap
+        vec2 spread = shift * 0.11;
+        vec2 redUv = uv + shift + spread;
+        vec2 greenUv = uv + shift;
+        vec2 blueUv = uv + shift - spread;
 
-        // Sedikit bias sesuai arah jari agar terasa responsif saat ditarik
-        float dirBias = -uDirection * 0.025 * motionAmount * suctionField;
+        vec4 refracted;
+        refracted.r = sampleScene(redUv).r;
+        refracted.g = sampleScene(greenUv).g;
+        refracted.b = sampleScene(blueUv).b;
+        refracted.a = 1.0;
 
-        vec2 warpedUV = uv + vec2(offsetX, topPull + bottomPull + dirBias);
-        vec4 color = sampleScene(warpedUV);
-
-        // Dispersi kromatik halus di bibir corong sedotan saat kecepatan tinggi
-        float fringe = motionAmount * suctionField * (0.002 + 0.004 * x2);
-        if (fringe > 0.0003) {
-          float vSign = topSuction >= bottomSuction ? -1.0 : 1.0;
-          color.r = sampleScene(warpedUV + vec2(fringe * nx, fringe * vSign)).r;
-          color.b = sampleScene(warpedUV - vec2(fringe * nx, fringe * vSign)).b;
-        }
-
-        outColor = color;
+        outColor = refracted;
       }
     `;
 
@@ -831,7 +837,7 @@
 
       visibleItems.forEach(({ index, offset }) => {
         const distance = Math.abs(offset);
-        const scale = 1 - Math.min(distance, 1) * 0.035;
+        const scale = 1 - Math.min(distance, 1) * 0.08;
         const w = cardWidth * scale;
         const h = cardHeight * scale;
         const x = centerX - w / 2;
@@ -841,7 +847,7 @@
         if (!snapshot) return;
 
         ctx.save();
-        ctx.globalAlpha = Math.max(0.82, 1 - distance * 0.10);
+        ctx.globalAlpha = Math.max(0.55, 1 - distance * 0.14);
 
         ctx.shadowColor = "rgba(0, 0, 0, 0.36)";
         ctx.shadowBlur = 26 * dpr;
@@ -890,25 +896,6 @@
         }
       }
 
-      if (dragging) {
-        pointerVelocity *= Math.exp(-dt * 12);
-      }
-
-      const rawVelocity = dragging ? pointerVelocity : velocity;
-      const movementSpeed = Math.abs(rawVelocity);
-
-      const motionTarget = Math.min(1, movementSpeed * 0.45);
-      const blendRate = motionTarget > liquidMotion ? 14 : 6.5;
-      const motionBlend = 1 - Math.exp(-dt * blendRate);
-      liquidMotion += (motionTarget - liquidMotion) * motionBlend;
-
-      if (liquidMotion < 0.0005) {
-        liquidMotion = 0;
-      }
-
-      const targetDir = Math.max(-1, Math.min(1, rawVelocity * 0.8));
-      smoothDirection += (targetDir - smoothDirection) * (1 - Math.exp(-dt * 10));
-
       drawScene();
       drawLiquidPill(now);
       uploadSceneTexture();
@@ -921,8 +908,6 @@
         visibleCanvas.height
       );
       gl.uniform1f(uniforms.time, now / 1000);
-      gl.uniform1f(uniforms.motion, liquidMotion);
-      gl.uniform1f(uniforms.direction, smoothDirection);
 
       gl.clearColor(11 / 255, 24 / 255, 36 / 255, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
@@ -962,10 +947,9 @@
       scroll = dragStartScroll - (dy * dpr) / slot;
       target = scroll;
 
-      const instantVel =
+      pointerVelocity =
         (-(event.clientY - lastPointerY) * dpr / slot) /
         (elapsed / 1000);
-      pointerVelocity = pointerVelocity * 0.45 + instantVel * 0.55;
 
       lastPointerY = event.clientY;
       lastPointerTime = now;
@@ -1052,9 +1036,7 @@
         uniforms = {
           scene: gl.getUniformLocation(program, "uScene"),
           resolution: gl.getUniformLocation(program, "uResolution"),
-          time: gl.getUniformLocation(program, "uTime"),
-          motion: gl.getUniformLocation(program, "uMotion"),
-          direction: gl.getUniformLocation(program, "uDirection")
+          time: gl.getUniformLocation(program, "uTime")
         };
 
         resize();
