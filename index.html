@@ -38,16 +38,18 @@ body {
 .app {
   position: fixed;
   inset: 0;
-  overflow: hidden;
+  overflow: visible;
   background: #0b1824;
 }
 
 .stage {
   position: absolute;
   inset: 0;
+  bottom: calc(-1 * env(safe-area-inset-bottom));
   overflow: hidden;
   touch-action: none;
   user-select: none;
+  cursor: grab;
 }
 
     .stage.dragging {
