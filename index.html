@@ -296,6 +296,7 @@
     let lastPointerY = 0;
     let lastPointerTime = 0;
     let pointerVelocity = 0;
+    let smoothDirection = 0;
     let previousFrameTime = 0;
     let liquidMotion = 0;
 
@@ -320,10 +321,9 @@
     `;
 
     /*
-      Shader Lensa Kaca Vertikal (sesuai demo repo saat scroll):
-      - Saat idle (motionAmount == 0): 100% gambar asli, tajam, lurus, tanpa outline/prisma.
-      - Saat scroll/transisi: tepi atas & bawah layar bertindak sebagai lensa cembung
-        yang menarik & melengkungkan ujung kartu secara liquid.
+      Shader tarik-menarik liquid organik:
+      - Tanpa hard cut-off & tanpa outline rim agar transisi kembali ke normal 100% mulus.
+      - Saat idle, liquidMotion turun perlahan ke 0 sehingga gambar kembali tajam & utuh.
     */
     const fragmentSource = `#version 300 es
       precision highp float;
@@ -342,46 +342,53 @@
 
       void main() {
         vec2 uv = gl_FragCoord.xy / uResolution;
+        vec4 original = sampleScene(uv);
 
-        float motionAmount = smoothstep(0.01, 0.25, uMotion);
-        if (motionAmount <= 0.001) {
-          outColor = sampleScene(uv);
+        float motionAmount = smoothstep(0.0, 0.35, uMotion);
+        if (motionAmount <= 0.0001) {
+          outColor = original;
           return;
         }
 
-        // Koordinat horizontal simetris dari tengah layar (-1 .. +1)
-        float nx = (uv.x - 0.5) * 2.0;
-        float xCurve = nx * nx;
+        float distanceTop = (1.0 - uv.y) * uResolution.y;
+        float distanceBottom = uv.y * uResolution.y;
 
-        // Zona lensa di tepi atas dan tepi bawah layar (melengkung ke dalam di pinggir kiri/kanan)
-        float distTop = 1.0 - uv.y;
-        float distBottom = uv.y;
+        float edgeReach = 24.0 + motionAmount * 190.0;
+        float topEdge = exp(-distanceTop / edgeReach);
+        float bottomEdge = exp(-distanceBottom / edgeReach);
+        float edgeField = max(topEdge, bottomEdge);
 
-        // Kedalaman jangkauan lensa lebih dalam di sudut kiri & kanan seperti di demo
-        float cornerReach = 0.16 + 0.14 * xCurve;
-        float topLens = exp(-distTop / cornerReach);
-        float bottomLens = exp(-distBottom / cornerReach);
-        float edgeField = max(topLens, bottomLens);
+        float x = uv.x * (uResolution.x / uResolution.y);
+        float wave =
+          sin(x * 22.0 + uTime * 2.4) * 0.55 +
+          sin(x * 37.0 - uTime * 1.7) * 0.28 +
+          sin(x * 11.0 + uTime) * 0.14;
 
-        // Tarikan liquid vertikal + pembengkokan sudut ke arah tengah
-        float pullY = uDirection * (0.045 + motionAmount * 0.13) * edgeField;
-        float pinchX = nx * (0.03 + motionAmount * 0.085) * edgeField;
+        float pullPixels = uDirection * (motionAmount * 150.0) * edgeField;
+        float ripplePixels = wave * (motionAmount * 22.0) * edgeField;
 
-        // Riak gelombang air halus saat bergerak
-        float wave = sin(nx * 5.0 + uTime * 3.0) * 0.5 + sin(nx * 9.0 - uTime * 2.2) * 0.3;
-        float rippleY = wave * 0.012 * motionAmount * edgeField;
+        float shiftY = (pullPixels + ripplePixels) / uResolution.y;
+        float spread = abs(pullPixels) * 0.14;
 
-        vec2 warpedUV = uv - vec2(pinchX, pullY + rippleY);
-        vec4 color = sampleScene(warpedUV);
+        vec4 liquid;
+        liquid.r = sampleScene(uv - vec2(0.0, (shiftY + spread / uResolution.y))).r;
+        liquid.g = sampleScene(uv - vec2(0.0, shiftY)).g;
+        liquid.b = sampleScene(uv - vec2(0.0, (shiftY - spread / uResolution.y))).b;
+        liquid.a = 1.0;
 
-        // Sedikit pergeseran spektrum halus hanya di bibir terluar lensa saat ditarik kencang
-        float fringe = motionAmount * edgeField * 0.0045;
-        if (fringe > 0.0005) {
-          color.r = sampleScene(warpedUV - vec2(fringe * nx, fringe * uDirection)).r;
-          color.b = sampleScene(warpedUV + vec2(fringe * nx, fringe * uDirection)).b;
-        }
+        float bottomFade = exp(-distanceBottom / 180.0) * motionAmount;
+        vec2 blurOffset = vec2(0.0, 0.010 + bottomFade * 0.022);
 
-        outColor = color;
+        vec3 blurred =
+          0.40 * sampleScene(uv).rgb +
+          0.20 * sampleScene(uv + blurOffset).rgb +
+          0.20 * sampleScene(uv - blurOffset).rgb +
+          0.10 * sampleScene(uv + blurOffset * 2.0).rgb +
+          0.10 * sampleScene(uv - blurOffset * 2.0).rgb;
+
+        liquid.rgb = mix(liquid.rgb, blurred, 0.55 * bottomFade);
+
+        outColor = liquid;
       }
     `;
 
@@ -461,11 +468,7 @@
       context.drawImage(image, sx, sy, sw, sh, x, y, w, h);
     }
 
-    /*
-      Multi-pass downscale/upscale blur yang bekerja 100% di Safari iOS maupun Android
-      (karena Safari iOS mengabaikan ctx.filter = 'blur(...)').
-    */
-    function createBlurredCanvas(image, targetW, targetH, passes = 4) {
+    function createBlurredCanvas(image, targetW, targetH, passes = 5) {
       const smallW = Math.max(16, Math.round(targetW / 18));
       const smallH = Math.max(16, Math.round(targetH / 18));
 
@@ -502,6 +505,7 @@
       return out;
     }
 
+    // Kartu utama: tajam penuh tanpa blur dan tanpa outline
     function createSnapshotForImage(image) {
       const w = Math.max(1, Math.round(cardWidth));
       const h = Math.max(1, Math.round(cardHeight));
@@ -516,42 +520,20 @@
       drawRoundedRect(sctx, 0, 0, w, h, radius);
       sctx.clip();
 
-      // 1. Gambar penuh tajam di dasar kartu
       drawImageToContext(sctx, image, 0, 0, w, h);
 
-      // 2. Layer blur halus untuk 80% bagian bawah kartu (20% atas tetap tajam, lalu memudar blur ke bawah)
-      const blurredLayer = createBlurredCanvas(image, w, h, 4);
-      const maskedBlur = document.createElement("canvas");
-      maskedBlur.width = w;
-      maskedBlur.height = h;
-      const mctx = maskedBlur.getContext("2d");
-
-      mctx.drawImage(blurredLayer, 0, 0);
-      mctx.globalCompositeOperation = "destination-in";
-
-      // Mulai blur dari 20% posisi atas kartu (sehingga 80% area bawah tertutup gradasi blur lembut)
-      const maskGrad = mctx.createLinearGradient(0, h * 0.20, 0, h * 0.62);
-      maskGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
-      maskGrad.addColorStop(0.45, "rgba(0, 0, 0, 0.72)");
-      maskGrad.addColorStop(1, "rgba(0, 0, 0, 1)");
-      mctx.fillStyle = maskGrad;
-      mctx.fillRect(0, 0, w, h);
-
-      sctx.drawImage(maskedBlur, 0, 0);
-
-      // 3. Gradasi warna gelap tipis di dasar bawah untuk kedalaman kontras
-      const shade = sctx.createLinearGradient(0, h * 0.45, 0, h);
+      const shade = sctx.createLinearGradient(0, h * 0.60, 0, h);
       shade.addColorStop(0, "rgba(0, 0, 0, 0)");
-      shade.addColorStop(1, "rgba(0, 0, 0, 0.24)");
+      shade.addColorStop(1, "rgba(0, 0, 0, 0.18)");
       sctx.fillStyle = shade;
       sctx.fillRect(0, 0, w, h);
 
       sctx.restore();
 
-      // Tanpa outline/stroke sama sekali pada card
       return snap;
     }
 
+    // Background layar penuh di belakang kartu: blur lembut (kompatibel iOS Safari)
     function createBackdropForImage(image) {
       const w = Math.max(1, Math.round(sceneCanvas.width / 2));
       const h = Math.max(1, Math.round(sceneCanvas.height / 2));
@@ -662,7 +644,7 @@
         cardWidth = cardHeight * aspectRatio;
       }
 
-      const cardGap = (isMobile ? 110 : 44) * dpr;
+      const cardGap = (isMobile ? 150 : 50) * dpr;
       slot = cardHeight + cardGap;
 
       cardCenterY = pixelHeight * (isMobile ? 0.45 : 0.53);
@@ -820,7 +802,6 @@
       const activeIndex = wrapIndex(Math.round(scroll));
       const activeBackdrop = backdropSnapshots[activeIndex];
 
-      // Background blur layar penuh yang juga jalan mulus di Safari iOS
       if (activeBackdrop) {
         ctx.save();
         ctx.globalAlpha = 0.85;
@@ -900,13 +881,27 @@
         }
       }
 
-      const movementSpeed = dragging
-        ? Math.max(0.28, Math.abs(pointerVelocity))
-        : Math.abs(velocity);
+      // Redam pointerVelocity perlahan saat jari berhenti di layar agar tidak loncat saat dilepas
+      if (dragging) {
+        pointerVelocity *= Math.exp(-dt * 12);
+      }
 
+      const rawVelocity = dragging ? pointerVelocity : velocity;
+      const movementSpeed = Math.abs(rawVelocity);
+
+      // Kurva naik cepat saat ditarik, lalu melandai mulus hingga 0 saat berhenti
       const motionTarget = Math.min(1, movementSpeed * 0.42);
-      const motionBlend = 1 - Math.exp(-dt * 11);
+      const blendRate = motionTarget > liquidMotion ? 14 : 6.5;
+      const motionBlend = 1 - Math.exp(-dt * blendRate);
       liquidMotion += (motionTarget - liquidMotion) * motionBlend;
+
+      if (liquidMotion < 0.0005) {
+        liquidMotion = 0;
+      }
+
+      // Arah tarikan dihaluskan (bukan Math.sign patah) agar tidak membalik mendadak saat spring memantul
+      const targetDir = Math.max(-1, Math.min(1, rawVelocity * 0.8));
+      smoothDirection += (targetDir - smoothDirection) * (1 - Math.exp(-dt * 10));
 
       drawScene();
       drawLiquidPill(now);
@@ -921,9 +916,7 @@
       );
       gl.uniform1f(uniforms.time, now / 1000);
       gl.uniform1f(uniforms.motion, liquidMotion);
-
-      const movementDirection = dragging ? pointerVelocity : velocity;
-      gl.uniform1f(uniforms.direction, Math.sign(movementDirection));
+      gl.uniform1f(uniforms.direction, smoothDirection);
 
       gl.clearColor(11 / 255, 24 / 255, 36 / 255, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
@@ -963,9 +956,10 @@
       scroll = dragStartScroll - (dy * dpr) / slot;
       target = scroll;
 
-      pointerVelocity =
+      const instantVel =
         (-(event.clientY - lastPointerY) * dpr / slot) /
         (elapsed / 1000);
+      pointerVelocity = pointerVelocity * 0.45 + instantVel * 0.55;
 
       lastPointerY = event.clientY;
       lastPointerTime = now;
