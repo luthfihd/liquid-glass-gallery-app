@@ -505,7 +505,7 @@
 
       drawImageToContext(sctx, image, 0, 0, w, h);
 
-      const blurBandHeight = h * 0.30;
+      const blurBandHeight = h * 0.80;
       const blurBandY = h - blurBandHeight;
 
       sctx.save();
@@ -513,7 +513,7 @@
       sctx.rect(0, blurBandY, w, blurBandHeight);
       sctx.clip();
 
-      const bRadius = 18 * dpr;
+      const bRadius = 50 * dpr;
       sctx.filter = `blur(${bRadius}px) saturate(1.18)`;
       drawImageToContext(sctx, image, -bRadius, -bRadius, w + bRadius * 2, h + bRadius * 2);
       sctx.restore();
@@ -810,7 +810,7 @@
       if (activeImage) {
         ctx.save();
         ctx.globalAlpha = 0.78;
-        const blurAmount = 100 * dpr;
+        const blurAmount = 80 * dpr;
         const bleed = blurAmount * 2.5;
         ctx.filter = `blur(${blurAmount}px) saturate(1.12)`;
 
