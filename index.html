@@ -10,7 +10,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-  <title>Liquid Glass Gallery Full</title>
+  <title>Liquid Glass Gallery</title>
 
   <style>
     *, *::before, *::after {
@@ -18,24 +18,34 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+    }
+
     html {
+      margin: 0;
+      padding: 0;
       width: 100%;
       height: 100%;
       background-color: #0b1824;
+      overflow: hidden;
     }
 
     body {
-      width: 100%;
-      min-height: 100vh;
-      min-height: 100dvh;
-      min-height: -webkit-fill-available;
       margin: 0;
       padding: 0;
-      overflow: hidden;
+      width: 100%;
+      /* Memaksa body meluas melewati batas safe-area atas dan bawah iOS PWA */
+      min-height: 100vh;
+      min-height: calc(100vh + var(--sat) + var(--sab));
       background-color: #0b1824;
       color: #f3f8ff;
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      overflow: hidden;
       overscroll-behavior: none;
+      position: fixed;
+      inset: 0;
     }
 
     .app {
@@ -43,10 +53,10 @@
       top: 0;
       left: 0;
       right: 0;
-      bottom: 0;
+      bottom: calc(-1 * var(--sab));
       width: 100vw;
       height: 100vh;
-      height: 100lvh;
+      height: calc(100vh + var(--sat) + var(--sab));
       overflow: hidden;
       background: #0b1824;
     }
@@ -67,7 +77,8 @@
 
     #gl {
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: 0;
       display: block;
       width: 100%;
       height: 100%;
@@ -75,10 +86,10 @@
 
     /* Floating pill: kontennya jernih, efek refraksi digambar di canvas-nya. */
     .topbar {
-      position: absolute;
+      position: fixed;
       z-index: 3;
       top: auto;
-      bottom: max(14px, calc(10px + env(safe-area-inset-bottom)));
+      bottom: max(16px, calc(12px + env(safe-area-inset-bottom, 0px)));
       left: 14px;
       right: 14px;
       min-height: 72px;
@@ -210,7 +221,7 @@
 </head>
 
 <body>
-  <main class="app">
+  <main class="app" id="app">
     <section class="stage" id="stage" aria-label="Galeri foto vertikal">
       <canvas id="gl"></canvas>
     </section>
@@ -252,6 +263,7 @@
       }
     ];
 
+    const app = document.getElementById("app");
     const stage = document.getElementById("stage");
     const visibleCanvas = document.getElementById("gl");
     const counter = document.getElementById("counter");
@@ -422,18 +434,42 @@
       });
     }
 
-    function resize() {
-      const rect = stage.getBoundingClientRect();
-      // Menggunakan nilai terbesar antara rect, innerHeight, dan screen.height
-      // agar tidak terpotong bar bawah di iOS/Android PWA
-      const targetWidth = Math.max(rect.width, window.innerWidth);
-      const targetHeight = Math.max(rect.height, window.innerHeight);
+    function getFullScreenDimensions() {
+      const isStandalone =
+        window.navigator.standalone === true ||
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.matchMedia("(display-mode: fullscreen)").matches;
 
-      if (!targetWidth || !targetHeight) return;
+      const rect = app.getBoundingClientRect();
+      let w = Math.max(rect.width, window.innerWidth, document.documentElement.clientWidth);
+      let h = Math.max(rect.height, window.innerHeight, document.documentElement.clientHeight);
+
+      // Pada mode Web App (Home Screen), iOS sering menahan innerHeight lebih pendek dari layar fisik
+      if (isStandalone && window.screen) {
+        const isPortrait = window.innerHeight >= window.innerWidth;
+        const physicalH = isPortrait
+          ? Math.max(window.screen.height, window.screen.width)
+          : Math.min(window.screen.height, window.screen.width);
+
+        if (physicalH > h) {
+          h = physicalH;
+        }
+      }
+
+      return { w, h };
+    }
+
+    function resize() {
+      const { w, h } = getFullScreenDimensions();
+      if (!w || !h) return;
+
+      // Sinkronkan tinggi container DOM agar persis menyentuh tepi bawah fisik
+      app.style.height = `${h}px`;
+      stage.style.height = `${h}px`;
 
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = targetWidth;
-      height = targetHeight;
+      width = w;
+      height = h;
 
       const pixelWidth = Math.max(1, Math.round(width * dpr));
       const pixelHeight = Math.max(1, Math.round(height * dpr));
@@ -459,7 +495,7 @@
       slot = cardHeight + cardGap;
 
       // Posisi kartu dinaikkan agar tidak bertabrakan dengan pill bawah.
-      cardCenterY = pixelHeight * (isMobile ? 0.46 : 0.53);
+      cardCenterY = pixelHeight * (isMobile ? 0.45 : 0.53);
 
       if (gl) {
         gl.viewport(0, 0, pixelWidth, pixelHeight);
@@ -647,14 +683,16 @@
       if (activeImage) {
         ctx.save();
         ctx.globalAlpha = 0.78;
-        ctx.filter = `blur(${32 * dpr}px) saturate(1.12)`;
+        const blurAmount = 32 * dpr;
+        const bleed = blurAmount * 2.5;
+        ctx.filter = `blur(${blurAmount}px) saturate(1.12)`;
 
         drawImageCover(
           activeImage,
-          -50 * dpr,
-          -50 * dpr,
-          pixelWidth + 100 * dpr,
-          pixelHeight + 100 * dpr
+          -bleed,
+          -bleed,
+          pixelWidth + bleed * 2,
+          pixelHeight + bleed * 2
         );
 
         ctx.restore();
@@ -922,8 +960,8 @@
         };
 
         resize();
-        // Panggil ulang resize singkat setelah mount PWA selesai
-        setTimeout(resize, 150);
+        setTimeout(resize, 100);
+        setTimeout(resize, 400);
         requestAnimationFrame(renderFrame);
       } catch (error) {
         console.error(error);
@@ -936,7 +974,7 @@
     stageObserver.observe(stage);
 
     window.addEventListener("resize", resize);
-    window.addEventListener("orientationchange", () => setTimeout(resize, 100));
+    window.addEventListener("orientationchange", () => setTimeout(resize, 150));
     window.visualViewport?.addEventListener("resize", resize);
 
     init();
