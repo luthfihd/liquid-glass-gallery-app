@@ -13,6 +13,14 @@
   <title>LiquidGlass Gallery</title>
 
   <style>
+    :root {
+      --nav-primary-rgb: 24, 42, 62;
+      --nav-accent-rgb: 255, 255, 255;
+      --nav-muted-rgb: 222, 232, 245;
+      --nav-pill-rgb: 255, 255, 255;
+      --hairline: 0.75px;
+    }
+
     *, *::before, *::after {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
@@ -140,24 +148,24 @@
     }
 
     .glass-circle-btn {
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.32);
-      background: rgba(20, 28, 38, 0.38);
-      -webkit-backdrop-filter: blur(16px) saturate(1.4);
-      backdrop-filter: blur(16px) saturate(1.4);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
+      background: rgba(20, 28, 38, 0.34);
+      -webkit-backdrop-filter: blur(18px) saturate(1.45);
+      backdrop-filter: blur(18px) saturate(1.45);
       color: #fff;
       display: grid;
       place-items: center;
       cursor: pointer;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24), inset 0 0.5px 0 rgba(255, 255, 255, 0.36);
       transition: transform 0.16s ease, background 0.16s ease;
     }
 
     .glass-circle-btn:active {
       transform: scale(0.9);
-      background: rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.2);
     }
 
     .snap-controls {
@@ -175,20 +183,20 @@
     }
 
     .photo-pick-btn {
-      width: 52px;
-      height: 52px;
-      border-radius: 16px;
-      border: 1.5px solid rgba(255, 255, 255, 0.48);
-      background: rgba(255, 255, 255, 0.14);
-      -webkit-backdrop-filter: blur(16px) saturate(1.4);
-      backdrop-filter: blur(16px) saturate(1.4);
+      width: 50px;
+      height: 50px;
+      border-radius: 15px;
+      border: var(--hairline) solid rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.12);
+      -webkit-backdrop-filter: blur(18px) saturate(1.45);
+      backdrop-filter: blur(18px) saturate(1.45);
       color: #fff;
       display: grid;
       place-items: center;
       cursor: pointer;
       overflow: hidden;
       padding: 0;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28), inset 0 0.5px 0 rgba(255, 255, 255, 0.4);
       transition: transform 0.16s ease;
     }
 
@@ -197,18 +205,18 @@
     }
 
     .shot-btn {
-      width: 78px;
-      height: 78px;
+      width: 76px;
+      height: 76px;
       border-radius: 50%;
-      border: 3.5px solid rgba(255, 255, 255, 0.92);
-      background: rgba(255, 255, 255, 0.16);
-      -webkit-backdrop-filter: blur(8px);
-      backdrop-filter: blur(8px);
+      border: 2.5px solid rgba(255, 255, 255, 0.88);
+      background: rgba(255, 255, 255, 0.14);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
       padding: 5px;
       cursor: pointer;
       display: grid;
       place-items: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
       transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -229,7 +237,9 @@
       background: #e2ecff;
     }
 
-    /* VIEW 3: MOCKUP STUDIO */
+    /* =========================================================
+       VIEW 3: MOCKUP STUDIO V1.1 (ALL ULTRA-THIN LIQUID GLASS)
+       ========================================================= */
     .mockup-view {
       position: absolute;
       inset: 0;
@@ -238,7 +248,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: max(16px, calc(10px + env(safe-area-inset-top, 0px))) 18px max(106px, calc(96px + env(safe-area-inset-bottom, 0px)));
+      padding: max(14px, calc(8px + env(safe-area-inset-top, 0px))) 16px max(100px, calc(90px + env(safe-area-inset-bottom, 0px)));
       background: #0c1722;
       opacity: 0;
       pointer-events: none;
@@ -255,12 +265,11 @@
 
     .mockup-bg {
       position: absolute;
-      inset: -24px;
+      inset: -28px;
       background-size: cover;
       background-position: center;
-      filter: blur(36px) saturate(1.25) brightness(0.62);
       z-index: 0;
-      transition: background-image 0.35s ease;
+      transition: background 0.4s ease, filter 0.4s ease;
     }
 
     .mockup-top-bar {
@@ -271,61 +280,106 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px;
     }
 
-    .device-switch {
-      display: inline-flex;
-      padding: 3px;
+    /* Liquid Glass Segmented Toggle (Sliding Glass Lens Pill + Ultra-Thin Outline) */
+    .lg-segmented {
+      position: relative;
+      height: 36px;
       border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.28);
-      background: rgba(15, 24, 34, 0.42);
-      -webkit-backdrop-filter: blur(16px) saturate(1.3);
-      backdrop-filter: blur(16px) saturate(1.3);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      padding: 3px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      overflow: hidden;
+      isolation: isolate;
+      touch-action: none;
+      user-select: none;
+      background: rgba(255, 255, 255, 0.08);
+      -webkit-backdrop-filter: blur(20px) saturate(1.55);
+      backdrop-filter: blur(20px) saturate(1.55);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
+      box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.22),
+        inset 0 0.5px 0.5px rgba(255, 255, 255, 0.42),
+        inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.12);
     }
 
-    .device-chip {
+    .lg-seg-thumb {
+      position: absolute;
+      z-index: 1;
+      top: 3px;
+      left: 3px;
+      width: calc((100% - 6px) / 2);
+      height: calc(100% - 6px);
+      border-radius: 999px;
+      pointer-events: none;
+      will-change: transform;
+      background: radial-gradient(
+        120% 100% at 50% 0%,
+        rgba(255, 255, 255, 0.34) 0%,
+        rgba(255, 255, 255, 0.12) 60%,
+        rgba(255, 255, 255, 0.20) 100%
+      );
+      border: 0.5px solid rgba(255, 255, 255, 0.34);
+      box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.20),
+        inset 0 0.5px 0.5px rgba(255, 255, 255, 0.72),
+        inset 1.5px 0 2px rgba(130, 215, 255, 0.22),
+        inset -1.5px 0 2px rgba(255, 185, 215, 0.20);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .lg-seg-btn {
+      position: relative;
+      z-index: 2;
       border: 0;
       background: transparent;
-      color: rgba(255, 255, 255, 0.68);
+      color: rgba(255, 255, 255, 0.62);
       font: inherit;
-      font-size: 0.76rem;
-      font-weight: 600;
-      padding: 6px 12px;
+      font-size: 0.71rem;
+      font-weight: 550;
+      letter-spacing: -0.01em;
+      padding: 0 11px;
+      height: 100%;
       border-radius: 999px;
       cursor: pointer;
-      transition: background 0.2s ease, color 0.2s ease;
+      white-space: nowrap;
+      transition: color 0.22s ease;
     }
 
-    .device-chip.active {
-      background: rgba(255, 255, 255, 0.22);
-      color: #fff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    .lg-seg-btn.active {
+      color: #ffffff;
+      font-weight: 600;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
     }
 
     .save-mockup-btn {
-      border: 1px solid rgba(255, 255, 255, 0.34);
-      background: rgba(255, 255, 255, 0.16);
-      -webkit-backdrop-filter: blur(16px) saturate(1.4);
-      backdrop-filter: blur(16px) saturate(1.4);
+      height: 36px;
+      border: var(--hairline) solid rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.11);
+      -webkit-backdrop-filter: blur(20px) saturate(1.55);
+      backdrop-filter: blur(20px) saturate(1.55);
       color: #fff;
       font: inherit;
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       font-weight: 600;
-      padding: 8px 14px;
+      padding: 0 13px;
       border-radius: 999px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       cursor: pointer;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.22),
+        inset 0 0.5px 0.5px rgba(255, 255, 255, 0.45);
       transition: transform 0.15s ease, background 0.15s ease;
     }
 
     .save-mockup-btn:active {
       transform: scale(0.94);
-      background: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.22);
     }
 
     .mockup-stage {
@@ -335,7 +389,7 @@
       width: 100%;
       display: grid;
       place-items: center;
-      padding: 8px 0;
+      padding: 4px 0;
       min-height: 0;
     }
 
@@ -345,7 +399,87 @@
       width: auto;
       height: auto;
       object-fit: contain;
-      filter: drop-shadow(0 24px 42px rgba(0, 0, 0, 0.52));
+      filter: drop-shadow(0 22px 38px rgba(0, 0, 0, 0.52));
+    }
+
+    /* LIQUID GLASS SLIDERS (ULTRA-THIN HAIRLINE + LENS THUMB) */
+    .mockup-sliders {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 390px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .lg-slider-card {
+      position: relative;
+      height: 42px;
+      border-radius: 999px;
+      padding: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden;
+      isolation: isolate;
+      touch-action: none;
+      user-select: none;
+      cursor: grab;
+      background: rgba(255, 255, 255, 0.08);
+      -webkit-backdrop-filter: blur(20px) saturate(1.55);
+      backdrop-filter: blur(20px) saturate(1.55);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
+      box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.22),
+        inset 0 0.5px 0.5px rgba(255, 255, 255, 0.42),
+        inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.12);
+    }
+
+    .lg-slider-card:active {
+      cursor: grabbing;
+    }
+
+    .lg-slider-thumb {
+      position: absolute;
+      z-index: 1;
+      top: 3px;
+      left: 3px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      pointer-events: none;
+      will-change: transform;
+      background: radial-gradient(
+        circle at 35% 25%,
+        rgba(255, 255, 255, 0.44) 0%,
+        rgba(255, 255, 255, 0.12) 65%,
+        rgba(255, 255, 255, 0.22) 100%
+      );
+      border: 0.5px solid rgba(255, 255, 255, 0.42);
+      box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.22),
+        inset 0 0.5px 0.5px rgba(255, 255, 255, 0.78),
+        inset 1.5px 0 2px rgba(120, 210, 255, 0.28),
+        inset -1.5px 0 2px rgba(255, 180, 210, 0.24);
+    }
+
+    .lg-slider-label {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      text-align: center;
+      font-size: 0.68rem;
+      font-weight: 550;
+      letter-spacing: -0.01em;
+      color: rgba(255, 255, 255, 0.92);
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.42);
+      pointer-events: none;
+      padding: 0 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* CAPTURE FLASH OVERLAY */
@@ -368,8 +502,10 @@
     }
 
     /* =========================================================
-       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR
-       Multi-layer optical refraction + specular rim + squish pill
+       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (V1.1)
+       - Ultra-thin hairline outline
+       - Indicator Pill acts as true magnifying + refracting glass lens
+       - Delicate icon stroke (1.55) & refined typography
        ========================================================= */
     .nav-dock-wrap {
       position: fixed;
@@ -377,8 +513,8 @@
       bottom: max(16px, calc(10px + env(safe-area-inset-bottom, 0px)));
       left: 50%;
       transform: translateX(-50%);
-      width: min(356px, calc(100vw - 28px));
-      height: 70px;
+      width: min(344px, calc(100vw - 32px));
+      height: 66px;
       pointer-events: auto;
     }
 
@@ -387,7 +523,7 @@
       width: 100%;
       height: 100%;
       border-radius: 999px;
-      padding: 6px;
+      padding: 5px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       align-items: center;
@@ -397,87 +533,89 @@
       user-select: none;
       background: linear-gradient(
         180deg,
-        rgba(255, 255, 255, 0.16) 0%,
-        rgba(255, 255, 255, 0.06) 55%,
-        rgba(255, 255, 255, 0.12) 100%
+        rgba(var(--nav-primary-rgb), 0.44) 0%,
+        rgba(var(--nav-primary-rgb), 0.28) 55%,
+        rgba(var(--nav-primary-rgb), 0.40) 100%
       );
-      -webkit-backdrop-filter: blur(18px) saturate(1.45);
-      backdrop-filter: blur(18px) saturate(1.45);
-      border: 1px solid rgba(255, 255, 255, 0.34);
+      -webkit-backdrop-filter: blur(22px) saturate(1.55);
+      backdrop-filter: blur(22px) saturate(1.55);
+      border: var(--hairline) solid rgba(var(--nav-accent-rgb), 0.24);
       box-shadow:
-        0 14px 34px rgba(0, 0, 0, 0.32),
-        0 2px 8px rgba(0, 0, 0, 0.18),
-        inset 0 1.5px 1px rgba(255, 255, 255, 0.55),
-        inset 0 -1.5px 2px rgba(255, 255, 255, 0.16);
+        0 14px 32px rgba(0, 0, 0, 0.30),
+        0 2px 8px rgba(var(--nav-primary-rgb), 0.26),
+        inset 0 0.5px 0.5px rgba(255, 255, 255, 0.46),
+        inset 0 -0.5px 1px rgba(var(--nav-accent-rgb), 0.14);
+      transition: background 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease;
     }
 
-    /* Layer 1: Real-time pixel edge refraction & chromatic dispersion canvas */
+    /* Layer 1: Optical Lens Canvas (Pembesaran & Pembiasan di dalam Indicator Pill) */
     #glassLens {
       position: absolute;
-      z-index: 0;
+      z-index: 1;
       inset: 0;
       width: 100%;
       height: 100%;
       border-radius: inherit;
-      opacity: 0.78;
       pointer-events: none;
     }
 
-    /* Layer 2: Specular Fresnel rim highlight */
+    /* Layer 2: Ultra-thin Specular Fresnel Rim */
     .liquid-nav::before {
       content: "";
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      padding: 1px;
+      padding: 0.75px;
       background: linear-gradient(
         135deg,
-        rgba(255, 255, 255, 0.75) 0%,
-        rgba(255, 255, 255, 0.12) 40%,
-        rgba(170, 220, 255, 0.18) 70%,
-        rgba(255, 255, 255, 0.55) 100%
+        rgba(255, 255, 255, 0.55) 0%,
+        rgba(var(--nav-accent-rgb), 0.14) 38%,
+        rgba(var(--nav-primary-rgb), 0.08) 68%,
+        rgba(var(--nav-accent-rgb), 0.42) 100%
       );
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
       mask-composite: exclude;
       pointer-events: none;
-      z-index: 3;
+      z-index: 4;
     }
 
-    /* Layer 3: Morphing / Sliding Active Liquid Glass Pill */
+    /* Layer 3: Indicator Pill (True Glass Lens Capsule) */
     .active-pill {
       position: absolute;
-      z-index: 1;
-      top: 6px;
-      left: 6px;
-      width: calc((100% - 12px) / 3);
-      height: calc(100% - 12px);
+      z-index: 2;
+      top: 5px;
+      left: 5px;
+      width: calc((100% - 10px) / 3);
+      height: calc(100% - 10px);
       border-radius: 999px;
       pointer-events: none;
       transform-origin: center center;
       will-change: transform;
       background: radial-gradient(
-        120% 100% at 50% 0%,
-        rgba(255, 255, 255, 0.36) 0%,
-        rgba(255, 255, 255, 0.14) 55%,
-        rgba(255, 255, 255, 0.22) 100%
+        130% 100% at 50% 0%,
+        rgba(255, 255, 255, 0.24) 0%,
+        rgba(var(--nav-pill-rgb), 0.07) 58%,
+        rgba(var(--nav-accent-rgb), 0.16) 100%
       );
+      border: 0.5px solid rgba(255, 255, 255, 0.34);
       box-shadow:
-        0 6px 18px rgba(0, 0, 0, 0.22),
-        inset 0 1.5px 1px rgba(255, 255, 255, 0.82),
-        inset 0 -1px 1.5px rgba(255, 255, 255, 0.26),
-        inset 2px 0 3px rgba(130, 210, 255, 0.22),
-        inset -2px 0 3px rgba(255, 190, 210, 0.20);
+        0 4px 14px rgba(0, 0, 0, 0.18),
+        inset 0 0.75px 0.75px rgba(255, 255, 255, 0.76),
+        inset 0 -0.5px 0.75px rgba(var(--nav-accent-rgb), 0.24),
+        inset 2px 0 3px rgba(125, 215, 255, 0.24),
+        inset -2px 0 3px rgba(255, 185, 215, 0.22);
+      transition: background 0.45s ease, box-shadow 0.45s ease;
     }
 
-    /* Layer 4: Tab Items */
+    /* Layer 4: Tab Items (Refined Thin Line Icons & Clean Typography) */
     .nav-item {
       position: relative;
-      z-index: 2;
+      z-index: 3;
       height: 100%;
       border: 0;
       background: transparent;
-      color: rgba(255, 255, 255, 0.66);
+      color: rgba(var(--nav-muted-rgb), 0.68);
       font: inherit;
       display: flex;
       flex-direction: column;
@@ -486,30 +624,35 @@
       gap: 3px;
       padding: 4px 2px;
       cursor: pointer;
-      transition: color 0.22s ease, transform 0.18s ease;
+      transition: color 0.3s ease, transform 0.18s ease;
     }
 
     .nav-item svg {
-      width: 21px;
-      height: 21px;
-      stroke-width: 2;
-      transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+      width: 20px;
+      height: 20px;
+      stroke-width: 1.55;
+      transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), stroke-width 0.22s ease;
     }
 
     .nav-item span {
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: -0.005em;
       line-height: 1;
     }
 
     .nav-item.active {
-      color: #ffffff;
-      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.28);
+      color: rgb(var(--nav-accent-rgb));
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.24);
     }
 
     .nav-item.active svg {
-      transform: translateY(-1px) scale(1.06);
+      stroke-width: 1.85;
+      transform: translateY(-0.5px) scale(1.06);
+    }
+
+    .nav-item.active span {
+      font-weight: 600;
     }
 
     #photoInput,
@@ -538,13 +681,13 @@
 
       <div class="snap-top">
         <button class="glass-circle-btn" id="closeSnapBtn" type="button" aria-label="Kembali ke Explore">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
           </svg>
         </button>
 
         <button class="glass-circle-btn" id="flipCameraBtn" type="button" aria-label="Balik kamera">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
             <path d="M3 3v5h5"/>
             <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
@@ -556,7 +699,7 @@
       <div class="snap-controls">
         <div class="snap-gallery-wrap">
           <button class="photo-pick-btn" id="photoPickBtn" type="button" aria-label="Pilih foto dari galeri">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <rect width="18" height="18" x="3" y="3" rx="3" ry="3"/>
               <circle cx="9" cy="9" r="2"/>
               <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
@@ -572,18 +715,27 @@
       </div>
     </section>
 
-    <!-- 3. MOCKUP STUDIO VIEW -->
+    <!-- 3. MOCKUP STUDIO VIEW (V1.1) -->
     <section class="mockup-view" id="mockupView" aria-label="Pratinjau Mockup Perangkat">
       <div class="mockup-bg" id="mockupBg"></div>
 
       <div class="mockup-top-bar">
-        <div class="device-switch" role="group" aria-label="Pilih frame perangkat">
-          <button class="device-chip" id="chipIphone" type="button" data-device="iphone">iPhone</button>
-          <button class="device-chip" id="chipAndroid" type="button" data-device="android">Android</button>
+        <!-- Liquid Glass Toggle 1: Device -->
+        <div class="lg-segmented" id="deviceToggle" role="group" aria-label="Pilih frame perangkat">
+          <div class="lg-seg-thumb" id="deviceToggleThumb"></div>
+          <button class="lg-seg-btn" id="chipIphone" type="button">iPhone</button>
+          <button class="lg-seg-btn" id="chipAndroid" type="button">Android</button>
+        </div>
+
+        <!-- Liquid Glass Toggle 2: Navbar On / Off -->
+        <div class="lg-segmented" id="navToggle" role="group" aria-label="Tampilkan Navbar di Screenshot">
+          <div class="lg-seg-thumb" id="navToggleThumb"></div>
+          <button class="lg-seg-btn active" id="chipNavOn" type="button">Nav On</button>
+          <button class="lg-seg-btn" id="chipNavOff" type="button">Nav Off</button>
         </div>
 
         <button class="save-mockup-btn" id="saveMockupBtn" type="button">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" x2="12" y1="15" y2="3"/>
@@ -594,6 +746,19 @@
 
       <div class="mockup-stage">
         <canvas id="mockupPreviewCanvas"></canvas>
+      </div>
+
+      <!-- LIQUID GLASS SLIDERS: BACKGROUND & FRAME FINISH -->
+      <div class="mockup-sliders">
+        <div class="lg-slider-card" id="bgSlider" aria-label="Geser tema background">
+          <div class="lg-slider-thumb" id="bgSliderThumb"></div>
+          <span class="lg-slider-label" id="bgSliderLabel">BG: Photo Blur</span>
+        </div>
+
+        <div class="lg-slider-card" id="frameSlider" aria-label="Geser warna frame perangkat">
+          <div class="lg-slider-thumb" id="frameSliderThumb"></div>
+          <span class="lg-slider-label" id="frameSliderLabel">Frame: Titanium</span>
+        </div>
       </div>
     </section>
 
@@ -607,10 +772,10 @@
 
         <button class="nav-item active" type="button" data-tab="0" aria-label="Explore">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="7" height="7" x="3" y="3" rx="1.5"/>
-            <rect width="7" height="7" x="14" y="3" rx="1.5"/>
-            <rect width="7" height="7" x="14" y="14" rx="1.5"/>
-            <rect width="7" height="7" x="3" y="14" rx="1.5"/>
+            <rect width="7" height="7" x="3" y="3" rx="1.8"/>
+            <rect width="7" height="7" x="14" y="3" rx="1.8"/>
+            <rect width="7" height="7" x="14" y="14" rx="1.8"/>
+            <rect width="7" height="7" x="3" y="14" rx="1.8"/>
           </svg>
           <span>Explore</span>
         </button>
@@ -625,7 +790,7 @@
 
         <button class="nav-item" type="button" data-tab="2" aria-label="Mockup">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="14" height="20" x="5" y="2" rx="2.5" ry="2.5"/>
+            <rect width="14" height="20" x="5" y="2" rx="2.8" ry="2.8"/>
             <path d="M12 18h.01"/>
           </svg>
           <span>Mockup</span>
@@ -682,9 +847,23 @@
     const mockupView = document.getElementById("mockupView");
     const mockupBg = document.getElementById("mockupBg");
     const mockupPreviewCanvas = document.getElementById("mockupPreviewCanvas");
+    const deviceToggle = document.getElementById("deviceToggle");
+    const deviceToggleThumb = document.getElementById("deviceToggleThumb");
     const chipIphone = document.getElementById("chipIphone");
     const chipAndroid = document.getElementById("chipAndroid");
+    const navToggle = document.getElementById("navToggle");
+    const navToggleThumb = document.getElementById("navToggleThumb");
+    const chipNavOn = document.getElementById("chipNavOn");
+    const chipNavOff = document.getElementById("chipNavOff");
     const saveMockupBtn = document.getElementById("saveMockupBtn");
+
+    // Sliders
+    const bgSlider = document.getElementById("bgSlider");
+    const bgSliderThumb = document.getElementById("bgSliderThumb");
+    const bgSliderLabel = document.getElementById("bgSliderLabel");
+    const frameSlider = document.getElementById("frameSlider");
+    const frameSliderThumb = document.getElementById("frameSliderThumb");
+    const frameSliderLabel = document.getElementById("frameSliderLabel");
 
     const sceneCanvas = document.createElement("canvas");
     const ctx = sceneCanvas.getContext("2d");
@@ -697,6 +876,7 @@
     let images = [];
     let itemSnapshots = [];
     let backdropSnapshots = [];
+    let itemPalettes = [];
     const sessionObjectUrls = [];
 
     let width = 0;
@@ -724,6 +904,7 @@
     let wheelTimer = 0;
     let lastGlassDraw = 0;
     let glassImageData = null;
+    let lastAppliedPaletteIndex = -1;
 
     // Navigation & Pill Spring Physics
     let activeTab = 0; // 0: Explore, 1: Snap, 2: Mockup
@@ -731,6 +912,7 @@
     let pillTarget = 0;
     let pillVel = 0;
     let pillDragging = false;
+    let pillPressing = false;
     let pillDragStartX = 0;
     let pillDragStartPos = 0;
     let pillMoved = false;
@@ -742,11 +924,167 @@
     // Mockup state
     let detectedDevice = /Android/i.test(navigator.userAgent) ? "android" : "iphone";
     let currentMockupDevice = detectedDevice;
-    let capturedGalleryImage = null;
+    let includeNavInSS = true;
+    let capturedRawScene = null;
+    let capturedPalette = null;
+    let capturedImageUrl = "";
+
+    let bgPresetIndex = 0; // 0..4
+    let frameFinishIndex = 0; // 0..3
+
+    const frameFinishes = [
+      { name: "Titanium", stops: ["#686e78", "#2d3138", "#555b65", "#1e2126", "#4e545e"] },
+      { name: "Obsidian", stops: ["#383c42", "#141619", "#2a2d32", "#0c0d10", "#25282d"] },
+      { name: "Silver", stops: ["#e4e8ee", "#9da4ae", "#d2d7df", "#7e8590", "#c4cad3"] },
+      { name: "Desert Gold", stops: ["#cbb396", "#6e5a44", "#b3997b", "#4c3d2d", "#9f8568"] }
+    ];
 
     const wrapIndex = (index) =>
       ((index % items.length) + items.length) % items.length;
 
+    /* =========================================================
+       MATERIAL YOU COLOR EXTRACTION (DOMINANT PRIMARY & ACCENT)
+       ========================================================= */
+    function rgbToHsl(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h = 0, s = 0;
+      const l = (max + min) / 2;
+
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return [h * 360, s, l];
+    }
+
+    function hslToRgb(h, s, l) {
+      h = ((h % 360) + 360) % 360 / 360;
+      s = Math.max(0, Math.min(1, s));
+      l = Math.max(0, Math.min(1, l));
+
+      let r, g, b;
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1 / 6) return p + (q - p) * 6 * t;
+          if (t < 1 / 2) return q;
+          if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+          return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+      }
+      return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    }
+
+    function extractMaterialYouPalette(image) {
+      const sampleSize = 36;
+      const c = document.createElement("canvas");
+      c.width = sampleSize;
+      c.height = sampleSize;
+      const sctx = c.getContext("2d");
+      sctx.drawImage(image, 0, 0, sampleSize, sampleSize);
+
+      const data = sctx.getImageData(0, 0, sampleSize, sampleSize).data;
+      const buckets = new Map();
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const [h, s, l] = rgbToHsl(r, g, b);
+
+        const hBin = Math.floor(h / 15) % 24;
+        const score = 1 + s * 3.2 + (1 - Math.abs(l - 0.5)) * 1.4;
+
+        if (!buckets.has(hBin)) {
+          buckets.set(hBin, { weight: 0, rSum: 0, gSum: 0, bSum: 0, count: 0, hue: h });
+        }
+        const entry = buckets.get(hBin);
+        entry.weight += score;
+        entry.rSum += r * score;
+        entry.gSum += g * score;
+        entry.bSum += b * score;
+        entry.count += score;
+      }
+
+      const sorted = Array.from(buckets.values()).sort((a, b) => b.weight - a.weight);
+      const top = sorted[0] || { rSum: 30, gSum: 55, bSum: 85, count: 1 };
+
+      const domR = Math.round(top.rSum / top.count);
+      const domG = Math.round(top.gSum / top.count);
+      const domB = Math.round(top.bSum / top.count);
+      const [domH, domS] = rgbToHsl(domR, domG, domB);
+
+      let second = sorted.find((b) => {
+        const bR = b.rSum / b.count;
+        const bG = b.gSum / b.count;
+        const bB = b.bSum / b.count;
+        const [bH] = rgbToHsl(bR, bG, bB);
+        const diff = Math.min(Math.abs(bH - domH), 360 - Math.abs(bH - domH));
+        return diff >= 40;
+      });
+
+      let accH = (domH + 34) % 360;
+      let accS = Math.max(0.58, domS);
+      if (second) {
+        const [sH, sS] = rgbToHsl(
+          second.rSum / second.count,
+          second.gSum / second.count,
+          second.bSum / second.count
+        );
+        accH = sH;
+        accS = Math.max(0.62, sS);
+      }
+
+      const primaryRgb = hslToRgb(domH, Math.min(0.78, Math.max(0.32, domS * 0.9)), 0.24);
+      const accentRgb = hslToRgb(accH, Math.min(0.95, Math.max(0.65, accS)), 0.84);
+      const mutedRgb = hslToRgb(domH, Math.min(0.45, domS * 0.5), 0.86);
+      const pillRgb = hslToRgb(accH, Math.min(0.85, accS), 0.72);
+
+      const vibrantRgb = hslToRgb(domH, Math.min(0.92, Math.max(0.48, domS)), 0.46);
+      const deepDarkRgb = hslToRgb(domH, Math.min(0.75, Math.max(0.30, domS)), 0.12);
+      const softPastelRgb = hslToRgb(domH, Math.min(0.55, Math.max(0.25, domS * 0.7)), 0.86);
+      const secondaryRgb = hslToRgb(accH, Math.min(0.88, accS), 0.52);
+
+      return {
+        primary: primaryRgb,
+        accent: accentRgb,
+        muted: mutedRgb,
+        pill: pillRgb,
+        vibrant: vibrantRgb,
+        deepDark: deepDarkRgb,
+        softPastel: softPastelRgb,
+        secondary: secondaryRgb
+      };
+    }
+
+    function applyNavMaterialYouPalette(palette) {
+      if (!palette) return;
+      const root = document.documentElement;
+      root.style.setProperty("--nav-primary-rgb", palette.primary.join(", "));
+      root.style.setProperty("--nav-accent-rgb", palette.accent.join(", "));
+      root.style.setProperty("--nav-muted-rgb", palette.muted.join(", "));
+      root.style.setProperty("--nav-pill-rgb", palette.pill.join(", "));
+    }
+
+    /* =========================================================
+       WEBGL SHADERS (CONCAVE LENS FRAME)
+       ========================================================= */
     const vertexSource = `#version 300 es
       precision highp float;
 
@@ -999,6 +1337,8 @@
       if (!images.length || !cardWidth || !cardHeight) return;
       itemSnapshots = images.map((image) => createSnapshotForImage(image));
       backdropSnapshots = images.map((image) => createBackdropForImage(image));
+      itemPalettes = images.map((image) => extractMaterialYouPalette(image));
+      lastAppliedPaletteIndex = -1;
     }
 
     /* =========================================================
@@ -1015,6 +1355,7 @@
           images.push(loadedImg);
           itemSnapshots.push(createSnapshotForImage(loadedImg));
           backdropSnapshots.push(createBackdropForImage(loadedImg));
+          itemPalettes.push(extractMaterialYouPalette(loadedImg));
         } catch (err) {
           console.error("Gagal memuat foto baru:", err);
         }
@@ -1125,7 +1466,7 @@
     });
 
     /* =========================================================
-       MOCKUP CAPTURE & COMPOSITOR (STATUS BAR + DEVICE FRAME)
+       MOCKUP CAPTURE & COMPOSITOR (V1.1 MATERIAL YOU + SLIDERS)
        ========================================================= */
     function triggerFlashEffect() {
       captureFlash.classList.remove("flash-anim");
@@ -1137,7 +1478,6 @@
     }
 
     function captureCurrentExploreScreen() {
-      // Pastikan frame WebGL terbaru ter-render ke visibleCanvas sebelum diambil
       renderWebGLScene(performance.now());
 
       const w = visibleCanvas.width;
@@ -1147,47 +1487,78 @@
       shot.height = h;
       const sctx = shot.getContext("2d");
 
-      // 1. Gambar penuh scene WebGL (backdrop blur + kartu aktif + efek lensa)
       sctx.drawImage(visibleCanvas, 0, 0, w, h);
-
-      // 2. Gambar mini floating navigation pill di bagian bawah layar SS
-      const pillW = Math.min(w * 0.84, 340 * dpr);
-      const pillH = 54 * dpr;
-      const pillX = (w - pillW) / 2;
-      const pillY = h - pillH - 22 * dpr;
-
-      sctx.save();
-      drawRoundedRect(sctx, pillX, pillY, pillW, pillH, pillH / 2);
-      sctx.fillStyle = "rgba(255, 255, 255, 0.16)";
-      sctx.fill();
-      sctx.lineWidth = 1.2 * dpr;
-      sctx.strokeStyle = "rgba(255, 255, 255, 0.36)";
-      sctx.stroke();
-
-      // Active capsule di Explore
-      const tabW = (pillW - 10 * dpr) / 3;
-      drawRoundedRect(sctx, pillX + 5 * dpr, pillY + 5 * dpr, tabW, pillH - 10 * dpr, (pillH - 10 * dpr) / 2);
-      sctx.fillStyle = "rgba(255, 255, 255, 0.24)";
-      sctx.fill();
-
-      const labels = ["Explore", "Snap", "Mockup"];
-      sctx.font = `600 ${11 * dpr}px -apple-system, system-ui, sans-serif`;
-      sctx.textAlign = "center";
-      sctx.textBaseline = "middle";
-      labels.forEach((label, idx) => {
-        sctx.fillStyle = idx === 0 ? "#ffffff" : "rgba(255, 255, 255, 0.65)";
-        sctx.fillText(label, pillX + 5 * dpr + tabW * (idx + 0.5), pillY + pillH * 0.52);
-      });
-      sctx.restore();
-
-      capturedGalleryImage = shot;
+      capturedRawScene = shot;
 
       const activeIndex = wrapIndex(Math.round(scroll));
-      if (items[activeIndex]) {
-        mockupBg.style.backgroundImage = `url("${items[activeIndex].image}")`;
-      }
+      capturedPalette = itemPalettes[activeIndex] || {
+        primary: [24, 42, 62],
+        accent: [255, 255, 255],
+        muted: [222, 232, 245],
+        pill: [255, 255, 255],
+        vibrant: [56, 118, 178],
+        deepDark: [12, 22, 34],
+        softPastel: [224, 236, 248],
+        secondary: [100, 175, 235]
+      };
+      capturedImageUrl = items[activeIndex]?.image || "";
 
+      updateMockupBackgroundDOM();
       renderDeviceMockup();
+    }
+
+    function getBackgroundPresets(pal) {
+      const p = pal || {
+        vibrant: [56, 118, 178],
+        secondary: [100, 175, 235],
+        deepDark: [12, 22, 34],
+        softPastel: [224, 236, 248]
+      };
+      return [
+        { name: "Photo Blur", type: "photo" },
+        {
+          name: "Vibrant You",
+          type: "gradient",
+          c1: `rgb(${p.vibrant.join(",")})`,
+          c2: `rgb(${p.secondary.join(",")})`,
+          c3: `rgb(${p.deepDark.join(",")})`
+        },
+        {
+          name: "Deep Tonal",
+          type: "gradient",
+          c1: `rgb(${p.deepDark.join(",")})`,
+          c2: `rgb(${p.primary.join(",")})`,
+          c3: "#070b10"
+        },
+        {
+          name: "Soft Pastel",
+          type: "gradient",
+          c1: `rgb(${p.softPastel.join(",")})`,
+          c2: "#f7f9fc",
+          c3: `rgb(${p.muted.join(",")})`
+        },
+        {
+          name: "Studio Dark",
+          type: "gradient",
+          c1: "#1f242b",
+          c2: "#101318",
+          c3: "#07090c"
+        }
+      ];
+    }
+
+    function updateMockupBackgroundDOM() {
+      const presets = getBackgroundPresets(capturedPalette);
+      const preset = presets[bgPresetIndex] || presets[0];
+      bgSliderLabel.textContent = `BG: ${preset.name}`;
+
+      if (preset.type === "photo" && capturedImageUrl) {
+        mockupBg.style.backgroundImage = `url("${capturedImageUrl}")`;
+        mockupBg.style.filter = "blur(36px) saturate(1.25) brightness(0.62)";
+      } else {
+        mockupBg.style.backgroundImage = `radial-gradient(circle at 22% 18%, ${preset.c1} 0%, ${preset.c2} 52%, ${preset.c3} 100%)`;
+        mockupBg.style.filter = "none";
+      }
     }
 
     function formatCurrentTime() {
@@ -1197,113 +1568,197 @@
       return `${h}:${m}`;
     }
 
+    function drawBackgroundOnExportCanvas(mctx, outW, outH) {
+      const presets = getBackgroundPresets(capturedPalette);
+      const preset = presets[bgPresetIndex] || presets[0];
+
+      if (preset.type === "photo" && images.length) {
+        const activeIndex = wrapIndex(Math.round(scroll));
+        const blurSnap = backdropSnapshots[activeIndex];
+        if (blurSnap) {
+          drawImageToContext(mctx, blurSnap, 0, 0, outW, outH);
+          mctx.fillStyle = "rgba(6, 12, 20, 0.28)";
+          mctx.fillRect(0, 0, outW, outH);
+          return;
+        }
+      }
+
+      const grad = mctx.createLinearGradient(0, 0, outW, outH);
+      grad.addColorStop(0, preset.c1 || "#1d2d3b");
+      grad.addColorStop(0.52, preset.c2 || "#121e2b");
+      grad.addColorStop(1, preset.c3 || "#071019");
+      mctx.fillStyle = grad;
+      mctx.fillRect(0, 0, outW, outH);
+    }
+
+    function syncSegmentedToggles() {
+      const isIphone = currentMockupDevice === "iphone";
+      chipIphone.classList.toggle("active", isIphone);
+      chipAndroid.classList.toggle("active", !isIphone);
+      deviceToggleThumb.style.transform = isIphone
+        ? "translate3d(0%, 0, 0)"
+        : "translate3d(100%, 0, 0)";
+
+      chipNavOn.classList.toggle("active", includeNavInSS);
+      chipNavOff.classList.toggle("active", !includeNavInSS);
+      navToggleThumb.style.transform = includeNavInSS
+        ? "translate3d(0%, 0, 0)"
+        : "translate3d(100%, 0, 0)";
+    }
+
     function renderDeviceMockup() {
-      if (!capturedGalleryImage) return;
+      if (!capturedRawScene) return;
 
-      chipIphone.classList.toggle("active", currentMockupDevice === "iphone");
-      chipAndroid.classList.toggle("active", currentMockupDevice === "android");
+      syncSegmentedToggles();
 
-      // Ukuran kanvas ekspor resolusi tinggi (1200 x 2400)
+      const finish = frameFinishes[frameFinishIndex] || frameFinishes[0];
+      frameSliderLabel.textContent = `Frame: ${finish.name}`;
+
       const outW = 1200;
       const outH = 2400;
       mockupPreviewCanvas.width = outW;
       mockupPreviewCanvas.height = outH;
       const mctx = mockupPreviewCanvas.getContext("2d");
-      mctx.clearRect(0, 0, outW, outH);
+
+      drawBackgroundOnExportCanvas(mctx, outW, outH);
 
       const isIphone = currentMockupDevice === "iphone";
-      const bodyW = 920;
-      const bodyH = isIphone ? 1980 : 2020;
+      const bodyW = 900;
+      const bodyH = isIphone ? 1940 : 1980;
       const bodyX = (outW - bodyW) / 2;
       const bodyY = (outH - bodyH) / 2;
-      const outerRadius = isIphone ? 148 : 112;
-      const bezel = isIphone ? 30 : 24;
+      const outerRadius = isIphone ? 144 : 108;
+      const bezel = isIphone ? 28 : 22;
       const screenX = bodyX + bezel;
       const screenY = bodyY + bezel;
       const screenW = bodyW - bezel * 2;
       const screenH = bodyH - bezel * 2;
       const screenRadius = outerRadius - bezel;
 
-      // 1. Tombol samping hardware
-      mctx.fillStyle = isIphone ? "#3a3f47" : "#2f343b";
+      // Drop shadow bodi HP
+      mctx.save();
+      mctx.shadowColor = "rgba(0, 0, 0, 0.55)";
+      mctx.shadowBlur = 70;
+      mctx.shadowOffsetY = 34;
+      drawRoundedRect(mctx, bodyX, bodyY, bodyW, bodyH, outerRadius);
+      mctx.fillStyle = "#111317";
+      mctx.fill();
+      mctx.restore();
+
+      // Tombol samping hardware
+      mctx.fillStyle = finish.stops[1];
       if (isIphone) {
-        // Volume & Power buttons iPhone
-        drawRoundedRect(mctx, bodyX - 7, bodyY + 340, 7, 70, 3);
+        drawRoundedRect(mctx, bodyX - 7, bodyY + 330, 7, 68, 3);
         mctx.fill();
-        drawRoundedRect(mctx, bodyX - 7, bodyY + 450, 7, 130, 3);
+        drawRoundedRect(mctx, bodyX - 7, bodyY + 440, 7, 126, 3);
         mctx.fill();
-        drawRoundedRect(mctx, bodyX - 7, bodyY + 610, 7, 130, 3);
+        drawRoundedRect(mctx, bodyX - 7, bodyY + 595, 7, 126, 3);
         mctx.fill();
-        drawRoundedRect(mctx, bodyX + bodyW, bodyY + 490, 7, 190, 3);
+        drawRoundedRect(mctx, bodyX + bodyW, bodyY + 480, 7, 185, 3);
         mctx.fill();
       } else {
-        // Volume & Power buttons Android (kanan)
-        drawRoundedRect(mctx, bodyX + bodyW, bodyY + 380, 7, 180, 3);
+        drawRoundedRect(mctx, bodyX + bodyW, bodyY + 370, 7, 175, 3);
         mctx.fill();
-        drawRoundedRect(mctx, bodyX + bodyW, bodyY + 610, 7, 105, 3);
+        drawRoundedRect(mctx, bodyX + bodyW, bodyY + 595, 7, 102, 3);
         mctx.fill();
       }
 
-      // 2. Bodi luar Titanium / Aluminium Frame
+      // Frame bodi logam
       const frameGrad = mctx.createLinearGradient(bodyX, bodyY, bodyX + bodyW, bodyY + bodyH);
-      if (isIphone) {
-        frameGrad.addColorStop(0, "#5b616b");
-        frameGrad.addColorStop(0.25, "#2b2f36");
-        frameGrad.addColorStop(0.5, "#4a4f58");
-        frameGrad.addColorStop(0.8, "#1e2126");
-        frameGrad.addColorStop(1, "#484d56");
-      } else {
-        frameGrad.addColorStop(0, "#434850");
-        frameGrad.addColorStop(0.5, "#1f2328");
-        frameGrad.addColorStop(1, "#393e46");
-      }
+      frameGrad.addColorStop(0, finish.stops[0]);
+      frameGrad.addColorStop(0.25, finish.stops[1]);
+      frameGrad.addColorStop(0.5, finish.stops[2]);
+      frameGrad.addColorStop(0.8, finish.stops[3]);
+      frameGrad.addColorStop(1, finish.stops[4]);
 
       drawRoundedRect(mctx, bodyX, bodyY, bodyW, bodyH, outerRadius);
       mctx.fillStyle = frameGrad;
       mctx.fill();
 
-      // Bezel hitam bagian dalam
+      // Bezel dalam layar
       drawRoundedRect(mctx, bodyX + 8, bodyY + 8, bodyW - 16, bodyH - 16, outerRadius - 6);
-      mctx.fillStyle = "#080a0d";
+      mctx.fillStyle = "#07090c";
       mctx.fill();
 
-      // 3. Clipping area layar HP & gambar hasil SS galeri
+      // Area Layar HP
       mctx.save();
       drawRoundedRect(mctx, screenX, screenY, screenW, screenH, screenRadius);
       mctx.clip();
 
-      drawImageToContext(mctx, capturedGalleryImage, screenX, screenY, screenW, screenH);
+      drawImageToContext(mctx, capturedRawScene, screenX, screenY, screenW, screenH);
 
-      // Gradasi gelap tipis di puncak status bar agar ikon selalu terbaca jelas
+      // Opsional: Gambar Floating Liquid Glass Navbar Material You di dalam SS (outline tipis)
+      if (includeNavInSS) {
+        const pal = capturedPalette || {
+          primary: [24, 42, 62],
+          accent: [255, 255, 255],
+          muted: [222, 232, 245],
+          pill: [255, 255, 255]
+        };
+
+        const navW = screenW * 0.82;
+        const navH = 108;
+        const navX = screenX + (screenW - navW) / 2;
+        const navY = screenY + screenH - navH - 52;
+
+        mctx.save();
+        drawRoundedRect(mctx, navX, navY, navW, navH, navH / 2);
+        mctx.fillStyle = `rgba(${pal.primary.join(",")}, 0.54)`;
+        mctx.fill();
+        mctx.lineWidth = 1.25;
+        mctx.strokeStyle = `rgba(${pal.accent.join(",")}, 0.30)`;
+        mctx.stroke();
+
+        // Active Capsule Lens di Explore
+        const tabW = (navW - 16) / 3;
+        drawRoundedRect(mctx, navX + 8, navY + 8, tabW, navH - 16, (navH - 16) / 2);
+        mctx.fillStyle = `rgba(${pal.pill.join(",")}, 0.22)`;
+        mctx.fill();
+        mctx.lineWidth = 1;
+        mctx.strokeStyle = "rgba(255, 255, 255, 0.36)";
+        mctx.stroke();
+
+        const labels = ["Explore", "Snap", "Mockup"];
+        mctx.font = "550 22px -apple-system, system-ui, sans-serif";
+        mctx.textAlign = "center";
+        mctx.textBaseline = "middle";
+        labels.forEach((label, idx) => {
+          mctx.fillStyle =
+            idx === 0
+              ? `rgb(${pal.accent.join(",")})`
+              : `rgba(${pal.muted.join(",")}, 0.70)`;
+          mctx.fillText(label, navX + 8 + tabW * (idx + 0.5), navY + navH * 0.52);
+        });
+        mctx.restore();
+      }
+
+      // Gradasi gelap tipis di status bar
       const topStatusGrad = mctx.createLinearGradient(0, screenY, 0, screenY + 130);
       topStatusGrad.addColorStop(0, "rgba(0, 0, 0, 0.34)");
       topStatusGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
       mctx.fillStyle = topStatusGrad;
       mctx.fillRect(screenX, screenY, screenW, 130);
 
-      // 4. Simulasi Status Bar Asli (Jam, Sinyal, Wi-Fi, Baterai) & Notch/Punch-hole
+      // Status Bar Asli
       const timeStr = formatCurrentTime();
       mctx.fillStyle = "#ffffff";
       mctx.textBaseline = "middle";
 
       if (isIphone) {
-        // Jam di kiri atas
-        mctx.font = "700 34px -apple-system, BlinkMacSystemFont, sans-serif";
+        mctx.font = "700 33px -apple-system, BlinkMacSystemFont, sans-serif";
         mctx.textAlign = "left";
-        mctx.fillText(timeStr, screenX + 68, screenY + 66);
+        mctx.fillText(timeStr, screenX + 66, screenY + 64);
 
-        // Dynamic Island
-        const islandW = 246;
-        const islandH = 72;
+        const islandW = 240;
+        const islandH = 70;
         const islandX = screenX + (screenW - islandW) / 2;
         const islandY = screenY + 28;
         drawRoundedRect(mctx, islandX, islandY, islandW, islandH, islandH / 2);
         mctx.fillStyle = "#000000";
         mctx.fill();
 
-        // Lensa kamera depan di dalam Dynamic Island
         mctx.beginPath();
-        mctx.arc(islandX + islandW - 44, islandY + islandH / 2, 14, 0, Math.PI * 2);
+        mctx.arc(islandX + islandW - 44, islandY + islandH / 2, 13, 0, Math.PI * 2);
         mctx.fillStyle = "#111927";
         mctx.fill();
         mctx.beginPath();
@@ -1311,79 +1766,70 @@
         mctx.fillStyle = "rgba(95, 155, 255, 0.45)";
         mctx.fill();
 
-        // Ikon Sinyal + 5G/WiFi + Baterai iOS di kanan atas
-        const rightBaseX = screenX + screenW - 64;
-        const statusCenterY = screenY + 66;
+        const rightBaseX = screenX + screenW - 62;
+        const statusCenterY = screenY + 64;
 
-        // Baterai
-        drawRoundedRect(mctx, rightBaseX - 54, statusCenterY - 13, 48, 26, 7);
+        drawRoundedRect(mctx, rightBaseX - 52, statusCenterY - 12, 46, 24, 6);
         mctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
         mctx.lineWidth = 2.5;
         mctx.stroke();
-        drawRoundedRect(mctx, rightBaseX - 50, statusCenterY - 9, 38, 18, 4);
+        drawRoundedRect(mctx, rightBaseX - 48, statusCenterY - 8, 36, 16, 4);
         mctx.fillStyle = "#ffffff";
         mctx.fill();
-        mctx.fillRect(rightBaseX - 3, statusCenterY - 5, 3, 10);
+        mctx.fillRect(rightBaseX - 3, statusCenterY - 4, 3, 8);
 
-        // Bar Sinyal
         for (let b = 0; b < 4; b++) {
-          const bh = 9 + b * 4.5;
-          drawRoundedRect(mctx, rightBaseX - 115 + b * 10, statusCenterY + 12 - bh, 6.5, bh, 2);
+          const bh = 9 + b * 4.2;
+          drawRoundedRect(mctx, rightBaseX - 110 + b * 9.5, statusCenterY + 11 - bh, 6, bh, 2);
           mctx.fill();
         }
 
-        // Home Indicator iOS di bawah
         drawRoundedRect(
           mctx,
-          screenX + (screenW - 310) / 2,
-          screenY + screenH - 34,
-          310,
-          11,
-          5.5
+          screenX + (screenW - 300) / 2,
+          screenY + screenH - 32,
+          300,
+          10,
+          5
         );
         mctx.fillStyle = "rgba(255, 255, 255, 0.85)";
         mctx.fill();
       } else {
-        // Android Status Bar (Jam di kiri, Punch-hole tengah, Sinyal & Baterai di kanan)
-        mctx.font = "600 31px 'Segoe UI', Roboto, sans-serif";
+        mctx.font = "600 30px 'Segoe UI', Roboto, sans-serif";
         mctx.textAlign = "left";
-        mctx.fillText(timeStr, screenX + 54, screenY + 58);
+        mctx.fillText(timeStr, screenX + 52, screenY + 56);
 
-        // Punch-hole camera tengah atas
         const holeX = screenX + screenW / 2;
-        const holeY = screenY + 56;
+        const holeY = screenY + 54;
         mctx.beginPath();
-        mctx.arc(holeX, holeY, 21, 0, Math.PI * 2);
+        mctx.arc(holeX, holeY, 20, 0, Math.PI * 2);
         mctx.fillStyle = "#000000";
         mctx.fill();
         mctx.beginPath();
-        mctx.arc(holeX - 4, holeY - 4, 6, 0, Math.PI * 2);
+        mctx.arc(holeX - 4, holeY - 4, 5.5, 0, Math.PI * 2);
         mctx.fillStyle = "rgba(100, 170, 255, 0.35)";
         mctx.fill();
 
-        // Baterai & Sinyal Android di kanan atas
-        const rightBaseX = screenX + screenW - 52;
-        const statusCenterY = screenY + 58;
+        const rightBaseX = screenX + screenW - 50;
+        const statusCenterY = screenY + 56;
 
-        drawRoundedRect(mctx, rightBaseX - 24, statusCenterY - 14, 22, 28, 4);
+        drawRoundedRect(mctx, rightBaseX - 22, statusCenterY - 13, 20, 26, 4);
         mctx.fillStyle = "#ffffff";
         mctx.fill();
-        mctx.fillRect(rightBaseX - 17, statusCenterY - 18, 8, 4);
+        mctx.fillRect(rightBaseX - 16, statusCenterY - 17, 8, 4);
 
-        // Segitiga sinyal seluler
         mctx.beginPath();
-        mctx.moveTo(rightBaseX - 64, statusCenterY + 13);
-        mctx.lineTo(rightBaseX - 38, statusCenterY + 13);
-        mctx.lineTo(rightBaseX - 38, statusCenterY - 13);
+        mctx.moveTo(rightBaseX - 60, statusCenterY + 12);
+        mctx.lineTo(rightBaseX - 36, statusCenterY + 12);
+        mctx.lineTo(rightBaseX - 36, statusCenterY - 12);
         mctx.closePath();
         mctx.fill();
 
-        // Gesture pill Android di bawah
         drawRoundedRect(
           mctx,
-          screenX + (screenW - 240) / 2,
-          screenY + screenH - 26,
-          240,
+          screenX + (screenW - 230) / 2,
+          screenY + screenH - 25,
+          230,
           8,
           4
         );
@@ -1391,7 +1837,7 @@
         mctx.fill();
       }
 
-      // 5. Pantulan kilau kaca layar halus
+      // Pantulan kaca layar
       const glassSheen = mctx.createLinearGradient(screenX, screenY, screenX + screenW * 0.7, screenY + screenH * 0.45);
       glassSheen.addColorStop(0, "rgba(255, 255, 255, 0.11)");
       glassSheen.addColorStop(0.45, "rgba(255, 255, 255, 0.02)");
@@ -1402,15 +1848,138 @@
       mctx.restore();
     }
 
-    chipIphone.addEventListener("click", () => {
-      currentMockupDevice = "iphone";
+    // Event klik & geser pada Segmented Liquid Glass Toggle (Device & Nav On/Off)
+    function bindSegmentedToggle(containerEl, onSelectIndex) {
+      let startX = 0;
+      let draggingSeg = false;
+
+      containerEl.addEventListener("pointerdown", (e) => {
+        startX = e.clientX;
+        draggingSeg = true;
+      });
+
+      containerEl.addEventListener("pointerup", (e) => {
+        if (!draggingSeg) return;
+        draggingSeg = false;
+        const rect = containerEl.getBoundingClientRect();
+        const relX = e.clientX - rect.left;
+        const idx = relX < rect.width / 2 ? 0 : 1;
+        onSelectIndex(idx);
+      });
+
+      containerEl.addEventListener("pointercancel", () => {
+        draggingSeg = false;
+      });
+    }
+
+    bindSegmentedToggle(deviceToggle, (idx) => {
+      currentMockupDevice = idx === 0 ? "iphone" : "android";
       renderDeviceMockup();
     });
 
-    chipAndroid.addEventListener("click", () => {
-      currentMockupDevice = "android";
+    bindSegmentedToggle(navToggle, (idx) => {
+      includeNavInSS = idx === 0;
       renderDeviceMockup();
     });
+
+    /* =========================================================
+       LIQUID GLASS SLIDERS (INTERACTIVE DRAG & TAP STEPPING)
+       ========================================================= */
+    function bindLiquidSlider(sliderEl, thumbEl, getStepsCount, onStepChange) {
+      let isSliding = false;
+      let startX = 0;
+      let startRatio = 0;
+      let currentRatio = 0;
+      let moved = false;
+
+      function positionThumb(ratio, stretching = false) {
+        const rect = sliderEl.getBoundingClientRect();
+        const thumbW = 34;
+        const maxTravel = Math.max(1, rect.width - thumbW - 6);
+        const x = Math.max(0, Math.min(maxTravel, ratio * maxTravel));
+        const sx = stretching ? 1.15 : 1;
+        const sy = stretching ? 0.92 : 1;
+        thumbEl.style.transform = `translate3d(${x}px, 0, 0) scale(${sx}, ${sy})`;
+      }
+
+      sliderEl.addEventListener("pointerdown", (e) => {
+        isSliding = true;
+        moved = false;
+        startX = e.clientX;
+        const steps = getStepsCount();
+        startRatio = steps > 1 ? currentRatio : 0;
+        sliderEl.setPointerCapture(e.pointerId);
+        positionThumb(currentRatio, true);
+      });
+
+      sliderEl.addEventListener("pointermove", (e) => {
+        if (!isSliding) return;
+        const rect = sliderEl.getBoundingClientRect();
+        const maxTravel = Math.max(1, rect.width - 40);
+        const dx = e.clientX - startX;
+        if (Math.abs(dx) > 4) moved = true;
+
+        currentRatio = Math.max(0, Math.min(1, startRatio + dx / maxTravel));
+        positionThumb(currentRatio, true);
+
+        const steps = getStepsCount();
+        const idx = Math.min(steps - 1, Math.floor(currentRatio * steps));
+        onStepChange(idx);
+      });
+
+      function endSlide() {
+        if (!isSliding) return;
+        isSliding = false;
+        const steps = getStepsCount();
+        if (!moved) {
+          const curIdx = Math.min(steps - 1, Math.round(currentRatio * (steps - 1)));
+          const nextIdx = (curIdx + 1) % steps;
+          currentRatio = steps > 1 ? nextIdx / (steps - 1) : 0;
+          onStepChange(nextIdx);
+        } else {
+          const snapIdx = Math.min(steps - 1, Math.round(currentRatio * (steps - 1)));
+          currentRatio = steps > 1 ? snapIdx / (steps - 1) : 0;
+          onStepChange(snapIdx);
+        }
+        positionThumb(currentRatio, false);
+      }
+
+      sliderEl.addEventListener("pointerup", endSlide);
+      sliderEl.addEventListener("pointercancel", endSlide);
+
+      return {
+        sync(idx) {
+          const steps = getStepsCount();
+          currentRatio = steps > 1 ? idx / (steps - 1) : 0;
+          positionThumb(currentRatio, false);
+        }
+      };
+    }
+
+    const bgSliderCtrl = bindLiquidSlider(
+      bgSlider,
+      bgSliderThumb,
+      () => 5,
+      (idx) => {
+        if (bgPresetIndex !== idx) {
+          bgPresetIndex = idx;
+          updateMockupBackgroundDOM();
+          renderDeviceMockup();
+        }
+      }
+    );
+
+    const frameSliderCtrl = bindLiquidSlider(
+      frameSlider,
+      frameSliderThumb,
+      () => frameFinishes.length,
+      (idx) => {
+        if (frameFinishIndex !== idx) {
+          frameFinishIndex = idx;
+          renderDeviceMockup();
+        }
+      }
+    );
 
     saveMockupBtn.addEventListener("click", () => {
       if (!mockupPreviewCanvas.width) return;
@@ -1448,8 +2017,7 @@
         snapView.classList.add("active");
         startCamera();
       } else if (clamped === 2) {
-        // Jika datang dari Explore (atau belum pernah capture), langsung SS layar galeri
-        if (!options.skipCapture && (prevTab === 0 || !capturedGalleryImage)) {
+        if (!options.skipCapture && (prevTab === 0 || !capturedRawScene)) {
           triggerFlashEffect();
           captureCurrentExploreScreen();
         }
@@ -1457,6 +2025,10 @@
         snapView.classList.remove("active");
         stage.classList.add("is-hidden");
         mockupView.classList.add("active");
+        requestAnimationFrame(() => {
+          bgSliderCtrl.sync(bgPresetIndex);
+          frameSliderCtrl.sync(frameFinishIndex);
+        });
       }
     }
 
@@ -1468,10 +2040,11 @@
       });
     });
 
-    // Gesture geser pada Floating Liquid Glass Bar (termasuk Slide-to-Mockup)
+    // Gesture geser & tekan pada Floating Liquid Glass Bar
     liquidNav.addEventListener("pointerdown", (event) => {
       if (event.button !== undefined && event.button !== 0) return;
       pillDragging = true;
+      pillPressing = true;
       pillMoved = false;
       pillDragStartX = event.clientX;
       pillDragStartPos = pillPos;
@@ -1482,7 +2055,7 @@
     liquidNav.addEventListener("pointermove", (event) => {
       if (!pillDragging) return;
       const rect = liquidNav.getBoundingClientRect();
-      const tabWidth = (rect.width - 12) / 3;
+      const tabWidth = (rect.width - 10) / 3;
       const dx = event.clientX - pillDragStartX;
 
       if (Math.abs(dx) > 6) {
@@ -1490,7 +2063,6 @@
       }
 
       const rawPos = pillDragStartPos + dx / tabWidth;
-      // Rubber-band resistance di ujung kiri/kanan
       if (rawPos < 0) {
         pillPos = rawPos * 0.25;
       } else if (rawPos > 2) {
@@ -1508,6 +2080,7 @@
     function finishPillDrag() {
       if (!pillDragging) return;
       pillDragging = false;
+      pillPressing = false;
 
       if (pillMoved) {
         const targetTab = Math.max(0, Math.min(2, Math.round(pillPos)));
@@ -1535,13 +2108,13 @@
       }
 
       const navRect = liquidNav.getBoundingClientRect();
-      const tabW = (navRect.width - 12) / 3;
+      const tabW = (navRect.width - 10) / 3;
       const translateX = pillPos * tabW;
 
-      // Efek elastis (squish & stretch) saat kapsul bergerak cepat atau ditarik
-      const speed = pillDragging ? 0.35 : Math.min(1.5, Math.abs(pillVel) * 0.14);
-      const scaleX = 1 + speed * 0.11;
-      const scaleY = 1 - speed * 0.05;
+      const speed = pillDragging ? 0.42 : Math.min(1.5, Math.abs(pillVel) * 0.15);
+      const pressBoost = pillPressing ? 1.06 : 1.0;
+      const scaleX = (1 + speed * 0.13) * pressBoost;
+      const scaleY = (1 - speed * 0.05) * pressBoost;
 
       activePill.style.transform = `translate3d(${translateX}px, 0, 0) scale(${scaleX}, ${scaleY})`;
     }
@@ -1638,10 +2211,10 @@
     }
 
     /* =========================================================
-       REAL-TIME EDGE REFRACTION & CHROMATIC DISPERSION FOR NAV BAR
+       REAL-TIME LENS REFRACTION & MAGNIFICATION INSIDE INDICATOR PILL
        ========================================================= */
     function drawLiquidNavRefraction(now) {
-      if (now - lastGlassDraw < 32) return;
+      if (now - lastGlassDraw < 28) return;
       lastGlassDraw = now;
 
       const rect = liquidNav.getBoundingClientRect();
@@ -1656,7 +2229,7 @@
       const left = Math.round(rect.left * dpr);
       const top = Math.round(rect.top * dpr);
 
-      const pad = Math.round(16 * dpr);
+      const pad = Math.round(24 * dpr);
       const sourceLeft = Math.max(0, left - pad);
       const sourceTop = Math.max(0, top - pad);
       const sourceRight = Math.min(sceneCanvas.width, left + lensWidth + pad);
@@ -1684,7 +2257,15 @@
       const centerY = lensHeight * 0.5;
       const halfW = Math.max(1, centerX);
       const halfH = Math.max(1, centerY);
-      const maxOffset = 12 * dpr;
+      const maxEdgeOffset = 10 * dpr;
+
+      // Geometri kapsul indikator aktif (glass lens capsule)
+      const insetPx = 5 * dpr;
+      const tabW = (lensWidth - insetPx * 2) / 3;
+      const pillHalfW = tabW * 0.5;
+      const pillHalfH = (lensHeight - insetPx * 2) * 0.5;
+      const pillCenterX = insetPx + (pillPos + 0.5) * tabW;
+      const pillCenterY = lensHeight * 0.5;
 
       function smoothstep(edge0, edge1, value) {
         const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
@@ -1702,19 +2283,43 @@
 
         for (let x = 0; x < lensWidth; x++) {
           const nx = (x - centerX) / halfW;
-          const radius = Math.sqrt(nx * nx * 0.35 + ny * ny * 0.85);
+
+          // 1. Pembiasan halus pada tepi dock luar
+          const dockRadius = Math.sqrt(nx * nx * 0.25 + ny * ny * 0.85);
+          const dockEdge = smoothstep(0.45, 1.05, dockRadius);
+          const dockDisp = dockEdge * maxEdgeOffset;
+
+          // 2. Pembesaran & pembiasan lensa cembung khusus di dalam Indicator Pill
+          const px = (x - pillCenterX) / pillHalfW;
+          const py = (y - pillCenterY) / pillHalfH;
+          const pillNormDist = Math.sqrt(px * px + py * py);
+          const insidePill = 1.0 - smoothstep(0.75, 1.08, pillNormDist);
+
+          // Profil lensa cembung (magnify di tengah, edge-pinch kuat di bibir kapsul)
+          const lensRim = smoothstep(0.45, 0.98, pillNormDist) * insidePill;
+          const lensMagnify = (1.0 - pillNormDist * pillNormDist) * insidePill;
+
+          const pillShiftX = px * (lensRim * 15 * dpr - lensMagnify * 8 * dpr);
+          const pillShiftY = py * (lensRim * 12 * dpr - lensMagnify * 6 * dpr);
+
+          // Dispersi prisma RGB tipis di tepi lensa indikator
+          const dispersion = (dockEdge * 1.4 + lensRim * 3.2) * dpr;
+
+          const baseX = left + x + nx * dockDisp + pillShiftX - sourceLeft;
+          const baseY = top + y + ny * dockDisp + pillShiftY - sourceTop;
 
           const outIndex = (y * lensWidth + x) * 4;
-          const edge = smoothstep(0.32, 1.05, radius);
-          const displacement = edge * maxOffset;
-          const dispersion = edge * 2.4 * dpr;
-
-          const baseX = left + x + nx * displacement - sourceLeft;
-          const baseY = top + y + ny * displacement - sourceTop;
-
-          output[outIndex] = readChannel(Math.round(baseX + nx * dispersion), Math.round(baseY + ny * dispersion), 0);
+          output[outIndex] = readChannel(
+            Math.round(baseX + (nx + px * insidePill) * dispersion),
+            Math.round(baseY + (ny + py * insidePill) * dispersion),
+            0
+          );
           output[outIndex + 1] = readChannel(Math.round(baseX), Math.round(baseY), 1);
-          output[outIndex + 2] = readChannel(Math.round(baseX - nx * dispersion), Math.round(baseY - ny * dispersion), 2);
+          output[outIndex + 2] = readChannel(
+            Math.round(baseX - (nx + px * insidePill) * dispersion),
+            Math.round(baseY - (ny + py * insidePill) * dispersion),
+            2
+          );
           output[outIndex + 3] = 255;
         }
       }
@@ -1741,6 +2346,12 @@
       ctx.fillRect(0, 0, pixelWidth, pixelHeight);
 
       const activeIndex = wrapIndex(Math.round(scroll));
+
+      if (activeIndex !== lastAppliedPaletteIndex && itemPalettes[activeIndex]) {
+        lastAppliedPaletteIndex = activeIndex;
+        applyNavMaterialYouPalette(itemPalettes[activeIndex]);
+      }
+
       const activeBackdrop = backdropSnapshots[activeIndex];
 
       if (activeBackdrop) {
