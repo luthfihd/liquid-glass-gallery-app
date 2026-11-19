@@ -156,21 +156,21 @@
       width: 42px;
       height: 42px;
       border-radius: 50%;
-      border: var(--hairline) solid rgba(255, 255, 255, 0.36);
-      background: rgba(255, 255, 255, 0.10);
-      -webkit-backdrop-filter: blur(12px) saturate(1.65);
-      backdrop-filter: blur(12px) saturate(1.65);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.08);
+      -webkit-backdrop-filter: blur(12px) saturate(1.55);
+      backdrop-filter: blur(12px) saturate(1.55);
       color: #fff;
       display: grid;
       place-items: center;
       cursor: pointer;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24), inset 0 0.5px 0 rgba(255, 255, 255, 0.65);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.20), inset 0 0.5px 0 rgba(255, 255, 255, 0.40);
       transition: transform 0.16s ease, background 0.16s ease;
     }
 
     .glass-circle-btn:active {
       transform: scale(0.9);
-      background: rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.18);
     }
 
     .snap-controls {
@@ -191,8 +191,8 @@
       width: 50px;
       height: 50px;
       border-radius: 15px;
-      border: var(--hairline) solid rgba(255, 255, 255, 0.34);
-      background: rgba(255, 255, 255, 0.10);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.08);
       -webkit-backdrop-filter: blur(12px) saturate(1.55);
       backdrop-filter: blur(12px) saturate(1.55);
       color: #fff;
@@ -201,7 +201,7 @@
       cursor: pointer;
       overflow: hidden;
       padding: 0;
-      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.26), inset 0 0.5px 0 rgba(255, 255, 255, 0.55);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22), inset 0 0.5px 0 rgba(255, 255, 255, 0.38);
       transition: transform 0.16s ease;
     }
 
@@ -213,15 +213,15 @@
       width: 76px;
       height: 76px;
       border-radius: 50%;
-      border: 2.5px solid rgba(255, 255, 255, 0.88);
-      background: rgba(255, 255, 255, 0.10);
+      border: 2px solid rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.08);
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
       padding: 5px;
       cursor: pointer;
       display: grid;
       place-items: center;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
       transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -243,7 +243,7 @@
     }
 
     /* =========================================================
-       VIEW 3: MOCKUP STUDIO (LARGER PREVIEW + FIXED SLIDERS)
+       VIEW 3: MOCKUP STUDIO
        ========================================================= */
     .mockup-view {
       position: absolute;
@@ -289,7 +289,7 @@
       flex-shrink: 0;
     }
 
-    /* Segmented Toggle: Clear Liquid Glass */
+    /* Segmented Toggle: Hairline Glass + Synced Text */
     .lg-segmented {
       position: relative;
       height: 36px;
@@ -301,13 +301,13 @@
       overflow: visible;
       isolation: isolate;
       touch-action: none;
-      background: rgba(255, 255, 255, 0.08);
-      -webkit-backdrop-filter: blur(8px) saturate(1.7);
-      backdrop-filter: blur(8px) saturate(1.7);
-      border: 0.75px solid rgba(255, 255, 255, 0.36);
+      background: rgba(255, 255, 255, 0.06);
+      -webkit-backdrop-filter: blur(8px) saturate(1.55);
+      backdrop-filter: blur(8px) saturate(1.55);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.20);
       box-shadow:
-        0 6px 18px rgba(0, 0, 0, 0.18),
-        inset 0 0.75px 0.75px rgba(255, 255, 255, 0.72);
+        0 4px 14px rgba(0, 0, 0, 0.14),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
       transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -324,10 +324,9 @@
       align-items: center;
       justify-content: center;
       font-size: 0.71rem;
-      font-weight: 560;
+      font-weight: 600;
       letter-spacing: -0.01em;
       color: rgba(255, 255, 255, 0.90);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
       white-space: nowrap;
       pointer-events: none;
     }
@@ -351,11 +350,9 @@
       align-items: center;
       justify-content: center;
       font-size: 0.71rem;
-      font-weight: 700;
+      font-weight: 600;
       letter-spacing: -0.01em;
       color: rgb(var(--nav-accent-rgb));
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-      transform: scale(1.08);
       white-space: nowrap;
     }
 
@@ -370,12 +367,11 @@
       pointer-events: none;
       transform-origin: center center;
       will-change: transform;
-      background: transparent;
-      border: 0.75px solid rgba(255, 255, 255, 0.56);
+      background: rgba(255, 255, 255, 0.08);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.26);
       box-shadow:
-        0 4px 10px rgba(0, 0, 0, 0.18),
-        inset 0 0.75px 0.75px rgba(255, 255, 255, 0.85),
-        inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.25);
+        0 2px 8px rgba(0, 0, 0, 0.14),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.42);
       transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -385,15 +381,14 @@
 
     .save-mockup-btn {
       height: 36px;
-      border: 0.75px solid rgba(255, 255, 255, 0.36);
-      background: rgba(255, 255, 255, 0.08);
-      -webkit-backdrop-filter: blur(8px) saturate(1.7);
-      backdrop-filter: blur(8px) saturate(1.7);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.20);
+      background: rgba(255, 255, 255, 0.06);
+      -webkit-backdrop-filter: blur(8px) saturate(1.55);
+      backdrop-filter: blur(8px) saturate(1.55);
       color: #ffffff;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
       font: inherit;
       font-size: 0.72rem;
-      font-weight: 650;
+      font-weight: 600;
       padding: 0 13px;
       border-radius: 999px;
       display: inline-flex;
@@ -402,14 +397,14 @@
       cursor: pointer;
       flex-shrink: 0;
       box-shadow:
-        0 6px 18px rgba(0, 0, 0, 0.18),
-        inset 0 0.75px 0.75px rgba(255, 255, 255, 0.72);
+        0 4px 14px rgba(0, 0, 0, 0.14),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
       transition: transform 0.15s ease, background 0.15s ease;
     }
 
     .save-mockup-btn:active {
       transform: scale(0.94);
-      background: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.16);
     }
 
     .mockup-stage {
@@ -432,11 +427,11 @@
       height: 96%;
       object-fit: contain;
       border-radius: 24px;
-      border: 0.75px solid rgba(255, 255, 255, 0.22);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.18);
       box-shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
     }
 
-    /* Sliders: Clean Liquid Glass Pill Sliders (Bug-Free) */
+    /* Sliders: Hairline Glass, Zero Overlap/Drift Between Base & Lens Text */
     .mockup-sliders {
       position: relative;
       z-index: 3;
@@ -460,18 +455,18 @@
       isolation: isolate;
       touch-action: none;
       cursor: grab;
-      background: rgba(255, 255, 255, 0.08);
-      -webkit-backdrop-filter: blur(8px) saturate(1.7);
-      backdrop-filter: blur(8px) saturate(1.7);
-      border: 0.75px solid rgba(255, 255, 255, 0.36);
+      background: rgba(255, 255, 255, 0.06);
+      -webkit-backdrop-filter: blur(8px) saturate(1.55);
+      backdrop-filter: blur(8px) saturate(1.55);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.20);
       box-shadow:
-        0 8px 20px rgba(0, 0, 0, 0.18),
-        inset 0 0.75px 0.75px rgba(255, 255, 255, 0.72);
+        0 4px 14px rgba(0, 0, 0, 0.14),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
       transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .lg-slider-card.is-morphing {
-      transform: scale(1.04);
+      transform: scale(1.035);
     }
 
     .lg-slider-card:active {
@@ -486,28 +481,25 @@
       align-items: center;
       justify-content: center;
       font-size: 0.68rem;
+      font-weight: 600;
       letter-spacing: -0.01em;
       pointer-events: none;
       padding: 0 12px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      text-shadow: none;
     }
 
     .lg-slider-label-base {
       z-index: 1;
-      font-weight: 560;
-      color: rgba(255, 255, 255, 0.92);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.38);
+      color: rgba(255, 255, 255, 0.90);
     }
 
     .lg-slider-label-lens {
       z-index: 3;
-      font-weight: 700;
       color: rgb(var(--nav-accent-rgb));
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
       background: transparent;
-      transform: scale(1.06);
     }
 
     .lg-slider-thumb {
@@ -521,12 +513,11 @@
       pointer-events: none;
       transform-origin: center center;
       will-change: transform;
-      background: transparent;
-      border: 0.75px solid rgba(255, 255, 255, 0.56);
+      background: rgba(255, 255, 255, 0.08);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.26);
       box-shadow:
-        0 4px 10px rgba(0, 0, 0, 0.18),
-        inset 0 0.75px 0.75px rgba(255, 255, 255, 0.85),
-        inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.25);
+        0 2px 8px rgba(0, 0, 0, 0.14),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.42);
     }
 
     /* CAPTURE FLASH OVERLAY */
@@ -549,11 +540,10 @@
     }
 
     /* =========================================================
-       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (APPLE iOS 26 STYLE)
-       - 100% Transparent Clear Glass (Zero White Background, Zero Artificial Gradient)
-       - Continuous Optical Refraction on BOTH Background AND Icons/Text
-       - Material You Extracted Accent Color Inside Magnifier Pill
-       - Butter-Smooth Spring Zoom (No CSS/JS Transition Conflict)
+       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (APPLE iOS 26)
+       - Idle: Zero Optical Distortion / Magnification (100% Calm)
+       - Slide / Touch: Convex Optical Magnifier + Chromatic Rim Emerges
+       - Dynamic Background Sampling Across Explore, Snap, & Mockup
        ========================================================= */
     .nav-dock-wrap {
       position: fixed;
@@ -578,19 +568,18 @@
       overflow: visible;
       isolation: isolate;
       touch-action: none;
-      background: rgba(255, 255, 255, 0.04);
-      -webkit-backdrop-filter: blur(2px) saturate(1.4);
-      backdrop-filter: blur(2px) saturate(1.4);
-      border: 0.75px solid rgba(255, 255, 255, 0.34);
+      background: rgba(255, 255, 255, 0.05);
+      -webkit-backdrop-filter: blur(8px) saturate(1.45);
+      backdrop-filter: blur(8px) saturate(1.45);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.20);
       box-shadow:
-        0 14px 32px rgba(0, 0, 0, 0.26),
-        inset 0 0.75px 0.75px rgba(255, 255, 255, 0.72),
-        inset 0 -0.5px 0.75px rgba(255, 255, 255, 0.20);
+        0 10px 26px rgba(0, 0, 0, 0.22),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.38),
+        inset 0 -0.5px 0 rgba(255, 255, 255, 0.14);
       transform-origin: center center;
       will-change: transform;
     }
 
-    /* Optical Refraction Canvas (Membiaskan Latar + Ikon + Teks secara Real-Time) */
     #glassLens {
       position: absolute;
       z-index: 2;
@@ -600,7 +589,7 @@
       pointer-events: none;
     }
 
-    /* Clean Rim Only — Zero Gradient Fill & Zero Artificial Color Glow */
+    /* Ultra-thin Hairline Pill Rim */
     .active-pill {
       position: absolute;
       z-index: 3;
@@ -612,15 +601,13 @@
       pointer-events: none;
       transform-origin: center center;
       will-change: transform;
-      background: transparent;
-      border: 0.75px solid rgba(255, 255, 255, 0.48);
+      background: rgba(255, 255, 255, 0.06);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.24);
       box-shadow:
-        0 6px 16px rgba(0, 0, 0, 0.16),
-        inset 0 0.75px 0.75px rgba(255, 255, 255, 0.85),
-        inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.22);
+        0 4px 12px rgba(0, 0, 0, 0.14),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.44);
     }
 
-    /* Accessibility Hit Areas (Invisible, Icons Rendered Optically Inside Canvas) */
     .nav-btn {
       position: relative;
       z-index: 4;
@@ -642,12 +629,12 @@
 
 <body>
   <main class="app" id="app">
-    <!-- 1. EXPLORE VIEW (GALLERY UTAMA SESUAI REPO) -->
+    <!-- 1. EXPLORE VIEW -->
     <section class="stage" id="stage" aria-label="Galeri foto vertikal">
       <canvas id="gl"></canvas>
     </section>
 
-    <!-- 2. SNAP VIEW (HALAMAN KAMERA & GALERI) -->
+    <!-- 2. SNAP VIEW -->
     <section class="snap-view" id="snapView" aria-label="Kamera dan tambah foto">
       <video id="cameraVideo" autoplay playsinline muted></video>
       <div class="camera-fallback" id="cameraFallback">
@@ -752,13 +739,9 @@
     <!-- FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR -->
     <div class="nav-dock-wrap">
       <nav class="liquid-nav" id="liquidNav" aria-label="Navigasi utama">
-        <!-- Real-time Optical Lens Canvas (Membiaskan Latar + Ikon + Teks secara Menyatu) -->
         <canvas id="glassLens" aria-hidden="true"></canvas>
-
-        <!-- Clean Transparent Glass Pill Rim (No Gradient Fill) -->
         <div class="active-pill" id="activePill"></div>
 
-        <!-- Screen-reader & Tap Targets -->
         <button class="nav-btn" type="button" data-tab="0" aria-label="Explore"></button>
         <button class="nav-btn" type="button" data-tab="1" aria-label="Snap"></button>
         <button class="nav-btn" type="button" data-tab="2" aria-label="Mockup"></button>
@@ -839,7 +822,6 @@
     const ctx = sceneCanvas.getContext("2d");
     const glassCtx = glassCanvas.getContext("2d", { willReadFrequently: true });
 
-    // Offscreen Optical Source Buffer untuk Pembiasan Latar + Ikon secara Menyatu
     const navOpticsBuffer = document.createElement("canvas");
     const navOpticsCtx = navOpticsBuffer.getContext("2d", { willReadFrequently: true });
 
@@ -892,9 +874,11 @@
     let pillDragStartPos = 0;
     let pillMoved = false;
 
-    // Smooth Navbar Zoom Spring (No CSS Transition Conflict)
+    // Smooth Navbar Zoom & Lens Activity (0 = 100% Calm/Idle, 1 = Active When Sliding/Pressing)
     let navZoom = 1.0;
     let navZoomVel = 0;
+    let lensActivity = 0.0;
+    let lensActivityVel = 0.0;
 
     // Camera state
     let cameraStream = null;
@@ -1694,16 +1678,18 @@
 
         mctx.save();
         drawRoundedRect(mctx, navX, navY, navW, navH, navH / 2);
-        mctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+        mctx.fillStyle = "rgba(255, 255, 255, 0.05)";
         mctx.fill();
-        mctx.lineWidth = 1.5;
-        mctx.strokeStyle = "rgba(255, 255, 255, 0.42)";
+        mctx.lineWidth = 1;
+        mctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
         mctx.stroke();
 
         const tabW = (navW - 16) / 3;
         drawRoundedRect(mctx, navX + 8, navY + 6, tabW, navH - 12, (navH - 12) / 2);
-        mctx.lineWidth = 1.5;
-        mctx.strokeStyle = "rgba(255, 255, 255, 0.56)";
+        mctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+        mctx.fill();
+        mctx.lineWidth = 1;
+        mctx.strokeStyle = "rgba(255, 255, 255, 0.34)";
         mctx.stroke();
 
         const acc = capturedPalette ? capturedPalette.accent : [45, 168, 255];
@@ -1914,7 +1900,7 @@
     );
 
     /* =========================================================
-       BUG-FREE PILL-SHAPED SLIDERS (TAP ANYWHERE OR DRAG)
+       ALIGNED, ZERO-DRIFT PILL SLIDERS (SYNCED BASE & LENS TEXT)
        ========================================================= */
     function bindLiquidSlider(sliderEl, thumbEl, baseLabelEl, lensLabelEl, getStepsCount, onStepChange) {
       let isSliding = false;
@@ -1928,9 +1914,8 @@
 
       function positionThumb(ratio, morphing = false) {
         const clampedRatio = Math.max(0, Math.min(1, ratio));
-        const rect = sliderEl.getBoundingClientRect();
-        const cardW = rect.width || 180;
-        const cardH = rect.height || 42;
+        const cardW = sliderEl.offsetWidth || 180;
+        const cardH = sliderEl.offsetHeight || 42;
         const maxTravel = Math.max(1, cardW - THUMB_W - 6);
         const x = clampedRatio * maxTravel;
         const sx = morphing ? 1.12 : 1;
@@ -1949,7 +1934,7 @@
         const bottom = Math.max(0, cardH - (centerY + effH * 0.5));
 
         lensLabelEl.style.clipPath = `inset(${top.toFixed(1)}px ${right.toFixed(1)}px ${bottom.toFixed(1)}px ${left.toFixed(1)}px round 999px)`;
-        baseLabelEl.style.clipPath = `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ${left.toFixed(1)}px ${top.toFixed(1)}px, ${left.toFixed(1)}px ${(cardH - bottom).toFixed(1)}px, ${(cardW - right).toFixed(1)}px ${(cardH - bottom).toFixed(1)}px, ${(cardW - right).toFixed(1)}px ${top.toFixed(1)}px, ${left.toFixed(1)}px ${top.toFixed(1)}px)`;
+        baseLabelEl.style.clipPath = `polygon(evenodd, 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ${left.toFixed(1)}px ${top.toFixed(1)}px, ${(cardW - right).toFixed(1)}px ${top.toFixed(1)}px, ${(cardW - right).toFixed(1)}px ${(cardH - bottom).toFixed(1)}px, ${left.toFixed(1)}px ${(cardH - bottom).toFixed(1)}px, ${left.toFixed(1)}px ${top.toFixed(1)}px)`;
       }
 
       sliderEl.addEventListener("pointerdown", (e) => {
@@ -1964,8 +1949,8 @@
 
       sliderEl.addEventListener("pointermove", (e) => {
         if (!isSliding) return;
-        const rect = sliderEl.getBoundingClientRect();
-        const maxTravel = Math.max(1, rect.width - THUMB_W - 6);
+        const cardW = sliderEl.offsetWidth || 180;
+        const maxTravel = Math.max(1, cardW - THUMB_W - 6);
         const dx = e.clientX - startX;
         if (Math.abs(dx) > 4) moved = true;
 
@@ -2148,12 +2133,11 @@
     });
 
     function getDropletScale() {
-      const speed = pillDragging ? 0.55 : Math.min(1.4, Math.abs(pillVel) * 0.14);
-      const pressBoostX = pillPressing ? 1.12 : 1.0;
-      const pressBoostY = pillPressing ? 1.30 : 1.0;
+      const a = lensActivity;
+      const speed = pillDragging ? 0.45 : Math.min(1.2, Math.abs(pillVel) * 0.14);
       return {
-        scaleX: (1 + speed * 0.10) * pressBoostX,
-        scaleY: (1 + speed * 0.04) * pressBoostY
+        scaleX: 1 + a * (0.14 + speed * 0.10),
+        scaleY: 1 + a * (0.30 + speed * 0.04)
       };
     }
 
@@ -2170,8 +2154,20 @@
         }
       }
 
-      // Smooth Spring Zoom untuk seluruh Navbar (Tidak Patah-patah!)
-      const zoomTarget = pillPressing ? 1.045 : 1.0;
+      // lensActivity: 1 saat disentuh/dislide/bergerak, 0 mutlak saat idle!
+      const isMoving = Math.abs(pillPos - pillTarget) > 0.012 || Math.abs(pillVel) > 0.04;
+      const activityTarget = (pillPressing || pillDragging || isMoving) ? 1.0 : 0.0;
+      const aStiff = 260;
+      const aDamp = 2 * Math.sqrt(aStiff) * 0.90;
+      lensActivityVel += (-aStiff * (lensActivity - activityTarget) - aDamp * lensActivityVel) * dt;
+      lensActivity += lensActivityVel * dt;
+      if (Math.abs(activityTarget - lensActivity) < 0.001 && Math.abs(lensActivityVel) < 0.002) {
+        lensActivity = activityTarget;
+        lensActivityVel = 0;
+      }
+
+      // Smooth Spring Zoom untuk seluruh Navbar mengikuti lensActivity
+      const zoomTarget = 1.0 + lensActivity * 0.045;
       const zStiff = 260;
       const zDamp = 2 * Math.sqrt(zStiff) * 0.88;
       navZoomVel += (-zStiff * (navZoom - zoomTarget) - zDamp * navZoomVel) * dt;
@@ -2267,6 +2263,10 @@
       }
 
       resizeGlassCanvas();
+      if (activeTab === 2) {
+        bgSliderCtrl.sync(bgPresetIndex);
+        frameSliderCtrl.sync(frameFinishIndex);
+      }
     }
 
     function resizeGlassCanvas() {
@@ -2286,13 +2286,113 @@
     }
 
     /* =========================================================
+       DYNAMIC BACKGROUND SAMPLING FOR NAVBAR (EXPLORE / SNAP / MOCKUP)
+       ========================================================= */
+    function drawDynamicNavBackdrop(
+      octx,
+      sourceLeft,
+      sourceTop,
+      sourceWidth,
+      sourceHeight,
+      lensWidth,
+      lensHeight
+    ) {
+      if (activeTab === 0) {
+        // Explore: ambil langsung dari kanvas galeri
+        octx.drawImage(
+          sceneCanvas,
+          sourceLeft,
+          sourceTop,
+          sourceWidth,
+          sourceHeight,
+          0,
+          0,
+          lensWidth,
+          lensHeight
+        );
+      } else if (activeTab === 1) {
+        // Snap: ambil langsung dari live camera feed di balik navbar
+        if (cameraStream && cameraVideo.videoWidth > 0 && cameraVideo.videoHeight > 0) {
+          const vw = cameraVideo.videoWidth;
+          const vh = cameraVideo.videoHeight;
+          const screenW = sceneCanvas.width;
+          const screenH = sceneCanvas.height;
+          const videoAspect = vw / vh;
+          const screenAspect = screenW / screenH;
+
+          let drawW = screenW;
+          let drawH = screenH;
+          let offX = 0;
+          let offY = 0;
+
+          if (videoAspect > screenAspect) {
+            drawW = screenH * videoAspect;
+            offX = (screenW - drawW) / 2;
+          } else {
+            drawH = screenW / videoAspect;
+            offY = (screenH - drawH) / 2;
+          }
+
+          const sx = ((sourceLeft - offX) / drawW) * vw;
+          const sy = ((sourceTop - offY) / drawH) * vh;
+          const sw = (sourceWidth / drawW) * vw;
+          const sh = (sourceHeight / drawH) * vh;
+
+          octx.save();
+          if (facingMode === "user") {
+            octx.translate(lensWidth, 0);
+            octx.scale(-1, 1);
+            octx.drawImage(cameraVideo, vw - sx - sw, sy, sw, sh, 0, 0, lensWidth, lensHeight);
+          } else {
+            octx.drawImage(cameraVideo, sx, sy, sw, sh, 0, 0, lensWidth, lensHeight);
+          }
+          octx.restore();
+        } else {
+          octx.fillStyle = "#0b1622";
+          octx.fillRect(0, 0, lensWidth, lensHeight);
+        }
+      } else {
+        // Mockup: ambil langsung dari latar tema mockup aktif
+        const presets = getBackgroundPresets(capturedPalette);
+        const preset = presets[bgPresetIndex] || presets[0];
+
+        if (preset.type === "photo" && images.length) {
+          const activeIndex = wrapIndex(Math.round(scroll));
+          const blurSnap = backdropSnapshots[activeIndex];
+          if (blurSnap) {
+            const scaleX = blurSnap.width / sceneCanvas.width;
+            const scaleY = blurSnap.height / sceneCanvas.height;
+            octx.drawImage(
+              blurSnap,
+              sourceLeft * scaleX,
+              sourceTop * scaleY,
+              sourceWidth * scaleX,
+              sourceHeight * scaleY,
+              0,
+              0,
+              lensWidth,
+              lensHeight
+            );
+            octx.fillStyle = "rgba(6, 12, 20, 0.35)";
+            octx.fillRect(0, 0, lensWidth, lensHeight);
+            return;
+          }
+        }
+
+        const grad = octx.createLinearGradient(0, 0, lensWidth, lensHeight);
+        grad.addColorStop(0, preset.c2 || "#121e2b");
+        grad.addColorStop(1, preset.c3 || "#071019");
+        octx.fillStyle = grad;
+        octx.fillRect(0, 0, lensWidth, lensHeight);
+      }
+    }
+
+    /* =========================================================
        DRAW SHARP TAB ICONS & LABELS INTO OPTICAL BUFFER
-       (Agar Ikon & Teks Ikut Membelok & Melengkung di Pinggir Lensa!)
        ========================================================= */
     function drawTabVectorIcon(octx, tabIdx, cx, cy, s) {
       octx.beginPath();
       if (tabIdx === 0) {
-        // Explore 2x2 Grid
         const box = 7 * s;
         const gap = 3.5 * s;
         const r = 1.8 * s;
@@ -2302,7 +2402,6 @@
         octx.roundRect(cx - box - gap * 0.5, cy + gap * 0.5, box, box, r);
         octx.stroke();
       } else if (tabIdx === 1) {
-        // Snap Camera
         const w = 18 * s;
         const h = 13 * s;
         const topY = cy - h * 0.5 + 1.5 * s;
@@ -2317,7 +2416,6 @@
         octx.arc(cx, topY + h * 0.52, 3.1 * s, 0, Math.PI * 2);
         octx.stroke();
       } else {
-        // Mockup Device
         const w = 13.5 * s;
         const h = 19 * s;
         octx.roundRect(cx - w * 0.5, cy - h * 0.5, w, h, 2.8 * s);
@@ -2342,16 +2440,15 @@
       pillHalfW,
       pillHalfH
     ) {
-      // 1. Gambar latar belakang scene di balik navbar
       navOpticsCtx.clearRect(0, 0, lensWidth, lensHeight);
-      navOpticsCtx.drawImage(
-        sceneCanvas,
+
+      // Gambar latar belakang dinamis sesuai menu aktif
+      drawDynamicNavBackdrop(
+        navOpticsCtx,
         sourceLeft,
         sourceTop,
         sourceWidth,
         sourceHeight,
-        0,
-        0,
         lensWidth,
         lensHeight
       );
@@ -2362,18 +2459,16 @@
       const iconY = padY + navH * 0.38;
       const textY = padY + navH * 0.75;
 
-      // 2. Gambar Ikon & Teks Putih (Lapisan Luar Lensa)
+      // 1. Ikon & Teks Putih di Luar Pill
       navOpticsCtx.save();
       navOpticsCtx.strokeStyle = "rgba(255, 255, 255, 0.94)";
       navOpticsCtx.fillStyle = "rgba(255, 255, 255, 0.94)";
-      navOpticsCtx.lineWidth = 1.9 * dpr;
+      navOpticsCtx.lineWidth = 1.85 * dpr;
       navOpticsCtx.lineCap = "round";
       navOpticsCtx.lineJoin = "round";
       navOpticsCtx.font = `600 ${Math.round(10.5 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
       navOpticsCtx.textAlign = "center";
       navOpticsCtx.textBaseline = "middle";
-      navOpticsCtx.shadowColor = "rgba(0, 0, 0, 0.38)";
-      navOpticsCtx.shadowBlur = 4 * dpr;
 
       for (let i = 0; i < 3; i++) {
         const cx = padX + insetPx + (i + 0.5) * tabW;
@@ -2382,28 +2477,24 @@
       }
       navOpticsCtx.restore();
 
-      // 3. Gambar Ikon & Teks Berwarna Ekstraksi Foto (Material You Accent) di dalam Area Pill
-      // Sebelum dibiaskan oleh lensa cembung sehingga warna + huruf ikut melengkung sempurna!
+      // 2. Ikon & Teks Berwarna Ekstraksi Foto di Dalam Pill
       navOpticsCtx.save();
       drawRoundedRect(
         navOpticsCtx,
-        pillCenterX - pillHalfW * 0.86,
-        lensHeight * 0.5 - pillHalfH * 0.86,
-        pillHalfW * 1.72,
-        pillHalfH * 1.72,
-        pillHalfH * 0.86
+        pillCenterX - pillHalfW * 0.94,
+        lensHeight * 0.5 - pillHalfH * 0.94,
+        pillHalfW * 1.88,
+        pillHalfH * 1.88,
+        pillHalfH * 0.94
       );
       navOpticsCtx.clip();
 
-      // Redraw clean background inside pill clip so white icon doesn't bleed underneath colored icon
-      navOpticsCtx.drawImage(
-        sceneCanvas,
+      drawDynamicNavBackdrop(
+        navOpticsCtx,
         sourceLeft,
         sourceTop,
         sourceWidth,
         sourceHeight,
-        0,
-        0,
         lensWidth,
         lensHeight
       );
@@ -2411,25 +2502,24 @@
       const accentColor = `rgb(${currentAccentRgb.join(",")})`;
       navOpticsCtx.strokeStyle = accentColor;
       navOpticsCtx.fillStyle = accentColor;
-      navOpticsCtx.lineWidth = 2.15 * dpr;
+      navOpticsCtx.lineWidth = 2.0 * dpr;
       navOpticsCtx.lineCap = "round";
       navOpticsCtx.lineJoin = "round";
-      navOpticsCtx.font = `700 ${Math.round(10.8 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      navOpticsCtx.font = `680 ${Math.round(10.6 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
       navOpticsCtx.textAlign = "center";
       navOpticsCtx.textBaseline = "middle";
-      navOpticsCtx.shadowColor = "rgba(0, 0, 0, 0.30)";
-      navOpticsCtx.shadowBlur = 3 * dpr;
 
       for (let i = 0; i < 3; i++) {
         const cx = padX + insetPx + (i + 0.5) * tabW;
-        drawTabVectorIcon(navOpticsCtx, i, cx, iconY, dpr * 1.04);
+        drawTabVectorIcon(navOpticsCtx, i, cx, iconY, dpr);
         navOpticsCtx.fillText(labels[i], cx, textY);
       }
       navOpticsCtx.restore();
     }
 
     /* =========================================================
-       REAL-TIME OPTICAL REFRACTION + MAGNIFIER LENS (APPLE iOS 26)
+       REAL-TIME OPTICAL REFRACTION (ZERO DISTORTION WHEN IDLE,
+       APPLE iOS 26 CONVEX MAGNIFIER + RIM CHROMATIC WHEN SLIDING)
        ========================================================= */
     function drawLiquidNavRefraction(now) {
       if (now - lastGlassDraw < 16) return;
@@ -2463,22 +2553,12 @@
 
       const { scaleX, scaleY } = getDropletScale();
 
-      const barHalfW = navW * 0.5;
-      const barHalfH = navH * 0.5;
-      const barCornerR = barHalfH;
-      const barBoxX = barHalfW - barCornerR;
-      const barBoxY = 0;
-
       const pillHalfW = (tabW * scaleX) * 0.5;
       const pillHalfH = ((navH - insetPx * 2) * scaleY) * 0.5;
       const pillCenterX = padX + insetPx + (pillPos + 0.5) * tabW;
       const pillCenterY = lensHeight * 0.5;
 
-      const cornerR = Math.min(pillHalfW, pillHalfH);
-      const boxHalfX = pillHalfW - cornerR;
-      const boxHalfY = pillHalfH - cornerR;
-
-      // Render Latar + Ikon Putih + Ikon Warna Ekstraksi ke Buffer Optik sebelum pembiasan
+      // Render ikon & latar dinamis ke buffer optik
       renderOpticalNavSource(
         sourceLeft,
         sourceTop,
@@ -2495,6 +2575,20 @@
         pillHalfH
       );
 
+      const act = lensActivity;
+
+      // 100% IDLE: Tanpa efek lensa sama sekali! Langsung tampilkan ikon jernih di dalam kapsul navbar.
+      if (act <= 0.002) {
+        glassCtx.clearRect(0, 0, lensWidth, lensHeight);
+        glassCtx.save();
+        drawRoundedRect(glassCtx, padX, padY, navW, navH, navH * 0.5);
+        glassCtx.clip();
+        glassCtx.drawImage(navOpticsBuffer, 0, 0);
+        glassCtx.restore();
+        return;
+      }
+
+      // AKTIF SAAT DISLIDE / DISENTUH: Lensa cembung jernih di tengah + pembelokan & dispersi kromatik di rim kapsul!
       let source;
       try {
         source = navOpticsCtx.getImageData(0, 0, lensWidth, lensHeight).data;
@@ -2504,6 +2598,16 @@
       }
 
       const output = glassImageData.data;
+
+      const barHalfW = navW * 0.5;
+      const barHalfH = navH * 0.5;
+      const barCornerR = barHalfH;
+      const barBoxX = barHalfW - barCornerR;
+      const barBoxY = 0;
+
+      const cornerR = Math.min(pillHalfW, pillHalfH);
+      const boxHalfX = pillHalfW - cornerR;
+      const boxHalfY = pillHalfH - cornerR;
 
       function smoothstep(edge0, edge1, value) {
         const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
@@ -2546,33 +2650,30 @@
 
           const alphaMask = 1.0 - smoothstep(-1.0 * dpr, 1.5 * dpr, unionSdf);
 
-          const barDepth = Math.max(0, Math.min(1, -sdfBar / barCornerR));
-          const barRim = Math.pow(1.0 - barDepth, 2.5);
-          const nxBar = dxBar / barHalfW;
-          const nyBar = dyBar / barHalfH;
+          let shiftX = 0;
+          let shiftY = 0;
+          let dispX = 0;
+          let dispY = 0;
 
-          let shiftX = nxBar * barRim * 16 * dpr;
-          let shiftY = nyBar * barRim * 14 * dpr;
-          let dispX = nxBar * barRim * 2.5 * dpr;
-          let dispY = nyBar * barRim * 2.5 * dpr;
-
-          // Lensa Cembung Pill: Membelokkan Ikon, Huruf & Latar secara Organik seperti Gambar 1
+          // Lensa Cembung Apple iOS 26 (Hanya di area kapsul yang sedang digeser):
+          // Tengah kapsul membesar halus & jernih, rim tepi kapsul membelokkan cahaya dengan dispersi RGB organik
           if (sdfPill <= 1.5 * dpr) {
             const normDepth = Math.max(0, Math.min(1, -sdfPill / cornerR));
-            // Profil tepi kaca cembung tebal hanya di rim luar (22% tepi), tengah jernih & sedikit zoom
-            const edgeRim = Math.pow(1.0 - normDepth, 2.8);
-            const centerZoom = smoothstep(0.15, 0.85, normDepth);
+            // Rim tajam hanya pada 24% tepi terluar kapsul
+            const edgeRim = Math.pow(1.0 - normDepth, 3.4);
+            // Area tengah lensa yang memperbesar ikon dengan bersih
+            const centerLens = smoothstep(0.18, 0.72, normDepth);
 
             const nx = dxPill / pillHalfW;
             const ny = dyPill / pillHalfH;
 
-            // Tepi menarik & melengkungkan ikon ke dalam rim, tengah memperbesar halus (1.12x)
-            shiftX = nx * (edgeRim * 28 * dpr - centerZoom * 7.5 * dpr);
-            shiftY = ny * (edgeRim * 22 * dpr - centerZoom * 5.5 * dpr);
+            // Pembesaran tengah (~1.16x) + tarikan lengkung pada rim kaca
+            shiftX = (nx * edgeRim * 24 * dpr - dxPill * 0.14 * centerLens) * act;
+            shiftY = (ny * edgeRim * 18 * dpr - dyPill * 0.14 * centerLens) * act;
 
-            // Dispersi RGB alami tepat di lengkungan rim kaca (persis Gambar 1)
-            dispX = nx * edgeRim * 5.2 * dpr;
-            dispY = ny * edgeRim * 4.2 * dpr;
+            // Dispersi RGB murni hanya di rim lengkungan kaca
+            dispX = nx * edgeRim * 4.2 * dpr * act;
+            dispY = ny * edgeRim * 3.4 * dpr * act;
           }
 
           const baseX = x + shiftX;
@@ -2680,9 +2781,6 @@
 
     function renderWebGLScene(now) {
       drawScene();
-      if (activeTab === 0) {
-        drawLiquidNavRefraction(now);
-      }
       uploadSceneTexture();
 
       gl.useProgram(program);
@@ -2730,6 +2828,9 @@
       if (activeTab === 0) {
         renderWebGLScene(now);
       }
+
+      // Selalu update optik & latar dinamis navbar di setiap halaman (Explore, Snap, Mockup)
+      drawLiquidNavRefraction(now);
 
       requestAnimationFrame(renderFrame);
     }
