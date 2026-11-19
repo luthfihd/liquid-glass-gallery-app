@@ -26,14 +26,21 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Kunci viewport penuh 100% agar iOS Safari/PWA tidak memunculkan top progressive blur */
-    html, body {
-      position: fixed;
-      inset: 0;
+    html {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
+      background-color: #0b1824;
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100lvh;
       background-color: #0b1824;
       color: #f3f8ff;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
@@ -44,15 +51,17 @@
     }
 
     .app {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      height: 100lvh;
       overflow: hidden;
       background: #0b1824;
     }
 
-    /* VIEW 1: EXPLORE (GALLERY UTAMA) */
+    /* =========================================================
+       VIEW 1: EXPLORE (EXACT REPO CAROUSEL & CONCAVE LENS)
+       ========================================================= */
     .stage {
       position: absolute;
       inset: 0;
@@ -60,7 +69,7 @@
       height: 100%;
       overflow: hidden;
       touch-action: none;
-      transition: opacity 0.32s ease, transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: opacity 0.3s ease, transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .stage.dragging {
@@ -81,7 +90,9 @@
       height: 100%;
     }
 
-    /* VIEW 2: SNAP (KAMERA MINIMALIS) */
+    /* =========================================================
+       VIEW 2: SNAP (KAMERA MINIMALIS)
+       ========================================================= */
     .snap-view {
       position: absolute;
       inset: 0;
@@ -232,7 +243,7 @@
     }
 
     /* =========================================================
-       VIEW 3: MOCKUP STUDIO V3 (ZERO OVERLAP + iOS 27 DROPLET)
+       VIEW 3: MOCKUP STUDIO
        ========================================================= */
     .mockup-view {
       position: absolute;
@@ -278,7 +289,7 @@
       flex-shrink: 0;
     }
 
-    /* Segmented Toggle: Mutually Exclusive Clip-Path (Anti-Teks Menimpa) */
+    /* Segmented Toggle: Solid 2-Column Grid + WebKit-Safe Inset Clip */
     .lg-segmented {
       position: relative;
       height: 36px;
@@ -299,19 +310,9 @@
         inset 0 0.5px 0.5px rgba(255, 255, 255, 0.72);
     }
 
-    /* Layer dasar: dilubangi oleh evenodd clip-path agar teks di dalam gelembung hilang total */
-    .lg-seg-base-layer {
+    .lg-seg-btn-base {
       position: relative;
       z-index: 1;
-      height: 100%;
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      pointer-events: none;
-    }
-
-    .lg-seg-btn-base {
       height: 100%;
       padding: 0 11px;
       display: flex;
@@ -322,9 +323,9 @@
       letter-spacing: -0.01em;
       color: rgba(14, 20, 28, 0.88);
       white-space: nowrap;
+      pointer-events: none;
     }
 
-    /* Layer atas: hanya muncul di dalam gelembung kaca (berwarna aksen & membesar) */
     .lg-seg-lens-layer {
       position: absolute;
       z-index: 3;
@@ -333,6 +334,9 @@
       grid-template-columns: 1fr 1fr;
       align-items: center;
       pointer-events: none;
+      /* Latar kaca di dalam gelembung menutup teks hitam di bawahnya tanpa overlap */
+      background: rgba(255, 255, 255, 0.78);
+      border-radius: 999px;
     }
 
     .lg-seg-btn-lens {
@@ -349,7 +353,6 @@
       white-space: nowrap;
     }
 
-    /* Gelembung kaca bening kristal cembung */
     .lg-seg-thumb {
       position: absolute;
       z-index: 2;
@@ -363,9 +366,9 @@
       will-change: transform;
       background: radial-gradient(
         120% 110% at 50% 12%,
-        rgba(255, 255, 255, 0.48) 0%,
-        rgba(255, 255, 255, 0.04) 52%,
-        rgba(255, 255, 255, 0.28) 100%
+        rgba(255, 255, 255, 0.55) 0%,
+        rgba(255, 255, 255, 0.08) 54%,
+        rgba(255, 255, 255, 0.34) 100%
       );
       border: 0.5px solid rgba(255, 255, 255, 0.65);
       box-shadow:
@@ -415,7 +418,6 @@
       background: rgba(255, 255, 255, 0.68);
     }
 
-    /* Area Preview SS yang proporsional (rounded 25px) */
     .mockup-stage {
       position: relative;
       z-index: 2;
@@ -440,7 +442,7 @@
       box-shadow: 0 20px 44px rgba(0, 0, 0, 0.50);
     }
 
-    /* NATIVE iOS 27 CRYSTAL-CLEAR DROPLET SLIDERS */
+    /* Sliders */
     .mockup-sliders {
       position: relative;
       z-index: 3;
@@ -503,6 +505,7 @@
       z-index: 3;
       font-weight: 700;
       color: rgb(var(--nav-accent-rgb));
+      background: rgba(255, 255, 255, 0.85);
       transform: scale(1.12);
     }
 
@@ -519,9 +522,9 @@
       will-change: transform;
       background: radial-gradient(
         120% 110% at 38% 15%,
-        rgba(255, 255, 255, 0.52) 0%,
-        rgba(255, 255, 255, 0.04) 54%,
-        rgba(255, 255, 255, 0.28) 100%
+        rgba(255, 255, 255, 0.55) 0%,
+        rgba(255, 255, 255, 0.08) 54%,
+        rgba(255, 255, 255, 0.34) 100%
       );
       border: 0.5px solid rgba(255, 255, 255, 0.65);
       box-shadow:
@@ -562,10 +565,10 @@
     }
 
     /* =========================================================
-       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (EXACT iOS 27 DROPLET)
-       - Mutually exclusive clip-path (zero overlapping text/icons!)
-       - Bright frosted translucent bar with ultra-thin hairline
-       - Spherical crystal-clear droplet lens bulging above & below bar
+       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (iOS 27 DROPLET)
+       - 100% WebKit-compatible clip-path: inset(...)
+       - Zero overlapping text/icons
+       - Crystal-clear droplet lens + chromatic rim
        ========================================================= */
     .nav-dock-wrap {
       position: fixed;
@@ -590,20 +593,19 @@
       overflow: visible;
       isolation: isolate;
       touch-action: none;
-      /* Badan bar frosted lembut dan terang seperti iOS 27 */
       background: linear-gradient(
         180deg,
-        rgba(255, 255, 255, 0.58) 0%,
-        rgba(255, 255, 255, 0.44) 55%,
-        rgba(255, 255, 255, 0.52) 100%
+        rgba(255, 255, 255, 0.56) 0%,
+        rgba(255, 255, 255, 0.40) 55%,
+        rgba(255, 255, 255, 0.50) 100%
       );
       -webkit-backdrop-filter: blur(26px) saturate(1.7);
       backdrop-filter: blur(26px) saturate(1.7);
-      border: 0.5px solid rgba(255, 255, 255, 0.48);
+      border: 0.5px solid rgba(255, 255, 255, 0.45);
       box-shadow:
-        0 14px 32px rgba(0, 0, 0, 0.20),
-        inset 0 0.5px 0.5px rgba(255, 255, 255, 0.80),
-        inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.30);
+        0 14px 32px rgba(0, 0, 0, 0.22),
+        inset 0 0.5px 0.5px rgba(255, 255, 255, 0.78),
+        inset 0 -0.5px 0.5px rgba(255, 255, 255, 0.28);
     }
 
     /* Layer 1: Optical Lens Canvas (Bening Kristal di dalam gelembung + Pembiasan Tepi Kromatik) */
@@ -616,19 +618,10 @@
       pointer-events: none;
     }
 
-    /* Layer 2: Base Tab Items (Dilubangi oleh evenodd clip-path agar TIDAK MENIMPA lensa) */
-    .nav-items-base {
+    /* Layer 2: Base Tab Items (Teks & ikon gelap bersih di luar gelembung) */
+    .nav-item-base {
       position: relative;
       z-index: 2;
-      grid-column: 1 / -1;
-      height: 100%;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      align-items: center;
-      pointer-events: none;
-    }
-
-    .nav-item-base {
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -637,6 +630,7 @@
       gap: 3px;
       padding: 4px 2px;
       color: rgba(14, 20, 28, 0.90);
+      pointer-events: none;
     }
 
     .nav-item-base svg,
@@ -660,7 +654,44 @@
       font-weight: 560;
     }
 
-    /* Layer 4: Magnified & Accent-Colored Tab Items (Hanya tampil di dalam gelembung) */
+    /* Layer 3: Spherical Droplet Rim */
+    .active-pill {
+      position: absolute;
+      z-index: 3;
+      top: 5px;
+      left: 5px;
+      width: calc((100% - 10px) / 3);
+      height: calc(100% - 10px);
+      border-radius: 999px;
+      pointer-events: none;
+      transform-origin: center center;
+      will-change: transform;
+      background: radial-gradient(
+        115% 100% at 50% 18%,
+        rgba(255, 255, 255, 0.44) 0%,
+        rgba(255, 255, 255, 0.04) 55%,
+        rgba(255, 255, 255, 0.24) 100%
+      );
+      border: 0.5px solid rgba(255, 255, 255, 0.62);
+      box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.18),
+        inset 0 1.25px 1.25px rgba(255, 255, 255, 0.96),
+        inset 0 -1.5px 2px rgba(95, 245, 175, 0.68),
+        inset 2.5px 0 3.5px rgba(85, 205, 255, 0.55),
+        inset -2.5px 0 3.5px rgba(255, 155, 210, 0.48);
+      transition: box-shadow 0.22s ease;
+    }
+
+    .liquid-nav.is-morphing .active-pill {
+      box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.32),
+        inset 0 1.5px 2px rgba(255, 255, 255, 0.98),
+        inset 0 -2.25px 3.5px rgba(80, 255, 170, 0.90),
+        inset 3.5px 0 5px rgba(70, 205, 255, 0.85),
+        inset -3.5px 0 5px rgba(255, 145, 210, 0.76);
+    }
+
+    /* Layer 4: Magnified & Accent-Colored Tab Items (Standard WebKit clip-path: inset) */
     .nav-items-lens {
       position: absolute;
       z-index: 4;
@@ -669,6 +700,10 @@
       grid-template-columns: repeat(3, 1fr);
       align-items: center;
       pointer-events: none;
+      /* Lapisan kaca bening-terang di dalam kapsul agar ikon hitam di bawahnya tidak menimpa */
+      background: rgba(242, 247, 255, 0.84);
+      border-radius: 999px;
+      clip-path: inset(0px 66.66% 0px 0px round 999px);
     }
 
     .nav-item-lens {
@@ -697,44 +732,6 @@
       font-weight: 660;
     }
 
-    /* Layer 3: Spherical Clear Droplet Rim & Chromatic Edge Highlight */
-    .active-pill {
-      position: absolute;
-      z-index: 3;
-      top: 5px;
-      left: 5px;
-      width: calc((100% - 10px) / 3);
-      height: calc(100% - 10px);
-      border-radius: 999px;
-      pointer-events: none;
-      transform-origin: center center;
-      will-change: transform;
-      /* Tengah bening kristal, puncak memiliki kilau lengkung tetesan air, bawah berpendar kromatik */
-      background: radial-gradient(
-        110% 95% at 50% 18%,
-        rgba(255, 255, 255, 0.42) 0%,
-        rgba(255, 255, 255, 0.00) 52%,
-        rgba(255, 255, 255, 0.22) 100%
-      );
-      border: 0.5px solid rgba(255, 255, 255, 0.62);
-      box-shadow:
-        0 6px 16px rgba(0, 0, 0, 0.16),
-        inset 0 1.25px 1.25px rgba(255, 255, 255, 0.96),
-        inset 0 -1.5px 2px rgba(95, 245, 175, 0.68),
-        inset 2.5px 0 3.5px rgba(85, 205, 255, 0.55),
-        inset -2.5px 0 3.5px rgba(255, 155, 210, 0.48);
-      transition: box-shadow 0.22s ease;
-    }
-
-    .liquid-nav.is-morphing .active-pill {
-      box-shadow:
-        0 12px 28px rgba(0, 0, 0, 0.30),
-        inset 0 1.5px 2px rgba(255, 255, 255, 0.98),
-        inset 0 -2.25px 3.5px rgba(80, 255, 170, 0.90),
-        inset 3.5px 0 5px rgba(70, 205, 255, 0.85),
-        inset -3.5px 0 5px rgba(255, 145, 210, 0.76);
-    }
-
     #photoInput,
     #counter {
       display: none;
@@ -744,7 +741,7 @@
 
 <body>
   <main class="app" id="app">
-    <!-- 1. EXPLORE VIEW (GALLERY UTAMA) -->
+    <!-- 1. EXPLORE VIEW (GALLERY UTAMA SESUAI REPO) -->
     <section class="stage" id="stage" aria-label="Galeri foto vertikal">
       <canvas id="gl"></canvas>
     </section>
@@ -795,17 +792,14 @@
       </div>
     </section>
 
-    <!-- 3. MOCKUP STUDIO VIEW (V3 - ZERO OVERLAP + iOS 27 DROPLET) -->
+    <!-- 3. MOCKUP STUDIO VIEW -->
     <section class="mockup-view" id="mockupView" aria-label="Pratinjau Mockup Perangkat">
       <div class="mockup-bg" id="mockupBg"></div>
 
       <div class="mockup-top-bar">
-        <!-- Segmented Toggle 1: Device -->
         <div class="lg-segmented" id="deviceToggle" role="group" aria-label="Pilih frame perangkat">
-          <div class="lg-seg-base-layer" id="deviceToggleBaseLayer">
-            <span class="lg-seg-btn-base">iPhone</span>
-            <span class="lg-seg-btn-base">Android</span>
-          </div>
+          <span class="lg-seg-btn-base">iPhone</span>
+          <span class="lg-seg-btn-base">Android</span>
           <div class="lg-seg-thumb" id="deviceToggleThumb"></div>
           <div class="lg-seg-lens-layer" id="deviceToggleLensLayer" aria-hidden="true">
             <span class="lg-seg-btn-lens">iPhone</span>
@@ -813,12 +807,9 @@
           </div>
         </div>
 
-        <!-- Segmented Toggle 2: Navbar On / Off -->
         <div class="lg-segmented" id="navToggle" role="group" aria-label="Tampilkan Navbar di Screenshot">
-          <div class="lg-seg-base-layer" id="navToggleBaseLayer">
-            <span class="lg-seg-btn-base">Nav On</span>
-            <span class="lg-seg-btn-base">Nav Off</span>
-          </div>
+          <span class="lg-seg-btn-base">Nav On</span>
+          <span class="lg-seg-btn-base">Nav Off</span>
           <div class="lg-seg-thumb" id="navToggleThumb"></div>
           <div class="lg-seg-lens-layer" id="navToggleLensLayer" aria-hidden="true">
             <span class="lg-seg-btn-lens">Nav On</span>
@@ -836,12 +827,10 @@
         </button>
       </div>
 
-      <!-- Preview Hasil SS (Rounded 25px, Proporsional & Jelas Terlihat) -->
       <div class="mockup-stage">
         <canvas id="mockupPreviewCanvas"></canvas>
       </div>
 
-      <!-- LIQUID GLASS SLIDERS: BACKGROUND & FRAME FINISH -->
       <div class="mockup-sliders">
         <div class="lg-slider-card" id="bgSlider" aria-label="Geser tema background">
           <span class="lg-slider-label-base" id="bgSliderLabelBase">BG: Photo Blur</span>
@@ -859,45 +848,43 @@
 
     <div class="capture-flash" id="captureFlash"></div>
 
-    <!-- FLOATING 3-TAB LIQUID GLASS BAR (EXACT iOS 27 CRYSTAL DROPLET) -->
+    <!-- FLOATING 3-TAB LIQUID GLASS BAR (iOS 27 CRYSTAL DROPLET) -->
     <div class="nav-dock-wrap">
       <nav class="liquid-nav" id="liquidNav" aria-label="Navigasi utama">
         <!-- Layer 1: Crystal-Clear Magnifying Lens + Chromatic Rim Canvas -->
         <canvas id="glassLens" aria-hidden="true"></canvas>
 
-        <!-- Layer 2: Base Tab Items (Inverse Clipped so ZERO overlap occurs) -->
-        <div class="nav-items-base" id="navItemsBase">
-          <div class="nav-item-base">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="7" height="7" x="3" y="3" rx="1.8"/>
-              <rect width="7" height="7" x="14" y="3" rx="1.8"/>
-              <rect width="7" height="7" x="14" y="14" rx="1.8"/>
-              <rect width="7" height="7" x="3" y="14" rx="1.8"/>
-            </svg>
-            <span>Explore</span>
-          </div>
+        <!-- Layer 2: Base Tab Items (In-Flow 3 Columns) -->
+        <div class="nav-item-base">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="7" height="7" x="3" y="3" rx="1.8"/>
+            <rect width="7" height="7" x="14" y="3" rx="1.8"/>
+            <rect width="7" height="7" x="14" y="14" rx="1.8"/>
+            <rect width="7" height="7" x="3" y="14" rx="1.8"/>
+          </svg>
+          <span>Explore</span>
+        </div>
 
-          <div class="nav-item-base">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
-              <circle cx="12" cy="13" r="3"/>
-            </svg>
-            <span>Snap</span>
-          </div>
+        <div class="nav-item-base">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+            <circle cx="12" cy="13" r="3"/>
+          </svg>
+          <span>Snap</span>
+        </div>
 
-          <div class="nav-item-base">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="14" height="20" x="5" y="2" rx="2.8" ry="2.8"/>
-              <path d="M12 18h.01"/>
-            </svg>
-            <span>Mockup</span>
-          </div>
+        <div class="nav-item-base">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="14" height="20" x="5" y="2" rx="2.8" ry="2.8"/>
+            <path d="M12 18h.01"/>
+          </svg>
+          <span>Mockup</span>
         </div>
 
         <!-- Layer 3: Spherical Droplet Rim -->
         <div class="active-pill" id="activePill"></div>
 
-        <!-- Layer 4: Magnified & Accent-Colored Tab Items (Clipped Inside Droplet!) -->
+        <!-- Layer 4: Magnified & Accent-Colored Tab Items (WebKit Inset Clip) -->
         <div class="nav-items-lens" id="navItemsLens" aria-hidden="true">
           <div class="nav-item-lens">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -960,7 +947,6 @@
     const liquidNav = document.getElementById("liquidNav");
     const glassCanvas = document.getElementById("glassLens");
     const activePill = document.getElementById("activePill");
-    const navItemsBase = document.getElementById("navItemsBase");
     const navItemsLens = document.getElementById("navItemsLens");
     const captureFlash = document.getElementById("captureFlash");
 
@@ -980,11 +966,9 @@
     const mockupPreviewCanvas = document.getElementById("mockupPreviewCanvas");
     const deviceToggle = document.getElementById("deviceToggle");
     const deviceToggleThumb = document.getElementById("deviceToggleThumb");
-    const deviceToggleBaseLayer = document.getElementById("deviceToggleBaseLayer");
     const deviceToggleLensLayer = document.getElementById("deviceToggleLensLayer");
     const navToggle = document.getElementById("navToggle");
     const navToggleThumb = document.getElementById("navToggleThumb");
-    const navToggleBaseLayer = document.getElementById("navToggleBaseLayer");
     const navToggleLensLayer = document.getElementById("navToggleLensLayer");
     const saveMockupBtn = document.getElementById("saveMockupBtn");
 
@@ -1076,26 +1060,7 @@
       ((index % items.length) + items.length) % items.length;
 
     /* =========================================================
-       HELPER: MUTUALLY EXCLUSIVE ROUNDED CAPSULE CLIP-PATH
-       (Memotong layer lensa dan melubangi layer dasar tanpa tumpang tindih)
-       ========================================================= */
-    function buildCapsulePath(x, y, w, h) {
-      const r = Math.min(w * 0.5, h * 0.5);
-      const x1 = x + r;
-      const x2 = x + w - r;
-      const y2 = y + h;
-      return `M ${x1.toFixed(1)} ${y.toFixed(1)} H ${x2.toFixed(1)} A ${r.toFixed(1)} ${r.toFixed(1)} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)} H ${x1.toFixed(1)} A ${r.toFixed(1)} ${r.toFixed(1)} 0 0 1 ${x1.toFixed(1)} ${y.toFixed(1)} Z`;
-    }
-
-    function applyMutuallyExclusiveClip(baseEl, lensEl, containerW, containerH, capX, capY, capW, capH) {
-      const holePath = buildCapsulePath(capX, capY, capW, capH);
-      const outerRect = `M -30 -30 H ${(containerW + 30).toFixed(1)} V ${(containerH + 30).toFixed(1)} H -30 Z`;
-      lensEl.style.clipPath = `path('${holePath}')`;
-      baseEl.style.clipPath = `path(evenodd, '${outerRect} ${holePath}')`;
-    }
-
-    /* =========================================================
-       MATERIAL YOU COLOR EXTRACTION (DOMINANT PRIMARY & ACCENT)
+       MATERIAL YOU COLOR EXTRACTION
        ========================================================= */
     function rgbToHsl(r, g, b) {
       r /= 255; g /= 255; b /= 255;
@@ -1235,7 +1200,7 @@
     }
 
     /* =========================================================
-       WEBGL SHADERS (CONCAVE LENS FRAME)
+       WEBGL SHADERS (EXACT REPO CONCAVE LENS FRAME)
        ========================================================= */
     const vertexSource = `#version 300 es
       precision highp float;
@@ -1618,7 +1583,7 @@
     });
 
     /* =========================================================
-       MOCKUP CAPTURE & COMPOSITOR (V3: 25px ROUNDED & CLEAR FIT)
+       MOCKUP CAPTURE & COMPOSITOR
        ========================================================= */
     function triggerFlashEffect() {
       captureFlash.classList.remove("flash-anim");
@@ -1745,33 +1710,21 @@
       mctx.fillRect(0, 0, outW, outH);
     }
 
-    function updateSegmentedLensClip(containerEl, thumbEl, baseLayerEl, lensLayerEl, ratio, morphing) {
-      const rect = containerEl.getBoundingClientRect();
-      const cW = rect.width || 132;
-      const cH = rect.height || 36;
-      const innerW = cW - 6;
-      const innerH = cH - 6;
-      const halfW = innerW / 2;
+    function updateSegmentedLensClip(thumbEl, lensLayerEl, ratio, morphing) {
+      const xPct = ratio * 100;
+      const scaleX = morphing ? 1.12 : 1;
+      const scaleY = morphing ? 1.24 : 1;
+      thumbEl.style.transform = `translate3d(${xPct}%, 0, 0) scale(${scaleX}, ${scaleY})`;
 
-      const xPx = ratio * halfW;
-      const scaleX = morphing ? 1.12 : 1.02;
-      const scaleY = morphing ? 1.24 : 1.04;
-      thumbEl.style.transform = `translate3d(${xPx}px, 0, 0) scale(${scaleX}, ${scaleY})`;
-
-      const capW = halfW * scaleX;
-      const capH = innerH * scaleY;
-      const capCenterX = xPx + halfW * 0.5;
-      const capCenterY = innerH * 0.5;
-      const capX = capCenterX - capW * 0.5;
-      const capY = capCenterY - capH * 0.5;
-
-      applyMutuallyExclusiveClip(baseLayerEl, lensLayerEl, innerW, innerH, capX, capY, capW, capH);
+      const leftPct = Math.max(0, Math.min(50, ratio * 50));
+      const rightPct = Math.max(0, Math.min(50, 50 - leftPct));
+      lensLayerEl.style.clipPath = `inset(-8px ${rightPct}% -8px ${leftPct}% round 999px)`;
     }
 
     function syncSegmentedToggles() {
       const isIphone = currentMockupDevice === "iphone";
-      updateSegmentedLensClip(deviceToggle, deviceToggleThumb, deviceToggleBaseLayer, deviceToggleLensLayer, isIphone ? 0 : 1, false);
-      updateSegmentedLensClip(navToggle, navToggleThumb, navToggleBaseLayer, navToggleLensLayer, includeNavInSS ? 0 : 1, false);
+      updateSegmentedLensClip(deviceToggleThumb, deviceToggleLensLayer, isIphone ? 0 : 1, false);
+      updateSegmentedLensClip(navToggleThumb, navToggleLensLayer, includeNavInSS ? 0 : 1, false);
     }
 
     function renderDeviceMockup() {
@@ -1805,7 +1758,6 @@
       const screenH = bodyH - bezel * 2;
       const screenRadius = outerRadius - bezel;
 
-      // Drop shadow bodi HP
       mctx.save();
       mctx.shadowColor = "rgba(0, 0, 0, 0.55)";
       mctx.shadowBlur = 70;
@@ -1815,7 +1767,6 @@
       mctx.fill();
       mctx.restore();
 
-      // Tombol samping hardware
       mctx.fillStyle = finish.stops[1];
       if (isIphone) {
         drawRoundedRect(mctx, bodyX - 7, bodyY + 330, 7, 68, 3);
@@ -1833,7 +1784,6 @@
         mctx.fill();
       }
 
-      // Frame bodi logam
       const frameGrad = mctx.createLinearGradient(bodyX, bodyY, bodyX + bodyW, bodyY + bodyH);
       frameGrad.addColorStop(0, finish.stops[0]);
       frameGrad.addColorStop(0.25, finish.stops[1]);
@@ -1845,19 +1795,16 @@
       mctx.fillStyle = frameGrad;
       mctx.fill();
 
-      // Bezel dalam layar
       drawRoundedRect(mctx, bodyX + 8, bodyY + 8, bodyW - 16, bodyH - 16, outerRadius - 6);
       mctx.fillStyle = "#07090c";
       mctx.fill();
 
-      // Area Layar HP
       mctx.save();
       drawRoundedRect(mctx, screenX, screenY, screenW, screenH, screenRadius);
       mctx.clip();
 
       drawImageToContext(mctx, capturedRawScene, screenX, screenY, screenW, screenH);
 
-      // Opsional: Gambar Floating Liquid Glass Navbar iOS 27 di dalam SS
       if (includeNavInSS) {
         const pal = capturedPalette || {
           primary: [24, 42, 62],
@@ -1879,10 +1826,9 @@
         mctx.strokeStyle = "rgba(255, 255, 255, 0.48)";
         mctx.stroke();
 
-        // Active Crystal-Clear Droplet Lens Capsule di Explore
         const tabW = (navW - 16) / 3;
         drawRoundedRect(mctx, navX + 8, navY + 6, tabW, navH - 12, (navH - 12) / 2);
-        mctx.fillStyle = "rgba(255, 255, 255, 0.22)";
+        mctx.fillStyle = "rgba(242, 247, 255, 0.84)";
         mctx.fill();
         mctx.lineWidth = 1;
         mctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
@@ -1902,14 +1848,12 @@
         mctx.restore();
       }
 
-      // Gradasi gelap tipis di status bar
       const topStatusGrad = mctx.createLinearGradient(0, screenY, 0, screenY + 130);
       topStatusGrad.addColorStop(0, "rgba(0, 0, 0, 0.34)");
       topStatusGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
       mctx.fillStyle = topStatusGrad;
       mctx.fillRect(screenX, screenY, screenW, 130);
 
-      // Status Bar Asli
       const timeStr = formatCurrentTime();
       mctx.fillStyle = "#ffffff";
       mctx.textBaseline = "middle";
@@ -2007,7 +1951,6 @@
         mctx.fill();
       }
 
-      // Pantulan kaca layar
       const glassSheen = mctx.createLinearGradient(screenX, screenY, screenX + screenW * 0.7, screenY + screenH * 0.45);
       glassSheen.addColorStop(0, "rgba(255, 255, 255, 0.11)");
       glassSheen.addColorStop(0.45, "rgba(255, 255, 255, 0.02)");
@@ -2019,9 +1962,9 @@
     }
 
     /* =========================================================
-       NATIVE iOS 27 CRYSTAL DROPLET SEGMENTED TOGGLES
+       SEGMENTED TOGGLES
        ========================================================= */
-    function bindSegmentedToggle(containerEl, thumbEl, baseLayerEl, lensLayerEl, getCurrentIdx, onSelectIndex) {
+    function bindSegmentedToggle(containerEl, thumbEl, lensLayerEl, getCurrentIdx, onSelectIndex) {
       let draggingSeg = false;
       let startX = 0;
       let startRatio = 0;
@@ -2036,7 +1979,7 @@
         currentRatio = startRatio;
         containerEl.classList.add("is-morphing");
         containerEl.setPointerCapture(e.pointerId);
-        updateSegmentedLensClip(containerEl, thumbEl, baseLayerEl, lensLayerEl, currentRatio, true);
+        updateSegmentedLensClip(thumbEl, lensLayerEl, currentRatio, true);
       });
 
       containerEl.addEventListener("pointermove", (e) => {
@@ -2046,8 +1989,8 @@
         const dx = e.clientX - startX;
         if (Math.abs(dx) > 4) moved = true;
 
-        currentRatio = Math.max(-0.06, Math.min(1.06, startRatio + dx / halfW));
-        updateSegmentedLensClip(containerEl, thumbEl, baseLayerEl, lensLayerEl, currentRatio, true);
+        currentRatio = Math.max(-0.08, Math.min(1.08, startRatio + dx / halfW));
+        updateSegmentedLensClip(thumbEl, lensLayerEl, currentRatio, true);
       });
 
       function endSeg(e) {
@@ -2077,7 +2020,6 @@
     bindSegmentedToggle(
       deviceToggle,
       deviceToggleThumb,
-      deviceToggleBaseLayer,
       deviceToggleLensLayer,
       () => (currentMockupDevice === "iphone" ? 0 : 1),
       (idx) => {
@@ -2089,7 +2031,6 @@
     bindSegmentedToggle(
       navToggle,
       navToggleThumb,
-      navToggleBaseLayer,
       navToggleLensLayer,
       () => (includeNavInSS ? 0 : 1),
       (idx) => {
@@ -2099,9 +2040,9 @@
     );
 
     /* =========================================================
-       NATIVE iOS 27 CRYSTAL DROPLET SLIDERS (MUTUALLY EXCLUSIVE SPLIT)
+       SLIDERS (WEBKIT CIRCLE CLIP-PATH)
        ========================================================= */
-    function bindLiquidSlider(sliderEl, thumbEl, baseLabelEl, lensLabelEl, getStepsCount, onStepChange) {
+    function bindLiquidSlider(sliderEl, thumbEl, lensLabelEl, getStepsCount, onStepChange) {
       let isSliding = false;
       let startX = 0;
       let startRatio = 0;
@@ -2110,21 +2051,17 @@
 
       function positionThumb(ratio, morphing = false) {
         const rect = sliderEl.getBoundingClientRect();
-        const cW = rect.width || 180;
-        const cH = rect.height || 42;
         const thumbW = 34;
-        const maxTravel = Math.max(1, cW - thumbW - 6);
+        const maxTravel = Math.max(1, rect.width - thumbW - 6);
         const x = Math.max(0, Math.min(maxTravel, ratio * maxTravel));
-        const sx = morphing ? 1.32 : 1.02;
-        const sy = morphing ? 1.28 : 1.04;
+        const sx = morphing ? 1.32 : 1;
+        const sy = morphing ? 1.28 : 1;
         thumbEl.style.transform = `translate3d(${x}px, 0, 0) scale(${sx}, ${sy})`;
 
-        const capW = thumbW * sx;
-        const capH = thumbW * sy;
-        const capX = 3 + x + thumbW * 0.5 - capW * 0.5;
-        const capY = cH * 0.5 - capH * 0.5;
-
-        applyMutuallyExclusiveClip(baseLabelEl, lensLabelEl, cW, cH, capX, capY, capW, capH);
+        const cx = 3 + x + thumbW * 0.5;
+        const cy = rect.height * 0.5;
+        const r = (thumbW * 0.5) * sx;
+        lensLabelEl.style.clipPath = `circle(${r.toFixed(1)}px at ${cx.toFixed(1)}px ${cy.toFixed(1)}px)`;
       }
 
       sliderEl.addEventListener("pointerdown", (e) => {
@@ -2186,7 +2123,6 @@
     const bgSliderCtrl = bindLiquidSlider(
       bgSlider,
       bgSliderThumb,
-      bgSliderLabelBase,
       bgSliderLabelLens,
       () => 5,
       (idx) => {
@@ -2201,7 +2137,6 @@
     const frameSliderCtrl = bindLiquidSlider(
       frameSlider,
       frameSliderThumb,
-      frameSliderLabelBase,
       frameSliderLabelLens,
       () => frameFinishes.length,
       (idx) => {
@@ -2319,8 +2254,8 @@
 
     function getDropletScale() {
       const speed = pillDragging ? 0.55 : Math.min(1.5, Math.abs(pillVel) * 0.16);
-      const pressBoostX = pillPressing ? 1.13 : 1.02;
-      const pressBoostY = pillPressing ? 1.32 : 1.06;
+      const pressBoostX = pillPressing ? 1.12 : 1.0;
+      const pressBoostY = pillPressing ? 1.28 : 1.0;
       return {
         scaleX: (1 + speed * 0.10) * pressBoostX,
         scaleY: (1 + speed * 0.04) * pressBoostY
@@ -2351,15 +2286,18 @@
       const { scaleX, scaleY } = getDropletScale();
       activePill.style.transform = `translate3d(${translateX}px, 0, 0) scale(${scaleX}, ${scaleY})`;
 
-      // Mutually exclusive rounded-capsule clip-path: ZERO overlapping text/icons!
-      const capW = baseTabW * scaleX;
-      const capH = innerH * scaleY;
-      const capCenterX = translateX + baseTabW * 0.5;
-      const capCenterY = innerH * 0.5;
-      const capX = capCenterX - capW * 0.5;
-      const capY = capCenterY - capH * 0.5;
+      // Standard WebKit inset clip-path synced with droplet pill
+      const pillCenterX = translateX + baseTabW * 0.5;
+      const pillHalfW = (baseTabW * scaleX) * 0.5;
+      const pillHalfH = (innerH * scaleY) * 0.5;
+      const pillCenterY = innerH * 0.5;
 
-      applyMutuallyExclusiveClip(navItemsBase, navItemsLens, innerW, innerH, capX, capY, capW, capH);
+      const clipLeft = pillCenterX - pillHalfW;
+      const clipRight = innerW - (pillCenterX + pillHalfW);
+      const clipTop = pillCenterY - pillHalfH;
+      const clipBottom = innerH - (pillCenterY + pillHalfH);
+
+      navItemsLens.style.clipPath = `inset(${clipTop.toFixed(1)}px ${clipRight.toFixed(1)}px ${clipBottom.toFixed(1)}px ${clipLeft.toFixed(1)}px round 999px)`;
     }
 
     window.addEventListener("beforeunload", () => {
@@ -2368,7 +2306,7 @@
     });
 
     /* =========================================================
-       VIEWPORT & RESIZE (FULL BLEED TANPA TOP PROGRESSIVE BLUR)
+       VIEWPORT & RESIZE (EXACT REPO DIMENSIONS)
        ========================================================= */
     function getFullScreenDimensions() {
       const isStandalone =
@@ -2376,11 +2314,11 @@
         window.matchMedia("(display-mode: standalone)").matches ||
         window.matchMedia("(display-mode: fullscreen)").matches;
 
-      let w = window.innerWidth || document.documentElement.clientWidth;
-      let h = window.innerHeight || document.documentElement.clientHeight;
+      let w = Math.max(window.innerWidth, document.documentElement.clientWidth);
+      let h = Math.max(window.innerHeight, document.documentElement.clientHeight);
 
       if (isStandalone && window.screen) {
-        const isPortrait = h >= w;
+        const isPortrait = window.innerHeight >= window.innerWidth;
         const screenH = isPortrait
           ? Math.max(window.screen.height, window.screen.width)
           : Math.min(window.screen.height, window.screen.width);
@@ -2394,6 +2332,12 @@
     function resize() {
       const { w, h } = getFullScreenDimensions();
       if (!w || !h) return;
+
+      document.documentElement.style.height = `${h}px`;
+      document.body.style.height = `${h}px`;
+      app.style.height = `${h}px`;
+      stage.style.height = `${h}px`;
+      visibleCanvas.style.height = `${h}px`;
 
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       width = w;
@@ -2502,7 +2446,6 @@
       const pillCenterX = insetPx + (pillPos + 0.5) * tabW;
       const pillCenterY = lensHeight * 0.5;
 
-      // Signed Distance Function untuk Rounded Capsule yang identik dengan CSS activePill
       const cornerR = Math.min(pillHalfW, pillHalfH);
       const boxHalfX = pillHalfW - cornerR;
       const boxHalfY = pillHalfH - cornerR;
@@ -2546,7 +2489,6 @@
           const nx = dx / pillHalfW;
           const ny = dy / pillHalfH;
 
-          // Pembiasan tepi kuat menarik piksel sekeliling + pembesaran kristal di tengah
           const pillShiftX = nx * (lensRim * 26 * dpr - lensMagnify * 14 * dpr);
           const pillShiftY = ny * (lensRim * 22 * dpr - lensMagnify * 11 * dpr);
 
