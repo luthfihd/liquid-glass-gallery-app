@@ -35,7 +35,7 @@
       min-height: 100lvh;
       background-color: #0b1824;
       color: #f3f8ff;
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
       overflow: hidden;
       overscroll-behavior: none;
     }
@@ -49,191 +49,589 @@
       background: #0b1824;
     }
 
+    /* VIEW 1: EXPLORE (GALLERY UTAMA) */
     .stage {
       position: absolute;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
       touch-action: none;
       user-select: none;
+      transition: opacity 0.32s ease, transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .stage.dragging {
       cursor: grabbing;
     }
 
+    .stage.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.97);
+    }
+
     #gl {
       position: absolute;
-      top: 0;
-      left: 0;
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    .topbar {
-      position: fixed;
-      z-index: 3;
-      top: auto;
-      bottom: max(16px, calc(10px + env(safe-area-inset-bottom, 0px)));
-      left: 14px;
-      right: 14px;
-      min-height: 72px;
-      padding: 9px 11px 9px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      overflow: hidden;
-      isolation: isolate;
-      border: 1px solid rgba(255, 255, 255, 0.34);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.08);
-      -webkit-backdrop-filter: blur(10px) saturate(1.18);
-      backdrop-filter: blur(10px) saturate(1.18);
-      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.16);
-      pointer-events: auto;
-    }
-
-    #glassLens {
-      position: absolute;
-      z-index: -1;
       inset: 0;
       display: block;
       width: 100%;
       height: 100%;
-      border-radius: inherit;
-      opacity: 0.72;
-      pointer-events: none;
     }
 
-    .topbar h1,
-    .top-actions {
-      position: relative;
-      z-index: 1;
-    }
-
-    .topbar h1 {
-      margin: 0;
-      color: #fff;
-      font-size: clamp(1.25rem, 5vw, 1.75rem);
-      font-weight: 650;
-      letter-spacing: -0.045em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
-    }
-
-    .top-actions {
+    /* VIEW 2: SNAP (KAMERA MINIMALIS) */
+    .snap-view {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      background: #050a10;
       display: flex;
-      flex: 0 0 auto;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(18px) scale(0.98);
+      transition: opacity 0.3s ease, transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .snap-view.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+
+    #cameraVideo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #08111a;
+    }
+
+    #cameraVideo.mirrored {
+      transform: scaleX(-1);
+    }
+
+    .camera-fallback {
+      position: absolute;
+      inset: 0;
+      display: none;
+      place-items: center;
+      text-align: center;
+      padding: 32px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      background: radial-gradient(circle at center, #162636 0%, #070e16 100%);
+    }
+
+    .camera-fallback.visible {
+      display: grid;
+    }
+
+    .snap-top {
+      position: relative;
+      z-index: 2;
+      padding: max(18px, calc(12px + env(safe-area-inset-top, 0px))) 18px 12px;
+      display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
     }
 
-    .add-button,
-    .avatar {
-      width: 46px;
-      height: 46px;
-      border: 1px solid rgba(255, 255, 255, 0.38);
+    .glass-circle-btn {
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-    }
-
-    .add-button {
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      background: rgba(20, 28, 38, 0.38);
+      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+      backdrop-filter: blur(16px) saturate(1.4);
+      color: #fff;
       display: grid;
       place-items: center;
-      padding: 0 0 4px;
-      color: white;
-      font: inherit;
-      font-size: 2rem;
-      line-height: 1;
-      background: rgba(255, 255, 255, 0.08);
       cursor: pointer;
-      transition: transform 0.15s ease, background-color 0.15s ease;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      transition: transform 0.16s ease, background 0.16s ease;
     }
 
-    .add-button:active {
-      transform: scale(0.92);
+    .glass-circle-btn:active {
+      transform: scale(0.9);
       background: rgba(255, 255, 255, 0.22);
     }
 
-    .avatar {
-      display: block;
-      object-fit: cover;
-      background: rgba(255, 255, 255, 0.12);
+    .snap-controls {
+      position: relative;
+      z-index: 2;
+      padding: 20px 28px max(116px, calc(104px + env(safe-area-inset-bottom, 0px)));
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      background: linear-gradient(to top, rgba(4, 9, 15, 0.72) 0%, rgba(4, 9, 15, 0) 100%);
+    }
+
+    .snap-gallery-wrap {
+      justify-self: start;
+    }
+
+    .photo-pick-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      border: 1.5px solid rgba(255, 255, 255, 0.48);
+      background: rgba(255, 255, 255, 0.14);
+      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+      backdrop-filter: blur(16px) saturate(1.4);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      overflow: hidden;
+      padding: 0;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      transition: transform 0.16s ease;
+    }
+
+    .photo-pick-btn:active {
+      transform: scale(0.92);
+    }
+
+    .shot-btn {
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      border: 3.5px solid rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.16);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      padding: 5px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .shot-btn-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #ffffff;
+      transition: transform 0.14s ease, background 0.14s ease;
+    }
+
+    .shot-btn:active {
+      transform: scale(0.92);
+    }
+
+    .shot-btn:active .shot-btn-inner {
+      transform: scale(0.88);
+      background: #e2ecff;
+    }
+
+    /* VIEW 3: MOCKUP STUDIO */
+    .mockup-view {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: max(16px, calc(10px + env(safe-area-inset-top, 0px))) 18px max(106px, calc(96px + env(safe-area-inset-bottom, 0px)));
+      background: #0c1722;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(1.03);
+      transition: opacity 0.32s ease, transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+      overflow: hidden;
+    }
+
+    .mockup-view.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    .mockup-bg {
+      position: absolute;
+      inset: -24px;
+      background-size: cover;
+      background-position: center;
+      filter: blur(36px) saturate(1.25) brightness(0.62);
+      z-index: 0;
+      transition: background-image 0.35s ease;
+    }
+
+    .mockup-top-bar {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .device-switch {
+      display: inline-flex;
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: rgba(15, 24, 34, 0.42);
+      -webkit-backdrop-filter: blur(16px) saturate(1.3);
+      backdrop-filter: blur(16px) saturate(1.3);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .device-chip {
+      border: 0;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.68);
+      font: inherit;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .device-chip.active {
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    }
+
+    .save-mockup-btn {
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      background: rgba(255, 255, 255, 0.16);
+      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+      backdrop-filter: blur(16px) saturate(1.4);
+      color: #fff;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .save-mockup-btn:active {
+      transform: scale(0.94);
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .mockup-stage {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      width: 100%;
+      display: grid;
+      place-items: center;
+      padding: 8px 0;
+      min-height: 0;
+    }
+
+    #mockupPreviewCanvas {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 24px 42px rgba(0, 0, 0, 0.52));
+    }
+
+    /* CAPTURE FLASH OVERLAY */
+    .capture-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .capture-flash.flash-anim {
+      animation: shutterFlash 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes shutterFlash {
+      0% { opacity: 0.88; }
+      100% { opacity: 0; }
+    }
+
+    /* =========================================================
+       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR
+       Multi-layer optical refraction + specular rim + squish pill
+       ========================================================= */
+    .nav-dock-wrap {
+      position: fixed;
+      z-index: 10;
+      bottom: max(16px, calc(10px + env(safe-area-inset-bottom, 0px)));
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(356px, calc(100vw - 28px));
+      height: 70px;
+      pointer-events: auto;
+    }
+
+    .liquid-nav {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      padding: 6px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: center;
+      overflow: hidden;
+      isolation: isolate;
+      touch-action: none;
+      user-select: none;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(255, 255, 255, 0.06) 55%,
+        rgba(255, 255, 255, 0.12) 100%
+      );
+      -webkit-backdrop-filter: blur(18px) saturate(1.45);
+      backdrop-filter: blur(18px) saturate(1.45);
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      box-shadow:
+        0 14px 34px rgba(0, 0, 0, 0.32),
+        0 2px 8px rgba(0, 0, 0, 0.18),
+        inset 0 1.5px 1px rgba(255, 255, 255, 0.55),
+        inset 0 -1.5px 2px rgba(255, 255, 255, 0.16);
+    }
+
+    /* Layer 1: Real-time pixel edge refraction & chromatic dispersion canvas */
+    #glassLens {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      opacity: 0.78;
+      pointer-events: none;
+    }
+
+    /* Layer 2: Specular Fresnel rim highlight */
+    .liquid-nav::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.75) 0%,
+        rgba(255, 255, 255, 0.12) 40%,
+        rgba(170, 220, 255, 0.18) 70%,
+        rgba(255, 255, 255, 0.55) 100%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* Layer 3: Morphing / Sliding Active Liquid Glass Pill */
+    .active-pill {
+      position: absolute;
+      z-index: 1;
+      top: 6px;
+      left: 6px;
+      width: calc((100% - 12px) / 3);
+      height: calc(100% - 12px);
+      border-radius: 999px;
+      pointer-events: none;
+      transform-origin: center center;
+      will-change: transform;
+      background: radial-gradient(
+        120% 100% at 50% 0%,
+        rgba(255, 255, 255, 0.36) 0%,
+        rgba(255, 255, 255, 0.14) 55%,
+        rgba(255, 255, 255, 0.22) 100%
+      );
+      box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.22),
+        inset 0 1.5px 1px rgba(255, 255, 255, 0.82),
+        inset 0 -1px 1.5px rgba(255, 255, 255, 0.26),
+        inset 2px 0 3px rgba(130, 210, 255, 0.22),
+        inset -2px 0 3px rgba(255, 190, 210, 0.20);
+    }
+
+    /* Layer 4: Tab Items */
+    .nav-item {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      border: 0;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.66);
+      font: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 4px 2px;
+      cursor: pointer;
+      transition: color 0.22s ease, transform 0.18s ease;
+    }
+
+    .nav-item svg {
+      width: 21px;
+      height: 21px;
+      stroke-width: 2;
+      transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .nav-item span {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: #ffffff;
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.28);
+    }
+
+    .nav-item.active svg {
+      transform: translateY(-1px) scale(1.06);
     }
 
     #photoInput,
     #counter {
       display: none;
     }
-
-    @media (max-width: 600px) {
-      .topbar {
-        left: 12px;
-        right: 12px;
-      }
-
-      .topbar h1 {
-        font-size: clamp(1.18rem, 5.2vw, 1.65rem);
-      }
-
-      .add-button,
-      .avatar {
-        width: 42px;
-        height: 42px;
-      }
-    }
-
-    @media (max-width: 360px) {
-      .topbar {
-        left: 9px;
-        right: 9px;
-        padding-left: 15px;
-        padding-right: 8px;
-      }
-
-      .topbar h1 {
-        font-size: 1.08rem;
-      }
-
-      .top-actions {
-        gap: 6px;
-      }
-
-      .add-button,
-      .avatar {
-        width: 39px;
-        height: 39px;
-      }
-    }
   </style>
 </head>
 
 <body>
   <main class="app" id="app">
+    <!-- 1. EXPLORE VIEW (GALLERY UTAMA) -->
     <section class="stage" id="stage" aria-label="Galeri foto vertikal">
       <canvas id="gl"></canvas>
     </section>
 
-    <header class="topbar" id="topbar">
-      <canvas id="glassLens" aria-hidden="true"></canvas>
-
-      <h1>LiquidGlass Gallery</h1>
-
-      <div class="top-actions">
-        <button class="add-button" id="addButton" type="button" aria-label="Tambah foto preview">+</button>
-        <img
-          class="avatar"
-          id="avatarImg"
-          src="https://images.unsplash.com/photo-1793605300952-49cbebdc3d49?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
-          alt=""
-        >
+    <!-- 2. SNAP VIEW (HALAMAN KAMERA & GALERI) -->
+    <section class="snap-view" id="snapView" aria-label="Kamera dan tambah foto">
+      <video id="cameraVideo" autoplay playsinline muted></video>
+      <div class="camera-fallback" id="cameraFallback">
+        <div>
+          <p style="margin:0 0 6px;font-weight:600;color:#fff;">Kamera tidak tersedia</p>
+          <p style="margin:0;">Ketuk ikon galeri di kiri bawah untuk memilih foto dari perangkatmu.</p>
+        </div>
       </div>
-    </header>
+
+      <div class="snap-top">
+        <button class="glass-circle-btn" id="closeSnapBtn" type="button" aria-label="Kembali ke Explore">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+        </button>
+
+        <button class="glass-circle-btn" id="flipCameraBtn" type="button" aria-label="Balik kamera">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+            <path d="M16 16h5v5"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="snap-controls">
+        <div class="snap-gallery-wrap">
+          <button class="photo-pick-btn" id="photoPickBtn" type="button" aria-label="Pilih foto dari galeri">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="3" ry="3"/>
+              <circle cx="9" cy="9" r="2"/>
+              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+            </svg>
+          </button>
+        </div>
+
+        <button class="shot-btn" id="shotBtn" type="button" aria-label="Ambil foto">
+          <span class="shot-btn-inner"></span>
+        </button>
+
+        <div></div>
+      </div>
+    </section>
+
+    <!-- 3. MOCKUP STUDIO VIEW -->
+    <section class="mockup-view" id="mockupView" aria-label="Pratinjau Mockup Perangkat">
+      <div class="mockup-bg" id="mockupBg"></div>
+
+      <div class="mockup-top-bar">
+        <div class="device-switch" role="group" aria-label="Pilih frame perangkat">
+          <button class="device-chip" id="chipIphone" type="button" data-device="iphone">iPhone</button>
+          <button class="device-chip" id="chipAndroid" type="button" data-device="android">Android</button>
+        </div>
+
+        <button class="save-mockup-btn" id="saveMockupBtn" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" x2="12" y1="15" y2="3"/>
+          </svg>
+          <span>Simpan</span>
+        </button>
+      </div>
+
+      <div class="mockup-stage">
+        <canvas id="mockupPreviewCanvas"></canvas>
+      </div>
+    </section>
+
+    <div class="capture-flash" id="captureFlash"></div>
+
+    <!-- FLOATING 3-TAB LIQUID GLASS BAR -->
+    <div class="nav-dock-wrap">
+      <nav class="liquid-nav" id="liquidNav" aria-label="Navigasi utama">
+        <canvas id="glassLens" aria-hidden="true"></canvas>
+        <div class="active-pill" id="activePill"></div>
+
+        <button class="nav-item active" type="button" data-tab="0" aria-label="Explore">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="7" height="7" x="3" y="3" rx="1.5"/>
+            <rect width="7" height="7" x="14" y="3" rx="1.5"/>
+            <rect width="7" height="7" x="14" y="14" rx="1.5"/>
+            <rect width="7" height="7" x="3" y="14" rx="1.5"/>
+          </svg>
+          <span>Explore</span>
+        </button>
+
+        <button class="nav-item" type="button" data-tab="1" aria-label="Snap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+            <circle cx="12" cy="13" r="3"/>
+          </svg>
+          <span>Snap</span>
+        </button>
+
+        <button class="nav-item" type="button" data-tab="2" aria-label="Mockup">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="14" height="20" x="5" y="2" rx="2.5" ry="2.5"/>
+            <path d="M12 18h.01"/>
+          </svg>
+          <span>Mockup</span>
+        </button>
+      </nav>
+    </div>
 
     <input type="file" id="photoInput" accept="image/*" multiple>
     <span id="counter" aria-live="polite">1 / 5</span>
@@ -262,10 +660,31 @@
     const stage = document.getElementById("stage");
     const visibleCanvas = document.getElementById("gl");
     const counter = document.getElementById("counter");
+
+    // Navigation elements
+    const liquidNav = document.getElementById("liquidNav");
     const glassCanvas = document.getElementById("glassLens");
-    const topbar = document.getElementById("topbar");
-    const addButton = document.getElementById("addButton");
+    const activePill = document.getElementById("activePill");
+    const navButtons = Array.from(document.querySelectorAll(".nav-item"));
+    const captureFlash = document.getElementById("captureFlash");
+
+    // Snap elements
+    const snapView = document.getElementById("snapView");
+    const cameraVideo = document.getElementById("cameraVideo");
+    const cameraFallback = document.getElementById("cameraFallback");
+    const closeSnapBtn = document.getElementById("closeSnapBtn");
+    const flipCameraBtn = document.getElementById("flipCameraBtn");
+    const photoPickBtn = document.getElementById("photoPickBtn");
+    const shotBtn = document.getElementById("shotBtn");
     const photoInput = document.getElementById("photoInput");
+
+    // Mockup elements
+    const mockupView = document.getElementById("mockupView");
+    const mockupBg = document.getElementById("mockupBg");
+    const mockupPreviewCanvas = document.getElementById("mockupPreviewCanvas");
+    const chipIphone = document.getElementById("chipIphone");
+    const chipAndroid = document.getElementById("chipAndroid");
+    const saveMockupBtn = document.getElementById("saveMockupBtn");
 
     const sceneCanvas = document.createElement("canvas");
     const ctx = sceneCanvas.getContext("2d");
@@ -306,6 +725,25 @@
     let lastGlassDraw = 0;
     let glassImageData = null;
 
+    // Navigation & Pill Spring Physics
+    let activeTab = 0; // 0: Explore, 1: Snap, 2: Mockup
+    let pillPos = 0;
+    let pillTarget = 0;
+    let pillVel = 0;
+    let pillDragging = false;
+    let pillDragStartX = 0;
+    let pillDragStartPos = 0;
+    let pillMoved = false;
+
+    // Camera state
+    let cameraStream = null;
+    let facingMode = "environment";
+
+    // Mockup state
+    let detectedDevice = /Android/i.test(navigator.userAgent) ? "android" : "iphone";
+    let currentMockupDevice = detectedDevice;
+    let capturedGalleryImage = null;
+
     const wrapIndex = (index) =>
       ((index % items.length) + items.length) % items.length;
 
@@ -321,15 +759,6 @@
       }
     `;
 
-    /*
-      Shader Lensa Kaca Vertikal (Rounded Concave Lens Frame):
-      1. Menggunakan roundedBoxDistance untuk menciptakan jendela tengah bening
-         dengan sudut melengkung ke dalam (concave pinch) mengikuti bingkai layar.
-      2. Jangkauan lensa melingkupi area atas & bawah kartu secara bertahap (tidak menumpuk
-         di bawah floating pill).
-      3. Pembiasan kaca melengkungkan sudut kartu ke dalam menuju pusat jendela bening
-         dengan dispersi RGB tipis di tepi lengkungan (tanpa garis pelangi lurus/streaking).
-    */
     const fragmentSource = `#version 300 es
       precision highp float;
 
@@ -356,12 +785,9 @@
         vec2 uv = gl_FragCoord.xy / uResolution;
         float aspect = uResolution.x / uResolution.y;
 
-        // Pusat jendela bening mengikuti posisi kartu saat idle
         vec2 offset = uv - uCardCenter;
         vec2 p = vec2(offset.x * aspect, offset.y);
 
-        // Ukuran jendela bening sedikit lebih lebar di tengah agar kartu idle 100% bersih,
-        // namun melengkung masuk di sudut atas & bawah seperti lensa kaca di Gambar 2
         vec2 clearHalfSize = vec2(
           (uCardSize.x * 0.56) / uResolution.y,
           (uCardSize.y * 0.52) / uResolution.y
@@ -376,10 +802,8 @@
           return;
         }
 
-        // Jangkauan bertahap dari bibir lengkung ke luar (tanpa menumpuk di tepi layar)
         float field = smoothstep(0.0, 0.16, clearDistance);
 
-        // Fokuskan pembiasan di bagian atas & bawah (redam sisi kiri-kanan tengah)
         float vertMask = smoothstep(
           clearHalfSize.y * 0.55,
           clearHalfSize.y * 1.05,
@@ -387,7 +811,6 @@
         );
         field *= vertMask;
 
-        // Redam lembut di 4% paling bawah/atas agar tidak terjadi clamping garis piksel
         float edgeGuard = smoothstep(0.0, 0.045, uv.y) * smoothstep(0.0, 0.045, 1.0 - uv.y);
         field *= edgeGuard;
 
@@ -404,13 +827,10 @@
         vec2 radialDir = normalize(offset + vec2(0.00001));
         vec2 tangentDir = vec2(-radialDir.y, radialDir.x);
 
-        // Pembiasan kaca: menarik sudut kartu melengkung masuk mengikuti bingkai lensa
-        // (+offset * field membuat gambar di zona lensa tampak mengecil/tersedot ke dalam lengkungan)
         vec2 shift =
           offset * 0.24 * field +
           tangentDir * fluidWave * field * field * 0.008;
 
-        // Dispersi spektrum kaca halus hanya di sepanjang lengkungan lensa
         vec2 spread = shift * 0.14;
         vec2 redUv = uv + shift + spread;
         vec2 greenUv = uv + shift;
@@ -422,7 +842,6 @@
         refracted.b = sampleScene(blueUv).b;
         refracted.a = 1.0;
 
-        // Kilau tipis kaca di bibir lengkungan lensa
         float rim = exp(-abs(clearDistance * uResolution.y) / 3.0) * vertMask;
         refracted.rgb += vec3(0.08, 0.10, 0.13) * rim * field;
 
@@ -582,35 +1001,26 @@
       backdropSnapshots = images.map((image) => createBackdropForImage(image));
     }
 
-    addButton.addEventListener("click", (event) => {
-      event.stopPropagation();
-      photoInput.click();
-    });
-
-    photoInput.addEventListener("change", async (event) => {
-      const files = Array.from(event.target.files || []).filter((file) =>
-        file.type.startsWith("image/")
-      );
-      if (!files.length) return;
-
+    /* =========================================================
+       HELPER: TAMBAH FOTO BARU & KEMBALI KE EXPLORE
+       ========================================================= */
+    async function addNewPhotosAndFocus(sources) {
+      if (!sources.length) return;
       const firstNewIndex = items.length;
 
-      for (const file of files) {
-        const objectUrl = URL.createObjectURL(file);
-        sessionObjectUrls.push(objectUrl);
-
+      for (const src of sources) {
         try {
-          const loadedImg = await loadImage(objectUrl, true);
-          items.push({ image: objectUrl, isSession: true });
+          const loadedImg = await loadImage(src, true);
+          items.push({ image: src, isSession: true });
           images.push(loadedImg);
           itemSnapshots.push(createSnapshotForImage(loadedImg));
           backdropSnapshots.push(createBackdropForImage(loadedImg));
         } catch (err) {
-          console.error("Gagal memuat foto preview:", err);
+          console.error("Gagal memuat foto baru:", err);
         }
       }
 
-      photoInput.value = "";
+      switchTab(0, { skipCapture: true });
 
       if (items.length > firstNewIndex) {
         const currentRound = Math.round(scroll);
@@ -619,12 +1029,531 @@
         if (diff <= 0) diff += items.length;
         target = currentRound + diff;
       }
+    }
+
+    /* =========================================================
+       CAMERA & SNAP VIEW LOGIC
+       ========================================================= */
+    async function startCamera() {
+      cameraFallback.classList.remove("visible");
+      stopCamera();
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        cameraFallback.classList.add("visible");
+        return;
+      }
+
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
+          audio: false
+        });
+        cameraVideo.srcObject = cameraStream;
+        cameraVideo.classList.toggle("mirrored", facingMode === "user");
+      } catch (err) {
+        console.warn("Akses kamera tidak tersedia:", err);
+        cameraFallback.classList.add("visible");
+      }
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        cameraStream = null;
+      }
+      cameraVideo.srcObject = null;
+    }
+
+    closeSnapBtn.addEventListener("click", () => {
+      switchTab(0, { skipCapture: true });
     });
 
+    flipCameraBtn.addEventListener("click", () => {
+      facingMode = facingMode === "environment" ? "user" : "environment";
+      startCamera();
+    });
+
+    photoPickBtn.addEventListener("click", () => {
+      photoInput.click();
+    });
+
+    photoInput.addEventListener("change", async (event) => {
+      const files = Array.from(event.target.files || []).filter((file) =>
+        file.type.startsWith("image/")
+      );
+      photoInput.value = "";
+      if (!files.length) return;
+
+      const urls = files.map((file) => {
+        const url = URL.createObjectURL(file);
+        sessionObjectUrls.push(url);
+        return url;
+      });
+
+      await addNewPhotosAndFocus(urls);
+    });
+
+    shotBtn.addEventListener("click", () => {
+      if (!cameraStream || !cameraVideo.videoWidth || !cameraVideo.videoHeight) {
+        photoInput.click();
+        return;
+      }
+
+      triggerFlashEffect();
+
+      const snapCanvas = document.createElement("canvas");
+      snapCanvas.width = cameraVideo.videoWidth;
+      snapCanvas.height = cameraVideo.videoHeight;
+      const sctx = snapCanvas.getContext("2d");
+
+      if (facingMode === "user") {
+        sctx.translate(snapCanvas.width, 0);
+        sctx.scale(-1, 1);
+      }
+      sctx.drawImage(cameraVideo, 0, 0, snapCanvas.width, snapCanvas.height);
+
+      snapCanvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        sessionObjectUrls.push(url);
+        await addNewPhotosAndFocus([url]);
+      }, "image/jpeg", 0.94);
+    });
+
+    /* =========================================================
+       MOCKUP CAPTURE & COMPOSITOR (STATUS BAR + DEVICE FRAME)
+       ========================================================= */
+    function triggerFlashEffect() {
+      captureFlash.classList.remove("flash-anim");
+      void captureFlash.offsetWidth;
+      captureFlash.classList.add("flash-anim");
+      if (navigator.vibrate) {
+        navigator.vibrate(18);
+      }
+    }
+
+    function captureCurrentExploreScreen() {
+      // Pastikan frame WebGL terbaru ter-render ke visibleCanvas sebelum diambil
+      renderWebGLScene(performance.now());
+
+      const w = visibleCanvas.width;
+      const h = visibleCanvas.height;
+      const shot = document.createElement("canvas");
+      shot.width = w;
+      shot.height = h;
+      const sctx = shot.getContext("2d");
+
+      // 1. Gambar penuh scene WebGL (backdrop blur + kartu aktif + efek lensa)
+      sctx.drawImage(visibleCanvas, 0, 0, w, h);
+
+      // 2. Gambar mini floating navigation pill di bagian bawah layar SS
+      const pillW = Math.min(w * 0.84, 340 * dpr);
+      const pillH = 54 * dpr;
+      const pillX = (w - pillW) / 2;
+      const pillY = h - pillH - 22 * dpr;
+
+      sctx.save();
+      drawRoundedRect(sctx, pillX, pillY, pillW, pillH, pillH / 2);
+      sctx.fillStyle = "rgba(255, 255, 255, 0.16)";
+      sctx.fill();
+      sctx.lineWidth = 1.2 * dpr;
+      sctx.strokeStyle = "rgba(255, 255, 255, 0.36)";
+      sctx.stroke();
+
+      // Active capsule di Explore
+      const tabW = (pillW - 10 * dpr) / 3;
+      drawRoundedRect(sctx, pillX + 5 * dpr, pillY + 5 * dpr, tabW, pillH - 10 * dpr, (pillH - 10 * dpr) / 2);
+      sctx.fillStyle = "rgba(255, 255, 255, 0.24)";
+      sctx.fill();
+
+      const labels = ["Explore", "Snap", "Mockup"];
+      sctx.font = `600 ${11 * dpr}px -apple-system, system-ui, sans-serif`;
+      sctx.textAlign = "center";
+      sctx.textBaseline = "middle";
+      labels.forEach((label, idx) => {
+        sctx.fillStyle = idx === 0 ? "#ffffff" : "rgba(255, 255, 255, 0.65)";
+        sctx.fillText(label, pillX + 5 * dpr + tabW * (idx + 0.5), pillY + pillH * 0.52);
+      });
+      sctx.restore();
+
+      capturedGalleryImage = shot;
+
+      const activeIndex = wrapIndex(Math.round(scroll));
+      if (items[activeIndex]) {
+        mockupBg.style.backgroundImage = `url("${items[activeIndex].image}")`;
+      }
+
+      renderDeviceMockup();
+    }
+
+    function formatCurrentTime() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, "0");
+      const m = String(now.getMinutes()).padStart(2, "0");
+      return `${h}:${m}`;
+    }
+
+    function renderDeviceMockup() {
+      if (!capturedGalleryImage) return;
+
+      chipIphone.classList.toggle("active", currentMockupDevice === "iphone");
+      chipAndroid.classList.toggle("active", currentMockupDevice === "android");
+
+      // Ukuran kanvas ekspor resolusi tinggi (1200 x 2400)
+      const outW = 1200;
+      const outH = 2400;
+      mockupPreviewCanvas.width = outW;
+      mockupPreviewCanvas.height = outH;
+      const mctx = mockupPreviewCanvas.getContext("2d");
+      mctx.clearRect(0, 0, outW, outH);
+
+      const isIphone = currentMockupDevice === "iphone";
+      const bodyW = 920;
+      const bodyH = isIphone ? 1980 : 2020;
+      const bodyX = (outW - bodyW) / 2;
+      const bodyY = (outH - bodyH) / 2;
+      const outerRadius = isIphone ? 148 : 112;
+      const bezel = isIphone ? 30 : 24;
+      const screenX = bodyX + bezel;
+      const screenY = bodyY + bezel;
+      const screenW = bodyW - bezel * 2;
+      const screenH = bodyH - bezel * 2;
+      const screenRadius = outerRadius - bezel;
+
+      // 1. Tombol samping hardware
+      mctx.fillStyle = isIphone ? "#3a3f47" : "#2f343b";
+      if (isIphone) {
+        // Volume & Power buttons iPhone
+        drawRoundedRect(mctx, bodyX - 7, bodyY + 340, 7, 70, 3);
+        mctx.fill();
+        drawRoundedRect(mctx, bodyX - 7, bodyY + 450, 7, 130, 3);
+        mctx.fill();
+        drawRoundedRect(mctx, bodyX - 7, bodyY + 610, 7, 130, 3);
+        mctx.fill();
+        drawRoundedRect(mctx, bodyX + bodyW, bodyY + 490, 7, 190, 3);
+        mctx.fill();
+      } else {
+        // Volume & Power buttons Android (kanan)
+        drawRoundedRect(mctx, bodyX + bodyW, bodyY + 380, 7, 180, 3);
+        mctx.fill();
+        drawRoundedRect(mctx, bodyX + bodyW, bodyY + 610, 7, 105, 3);
+        mctx.fill();
+      }
+
+      // 2. Bodi luar Titanium / Aluminium Frame
+      const frameGrad = mctx.createLinearGradient(bodyX, bodyY, bodyX + bodyW, bodyY + bodyH);
+      if (isIphone) {
+        frameGrad.addColorStop(0, "#5b616b");
+        frameGrad.addColorStop(0.25, "#2b2f36");
+        frameGrad.addColorStop(0.5, "#4a4f58");
+        frameGrad.addColorStop(0.8, "#1e2126");
+        frameGrad.addColorStop(1, "#484d56");
+      } else {
+        frameGrad.addColorStop(0, "#434850");
+        frameGrad.addColorStop(0.5, "#1f2328");
+        frameGrad.addColorStop(1, "#393e46");
+      }
+
+      drawRoundedRect(mctx, bodyX, bodyY, bodyW, bodyH, outerRadius);
+      mctx.fillStyle = frameGrad;
+      mctx.fill();
+
+      // Bezel hitam bagian dalam
+      drawRoundedRect(mctx, bodyX + 8, bodyY + 8, bodyW - 16, bodyH - 16, outerRadius - 6);
+      mctx.fillStyle = "#080a0d";
+      mctx.fill();
+
+      // 3. Clipping area layar HP & gambar hasil SS galeri
+      mctx.save();
+      drawRoundedRect(mctx, screenX, screenY, screenW, screenH, screenRadius);
+      mctx.clip();
+
+      drawImageToContext(mctx, capturedGalleryImage, screenX, screenY, screenW, screenH);
+
+      // Gradasi gelap tipis di puncak status bar agar ikon selalu terbaca jelas
+      const topStatusGrad = mctx.createLinearGradient(0, screenY, 0, screenY + 130);
+      topStatusGrad.addColorStop(0, "rgba(0, 0, 0, 0.34)");
+      topStatusGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      mctx.fillStyle = topStatusGrad;
+      mctx.fillRect(screenX, screenY, screenW, 130);
+
+      // 4. Simulasi Status Bar Asli (Jam, Sinyal, Wi-Fi, Baterai) & Notch/Punch-hole
+      const timeStr = formatCurrentTime();
+      mctx.fillStyle = "#ffffff";
+      mctx.textBaseline = "middle";
+
+      if (isIphone) {
+        // Jam di kiri atas
+        mctx.font = "700 34px -apple-system, BlinkMacSystemFont, sans-serif";
+        mctx.textAlign = "left";
+        mctx.fillText(timeStr, screenX + 68, screenY + 66);
+
+        // Dynamic Island
+        const islandW = 246;
+        const islandH = 72;
+        const islandX = screenX + (screenW - islandW) / 2;
+        const islandY = screenY + 28;
+        drawRoundedRect(mctx, islandX, islandY, islandW, islandH, islandH / 2);
+        mctx.fillStyle = "#000000";
+        mctx.fill();
+
+        // Lensa kamera depan di dalam Dynamic Island
+        mctx.beginPath();
+        mctx.arc(islandX + islandW - 44, islandY + islandH / 2, 14, 0, Math.PI * 2);
+        mctx.fillStyle = "#111927";
+        mctx.fill();
+        mctx.beginPath();
+        mctx.arc(islandX + islandW - 41, islandY + islandH / 2 - 3, 5, 0, Math.PI * 2);
+        mctx.fillStyle = "rgba(95, 155, 255, 0.45)";
+        mctx.fill();
+
+        // Ikon Sinyal + 5G/WiFi + Baterai iOS di kanan atas
+        const rightBaseX = screenX + screenW - 64;
+        const statusCenterY = screenY + 66;
+
+        // Baterai
+        drawRoundedRect(mctx, rightBaseX - 54, statusCenterY - 13, 48, 26, 7);
+        mctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
+        mctx.lineWidth = 2.5;
+        mctx.stroke();
+        drawRoundedRect(mctx, rightBaseX - 50, statusCenterY - 9, 38, 18, 4);
+        mctx.fillStyle = "#ffffff";
+        mctx.fill();
+        mctx.fillRect(rightBaseX - 3, statusCenterY - 5, 3, 10);
+
+        // Bar Sinyal
+        for (let b = 0; b < 4; b++) {
+          const bh = 9 + b * 4.5;
+          drawRoundedRect(mctx, rightBaseX - 115 + b * 10, statusCenterY + 12 - bh, 6.5, bh, 2);
+          mctx.fill();
+        }
+
+        // Home Indicator iOS di bawah
+        drawRoundedRect(
+          mctx,
+          screenX + (screenW - 310) / 2,
+          screenY + screenH - 34,
+          310,
+          11,
+          5.5
+        );
+        mctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+        mctx.fill();
+      } else {
+        // Android Status Bar (Jam di kiri, Punch-hole tengah, Sinyal & Baterai di kanan)
+        mctx.font = "600 31px 'Segoe UI', Roboto, sans-serif";
+        mctx.textAlign = "left";
+        mctx.fillText(timeStr, screenX + 54, screenY + 58);
+
+        // Punch-hole camera tengah atas
+        const holeX = screenX + screenW / 2;
+        const holeY = screenY + 56;
+        mctx.beginPath();
+        mctx.arc(holeX, holeY, 21, 0, Math.PI * 2);
+        mctx.fillStyle = "#000000";
+        mctx.fill();
+        mctx.beginPath();
+        mctx.arc(holeX - 4, holeY - 4, 6, 0, Math.PI * 2);
+        mctx.fillStyle = "rgba(100, 170, 255, 0.35)";
+        mctx.fill();
+
+        // Baterai & Sinyal Android di kanan atas
+        const rightBaseX = screenX + screenW - 52;
+        const statusCenterY = screenY + 58;
+
+        drawRoundedRect(mctx, rightBaseX - 24, statusCenterY - 14, 22, 28, 4);
+        mctx.fillStyle = "#ffffff";
+        mctx.fill();
+        mctx.fillRect(rightBaseX - 17, statusCenterY - 18, 8, 4);
+
+        // Segitiga sinyal seluler
+        mctx.beginPath();
+        mctx.moveTo(rightBaseX - 64, statusCenterY + 13);
+        mctx.lineTo(rightBaseX - 38, statusCenterY + 13);
+        mctx.lineTo(rightBaseX - 38, statusCenterY - 13);
+        mctx.closePath();
+        mctx.fill();
+
+        // Gesture pill Android di bawah
+        drawRoundedRect(
+          mctx,
+          screenX + (screenW - 240) / 2,
+          screenY + screenH - 26,
+          240,
+          8,
+          4
+        );
+        mctx.fillStyle = "rgba(255, 255, 255, 0.78)";
+        mctx.fill();
+      }
+
+      // 5. Pantulan kilau kaca layar halus
+      const glassSheen = mctx.createLinearGradient(screenX, screenY, screenX + screenW * 0.7, screenY + screenH * 0.45);
+      glassSheen.addColorStop(0, "rgba(255, 255, 255, 0.11)");
+      glassSheen.addColorStop(0.45, "rgba(255, 255, 255, 0.02)");
+      glassSheen.addColorStop(1, "rgba(255, 255, 255, 0)");
+      mctx.fillStyle = glassSheen;
+      mctx.fillRect(screenX, screenY, screenW, screenH);
+
+      mctx.restore();
+    }
+
+    chipIphone.addEventListener("click", () => {
+      currentMockupDevice = "iphone";
+      renderDeviceMockup();
+    });
+
+    chipAndroid.addEventListener("click", () => {
+      currentMockupDevice = "android";
+      renderDeviceMockup();
+    });
+
+    saveMockupBtn.addEventListener("click", () => {
+      if (!mockupPreviewCanvas.width) return;
+      mockupPreviewCanvas.toBlob((blob) => {
+        if (!blob) return;
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `LiquidGlass-Mockup-${currentMockupDevice}-${Date.now()}.png`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+      }, "image/png");
+    });
+
+    /* =========================================================
+       TAB SWITCHING & INTERACTIVE LIQUID GLASS PILL
+       ========================================================= */
+    function switchTab(tabIndex, options = {}) {
+      const clamped = Math.max(0, Math.min(2, tabIndex));
+      const prevTab = activeTab;
+      activeTab = clamped;
+      pillTarget = clamped;
+
+      navButtons.forEach((btn, idx) => {
+        btn.classList.toggle("active", idx === clamped);
+      });
+
+      if (clamped === 0) {
+        stopCamera();
+        snapView.classList.remove("active");
+        mockupView.classList.remove("active");
+        stage.classList.remove("is-hidden");
+      } else if (clamped === 1) {
+        mockupView.classList.remove("active");
+        stage.classList.add("is-hidden");
+        snapView.classList.add("active");
+        startCamera();
+      } else if (clamped === 2) {
+        // Jika datang dari Explore (atau belum pernah capture), langsung SS layar galeri
+        if (!options.skipCapture && (prevTab === 0 || !capturedGalleryImage)) {
+          triggerFlashEffect();
+          captureCurrentExploreScreen();
+        }
+        stopCamera();
+        snapView.classList.remove("active");
+        stage.classList.add("is-hidden");
+        mockupView.classList.add("active");
+      }
+    }
+
+    navButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (pillMoved) return;
+        const tab = Number(btn.dataset.tab);
+        switchTab(tab);
+      });
+    });
+
+    // Gesture geser pada Floating Liquid Glass Bar (termasuk Slide-to-Mockup)
+    liquidNav.addEventListener("pointerdown", (event) => {
+      if (event.button !== undefined && event.button !== 0) return;
+      pillDragging = true;
+      pillMoved = false;
+      pillDragStartX = event.clientX;
+      pillDragStartPos = pillPos;
+      pillVel = 0;
+      liquidNav.setPointerCapture(event.pointerId);
+    });
+
+    liquidNav.addEventListener("pointermove", (event) => {
+      if (!pillDragging) return;
+      const rect = liquidNav.getBoundingClientRect();
+      const tabWidth = (rect.width - 12) / 3;
+      const dx = event.clientX - pillDragStartX;
+
+      if (Math.abs(dx) > 6) {
+        pillMoved = true;
+      }
+
+      const rawPos = pillDragStartPos + dx / tabWidth;
+      // Rubber-band resistance di ujung kiri/kanan
+      if (rawPos < 0) {
+        pillPos = rawPos * 0.25;
+      } else if (rawPos > 2) {
+        pillPos = 2 + (rawPos - 2) * 0.25;
+      } else {
+        pillPos = rawPos;
+      }
+
+      const nearest = Math.max(0, Math.min(2, Math.round(pillPos)));
+      navButtons.forEach((btn, idx) => {
+        btn.classList.toggle("active", idx === nearest);
+      });
+    });
+
+    function finishPillDrag() {
+      if (!pillDragging) return;
+      pillDragging = false;
+
+      if (pillMoved) {
+        const targetTab = Math.max(0, Math.min(2, Math.round(pillPos)));
+        switchTab(targetTab);
+        setTimeout(() => {
+          pillMoved = false;
+        }, 40);
+      }
+    }
+
+    liquidNav.addEventListener("pointerup", finishPillDrag);
+    liquidNav.addEventListener("pointercancel", finishPillDrag);
+
+    function updateLiquidPillPhysics(dt) {
+      if (!pillDragging) {
+        const stiffness = 240;
+        const damping = 2 * Math.sqrt(stiffness) * 0.84;
+        pillVel += (-stiffness * (pillPos - pillTarget) - damping * pillVel) * dt;
+        pillPos += pillVel * dt;
+
+        if (Math.abs(pillTarget - pillPos) < 0.001 && Math.abs(pillVel) < 0.005) {
+          pillPos = pillTarget;
+          pillVel = 0;
+        }
+      }
+
+      const navRect = liquidNav.getBoundingClientRect();
+      const tabW = (navRect.width - 12) / 3;
+      const translateX = pillPos * tabW;
+
+      // Efek elastis (squish & stretch) saat kapsul bergerak cepat atau ditarik
+      const speed = pillDragging ? 0.35 : Math.min(1.5, Math.abs(pillVel) * 0.14);
+      const scaleX = 1 + speed * 0.11;
+      const scaleY = 1 - speed * 0.05;
+
+      activePill.style.transform = `translate3d(${translateX}px, 0, 0) scale(${scaleX}, ${scaleY})`;
+    }
+
     window.addEventListener("beforeunload", () => {
+      stopCamera();
       sessionObjectUrls.forEach((url) => URL.revokeObjectURL(url));
     });
 
+    /* =========================================================
+       VIEWPORT & RESIZE
+       ========================================================= */
     function getFullScreenDimensions() {
       const isStandalone =
         window.navigator.standalone === true ||
@@ -680,7 +1609,7 @@
         cardWidth = cardHeight * aspectRatio;
       }
 
-      const cardGap = (isMobile ? 250 : 50) * dpr;
+      const cardGap = (isMobile ? 150 : 50) * dpr;
       slot = cardHeight + cardGap;
 
       cardCenterY = pixelHeight * (isMobile ? 0.45 : 0.53);
@@ -695,7 +1624,7 @@
     }
 
     function resizeGlassCanvas() {
-      const rect = topbar.getBoundingClientRect();
+      const rect = liquidNav.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
 
       const newWidth = Math.max(1, Math.round(rect.width * dpr));
@@ -708,11 +1637,14 @@
       }
     }
 
-    function drawLiquidPill(now) {
-      if (now - lastGlassDraw < 30) return;
+    /* =========================================================
+       REAL-TIME EDGE REFRACTION & CHROMATIC DISPERSION FOR NAV BAR
+       ========================================================= */
+    function drawLiquidNavRefraction(now) {
+      if (now - lastGlassDraw < 32) return;
       lastGlassDraw = now;
 
-      const rect = topbar.getBoundingClientRect();
+      const rect = liquidNav.getBoundingClientRect();
       if (!rect.width || !rect.height || !sceneCanvas.width) return;
 
       resizeGlassCanvas();
@@ -724,17 +1656,11 @@
       const left = Math.round(rect.left * dpr);
       const top = Math.round(rect.top * dpr);
 
-      const pad = Math.round(14 * dpr);
+      const pad = Math.round(16 * dpr);
       const sourceLeft = Math.max(0, left - pad);
       const sourceTop = Math.max(0, top - pad);
-      const sourceRight = Math.min(
-        sceneCanvas.width,
-        left + lensWidth + pad
-      );
-      const sourceBottom = Math.min(
-        sceneCanvas.height,
-        top + lensHeight + pad
-      );
+      const sourceRight = Math.min(sceneCanvas.width, left + lensWidth + pad);
+      const sourceBottom = Math.min(sceneCanvas.height, top + lensHeight + pad);
 
       const sourceWidth = sourceRight - sourceLeft;
       const sourceHeight = sourceBottom - sourceTop;
@@ -758,7 +1684,7 @@
       const centerY = lensHeight * 0.5;
       const halfW = Math.max(1, centerX);
       const halfH = Math.max(1, centerY);
-      const maxOffset = 11 * dpr;
+      const maxOffset = 12 * dpr;
 
       function smoothstep(edge0, edge1, value) {
         const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
@@ -776,40 +1702,19 @@
 
         for (let x = 0; x < lensWidth; x++) {
           const nx = (x - centerX) / halfW;
-          const radius = Math.sqrt(nx * nx + ny * ny);
-
-          const cornerRadius = Math.min(lensHeight * 0.5, lensWidth * 0.5);
-          const cssX = x / dpr;
-          const cssY = y / dpr;
-          const cssW = lensWidth / dpr;
-          const cssH = lensHeight / dpr;
-          const cssRadius = cornerRadius / dpr;
-
-          const qx = Math.abs(cssX - cssW / 2) - (cssW / 2 - cssRadius);
-          const qy = Math.abs(cssY - cssH / 2) - (cssH / 2 - cssRadius);
-          const outsideCorner =
-            Math.max(qx, 0) * Math.max(qx, 0) +
-            Math.max(qy, 0) * Math.max(qy, 0) >
-            cssRadius * cssRadius;
+          const radius = Math.sqrt(nx * nx * 0.35 + ny * ny * 0.85);
 
           const outIndex = (y * lensWidth + x) * 4;
-
-          if (outsideCorner) {
-            output[outIndex + 3] = 0;
-            continue;
-          }
-
-          const edge = smoothstep(0.28, 1.12, radius);
+          const edge = smoothstep(0.32, 1.05, radius);
           const displacement = edge * maxOffset;
+          const dispersion = edge * 2.4 * dpr;
 
-          const sourceX =
-            Math.round(left + x + nx * displacement - sourceLeft);
-          const sourceY =
-            Math.round(top + y + ny * displacement - sourceTop);
+          const baseX = left + x + nx * displacement - sourceLeft;
+          const baseY = top + y + ny * displacement - sourceTop;
 
-          output[outIndex] = readChannel(sourceX, sourceY, 0);
-          output[outIndex + 1] = readChannel(sourceX, sourceY, 1);
-          output[outIndex + 2] = readChannel(sourceX, sourceY, 2);
+          output[outIndex] = readChannel(Math.round(baseX + nx * dispersion), Math.round(baseY + ny * dispersion), 0);
+          output[outIndex + 1] = readChannel(Math.round(baseX), Math.round(baseY), 1);
+          output[outIndex + 2] = readChannel(Math.round(baseX - nx * dispersion), Math.round(baseY - ny * dispersion), 2);
           output[outIndex + 3] = 255;
         }
       }
@@ -897,28 +1802,11 @@
       );
     }
 
-    function renderFrame(time) {
-      const now = time || performance.now();
-
-      if (!previousFrameTime) previousFrameTime = now;
-      const dt = Math.min((now - previousFrameTime) / 1000, 0.032);
-      previousFrameTime = now;
-
-      if (!dragging) {
-        const stiffness = 170;
-        const damping = 2 * Math.sqrt(stiffness) * 0.92;
-
-        velocity += (-stiffness * (scroll - target) - damping * velocity) * dt;
-        scroll += velocity * dt;
-
-        if (Math.abs(target - scroll) < 0.001 && Math.abs(velocity) < 0.01) {
-          scroll = target;
-          velocity = 0;
-        }
-      }
-
+    function renderWebGLScene(now) {
       drawScene();
-      drawLiquidPill(now);
+      if (activeTab === 0) {
+        drawLiquidNavRefraction(now);
+      }
       uploadSceneTexture();
 
       gl.useProgram(program);
@@ -939,6 +1827,33 @@
       gl.clearColor(11 / 255, 24 / 255, 36 / 255, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    function renderFrame(time) {
+      const now = time || performance.now();
+
+      if (!previousFrameTime) previousFrameTime = now;
+      const dt = Math.min((now - previousFrameTime) / 1000, 0.032);
+      previousFrameTime = now;
+
+      if (!dragging) {
+        const stiffness = 170;
+        const damping = 2 * Math.sqrt(stiffness) * 0.92;
+
+        velocity += (-stiffness * (scroll - target) - damping * velocity) * dt;
+        scroll += velocity * dt;
+
+        if (Math.abs(target - scroll) < 0.001 && Math.abs(velocity) < 0.01) {
+          scroll = target;
+          velocity = 0;
+        }
+      }
+
+      updateLiquidPillPhysics(dt);
+
+      if (activeTab === 0) {
+        renderWebGLScene(now);
+      }
 
       requestAnimationFrame(renderFrame);
     }
@@ -949,6 +1864,7 @@
     }
 
     stage.addEventListener("pointerdown", (event) => {
+      if (activeTab !== 0) return;
       if (event.button !== undefined && event.button !== 0) return;
 
       dragging = true;
@@ -1002,6 +1918,7 @@
     stage.addEventListener("pointercancel", finishDrag);
 
     stage.addEventListener("wheel", (event) => {
+      if (activeTab !== 0) return;
       event.preventDefault();
 
       const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX)
@@ -1030,6 +1947,7 @@
     }, { passive: false });
 
     document.addEventListener("keydown", (event) => {
+      if (activeTab !== 0) return;
       if (event.key === "ArrowDown") moveBy(1);
       if (event.key === "ArrowUp") moveBy(-1);
     });
