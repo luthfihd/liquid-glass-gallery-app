@@ -69,7 +69,7 @@
       height: 100%;
       overflow: hidden;
       touch-action: none;
-      transition: opacity 0.28s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .stage.dragging {
@@ -103,8 +103,8 @@
       justify-content: space-between;
       opacity: 0;
       pointer-events: none;
-      transform: translateY(18px) scale(0.98);
-      transition: opacity 0.28s ease, transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+      transform: translateY(16px) scale(0.98);
+      transition: opacity 0.24s ease, transform 0.30s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .snap-view.active {
@@ -165,7 +165,7 @@
       place-items: center;
       cursor: pointer;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.20), inset 0 0.5px 0 rgba(255, 255, 255, 0.40);
-      transition: transform 0.16s ease, background 0.16s ease;
+      transition: transform 0.14s ease, background 0.14s ease;
     }
 
     .glass-circle-btn:active {
@@ -202,7 +202,7 @@
       overflow: hidden;
       padding: 0;
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22), inset 0 0.5px 0 rgba(255, 255, 255, 0.38);
-      transition: transform 0.16s ease;
+      transition: transform 0.14s ease;
     }
 
     .photo-pick-btn:active {
@@ -222,7 +222,7 @@
       display: grid;
       place-items: center;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
-      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .shot-btn-inner {
@@ -230,7 +230,7 @@
       height: 100%;
       border-radius: 50%;
       background: #ffffff;
-      transition: transform 0.14s ease, background 0.14s ease;
+      transition: transform 0.12s ease, background 0.12s ease;
     }
 
     .shot-btn:active {
@@ -258,7 +258,7 @@
       opacity: 0;
       pointer-events: none;
       transform: scale(1.03);
-      transition: opacity 0.28s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
       overflow: hidden;
     }
 
@@ -274,7 +274,7 @@
       background-size: cover;
       background-position: center;
       z-index: 0;
-      transition: background 0.4s ease, filter 0.4s ease;
+      transition: background 0.35s ease, filter 0.35s ease;
     }
 
     .mockup-top-bar {
@@ -289,7 +289,7 @@
       flex-shrink: 0;
     }
 
-    /* Segmented Toggle: Hairline Glass + Synced Text */
+    /* Segmented Toggle */
     .lg-segmented {
       position: relative;
       height: 36px;
@@ -308,7 +308,7 @@
       box-shadow:
         0 4px 14px rgba(0, 0, 0, 0.14),
         inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
-      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .lg-segmented.is-morphing {
@@ -372,7 +372,7 @@
       box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.14),
         inset 0 0.5px 0 rgba(255, 255, 255, 0.42);
-      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.20s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .lg-segmented.is-morphing .lg-seg-thumb {
@@ -399,7 +399,7 @@
       box-shadow:
         0 4px 14px rgba(0, 0, 0, 0.14),
         inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
-      transition: transform 0.15s ease, background 0.15s ease;
+      transition: transform 0.12s ease, background 0.12s ease;
     }
 
     .save-mockup-btn:active {
@@ -431,7 +431,7 @@
       box-shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
     }
 
-    /* Sliders: Hairline Glass, Zero Overlap/Drift Between Base & Lens Text */
+    /* Sliders: Larger Lens Thumb + Real-time Optical Refraction Canvas */
     .mockup-sliders {
       position: relative;
       z-index: 3;
@@ -445,7 +445,7 @@
 
     .lg-slider-card {
       position: relative;
-      height: 42px;
+      height: 44px;
       border-radius: 999px;
       padding: 3px;
       display: flex;
@@ -462,7 +462,7 @@
       box-shadow:
         0 4px 14px rgba(0, 0, 0, 0.14),
         inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
-      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .lg-slider-card.is-morphing {
@@ -473,51 +473,31 @@
       cursor: grabbing;
     }
 
-    .lg-slider-label-base,
-    .lg-slider-label-lens {
+    .lg-slider-canvas {
       position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
+      inset: -10px -8px;
+      width: calc(100% + 16px);
+      height: calc(100% + 20px);
+      z-index: 2;
       pointer-events: none;
-      padding: 0 12px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-shadow: none;
-    }
-
-    .lg-slider-label-base {
-      z-index: 1;
-      color: rgba(255, 255, 255, 0.90);
-    }
-
-    .lg-slider-label-lens {
-      z-index: 3;
-      color: rgb(var(--nav-accent-rgb));
-      background: transparent;
     }
 
     .lg-slider-thumb {
       position: absolute;
-      z-index: 2;
+      z-index: 3;
       top: 3px;
       left: 3px;
-      width: 64px;
-      height: 34px;
+      width: 84px;
+      height: 36px;
       border-radius: 999px;
       pointer-events: none;
       transform-origin: center center;
       will-change: transform;
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
       border: var(--hairline) solid rgba(255, 255, 255, 0.26);
       box-shadow:
-        0 2px 8px rgba(0, 0, 0, 0.14),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.42);
+        0 3px 10px rgba(0, 0, 0, 0.16),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.45);
     }
 
     /* CAPTURE FLASH OVERLAY */
@@ -531,7 +511,7 @@
     }
 
     .capture-flash.flash-anim {
-      animation: shutterFlash 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: shutterFlash 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
     @keyframes shutterFlash {
@@ -541,9 +521,6 @@
 
     /* =========================================================
        FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (APPLE iOS 26)
-       - Idle: Zero Optical Distortion / Magnification (100% Calm)
-       - Slide / Touch: Convex Optical Magnifier + Chromatic Rim Emerges
-       - Dynamic Background Sampling Across Explore, Snap, & Mockup
        ========================================================= */
     .nav-dock-wrap {
       position: fixed;
@@ -568,9 +545,9 @@
       overflow: visible;
       isolation: isolate;
       touch-action: none;
-      background: rgba(255, 255, 255, 0.05);
-      -webkit-backdrop-filter: blur(8px) saturate(1.45);
-      backdrop-filter: blur(8px) saturate(1.45);
+      background: rgba(255, 255, 255, 0.04);
+      -webkit-backdrop-filter: blur(4px) saturate(1.4);
+      backdrop-filter: blur(4px) saturate(1.4);
       border: var(--hairline) solid rgba(255, 255, 255, 0.20);
       box-shadow:
         0 10px 26px rgba(0, 0, 0, 0.22),
@@ -601,11 +578,11 @@
       pointer-events: none;
       transform-origin: center center;
       will-change: transform;
-      background: rgba(255, 255, 255, 0.06);
-      border: var(--hairline) solid rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.05);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.26);
       box-shadow:
         0 4px 12px rgba(0, 0, 0, 0.14),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.44);
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.45);
     }
 
     .nav-btn {
@@ -721,15 +698,13 @@
 
       <div class="mockup-sliders">
         <div class="lg-slider-card" id="bgSlider" aria-label="Geser tema background">
-          <span class="lg-slider-label-base" id="bgSliderLabelBase">BG: Photo Blur</span>
+          <canvas class="lg-slider-canvas" id="bgSliderCanvas" aria-hidden="true"></canvas>
           <div class="lg-slider-thumb" id="bgSliderThumb"></div>
-          <span class="lg-slider-label-lens" id="bgSliderLabelLens" aria-hidden="true">BG: Photo Blur</span>
         </div>
 
         <div class="lg-slider-card" id="frameSlider" aria-label="Geser warna frame perangkat">
-          <span class="lg-slider-label-base" id="frameSliderLabelBase">Frame: Titanium</span>
+          <canvas class="lg-slider-canvas" id="frameSliderCanvas" aria-hidden="true"></canvas>
           <div class="lg-slider-thumb" id="frameSliderThumb"></div>
-          <span class="lg-slider-label-lens" id="frameSliderLabelLens" aria-hidden="true">Frame: Titanium</span>
         </div>
       </div>
     </section>
@@ -810,13 +785,11 @@
 
     // Sliders
     const bgSlider = document.getElementById("bgSlider");
+    const bgSliderCanvas = document.getElementById("bgSliderCanvas");
     const bgSliderThumb = document.getElementById("bgSliderThumb");
-    const bgSliderLabelBase = document.getElementById("bgSliderLabelBase");
-    const bgSliderLabelLens = document.getElementById("bgSliderLabelLens");
     const frameSlider = document.getElementById("frameSlider");
+    const frameSliderCanvas = document.getElementById("frameSliderCanvas");
     const frameSliderThumb = document.getElementById("frameSliderThumb");
-    const frameSliderLabelBase = document.getElementById("frameSliderLabelBase");
-    const frameSliderLabelLens = document.getElementById("frameSliderLabelLens");
 
     const sceneCanvas = document.createElement("canvas");
     const ctx = sceneCanvas.getContext("2d");
@@ -874,7 +847,7 @@
     let pillDragStartPos = 0;
     let pillMoved = false;
 
-    // Smooth Navbar Zoom & Lens Activity (0 = 100% Calm/Idle, 1 = Active When Sliding/Pressing)
+    // Fast, Snappy Navbar Zoom & Lens Activity (0 = Idle / Tenang, 1 = Aktif saat Dislide)
     let navZoom = 1.0;
     let navZoomVel = 0;
     let lensActivity = 0.0;
@@ -894,6 +867,8 @@
 
     let bgPresetIndex = 0; // 0..4
     let frameFinishIndex = 0; // 0..3
+    let currentBgLabel = "BG: Photo Blur";
+    let currentFrameLabel = "Frame: Titanium";
 
     const frameFinishes = [
       { name: "Titanium", stops: ["#686e78", "#2d3138", "#555b65", "#1e2126", "#4e545e"] },
@@ -1529,9 +1504,7 @@
     function updateMockupBackgroundDOM() {
       const presets = getBackgroundPresets(capturedPalette);
       const preset = presets[bgPresetIndex] || presets[0];
-      const text = `BG: ${preset.name}`;
-      bgSliderLabelBase.textContent = text;
-      bgSliderLabelLens.textContent = text;
+      currentBgLabel = `BG: ${preset.name}`;
 
       if (preset.type === "photo" && capturedImageUrl) {
         mockupBg.style.backgroundImage = `url("${capturedImageUrl}")`;
@@ -1598,9 +1571,7 @@
       syncSegmentedToggles();
 
       const finish = frameFinishes[frameFinishIndex] || frameFinishes[0];
-      const frameText = `Frame: ${finish.name}`;
-      frameSliderLabelBase.textContent = frameText;
-      frameSliderLabelLens.textContent = frameText;
+      currentFrameLabel = `Frame: ${finish.name}`;
 
       const outW = 1200;
       const outH = 2400;
@@ -1900,41 +1871,152 @@
     );
 
     /* =========================================================
-       ALIGNED, ZERO-DRIFT PILL SLIDERS (SYNCED BASE & LENS TEXT)
+       REAL-TIME OPTICAL REFRACTION SLIDERS (LARGER LENS + ZERO TEXT DRIFT)
        ========================================================= */
-    function bindLiquidSlider(sliderEl, thumbEl, baseLabelEl, lensLabelEl, getStepsCount, onStepChange) {
+    function createOpticalSlider(sliderEl, canvasEl, thumbEl, getLabelText, getStepsCount, onStepChange) {
+      const sctx = canvasEl.getContext("2d", { willReadFrequently: true });
+      const buf = document.createElement("canvas");
+      const bctx = buf.getContext("2d", { willReadFrequently: true });
+      let imgData = null;
+
       let isSliding = false;
       let startX = 0;
       let startRatio = 0;
       let currentRatio = 0;
       let moved = false;
 
-      const THUMB_W = 64;
-      const THUMB_H = 34;
+      const THUMB_W = 84;
+      const THUMB_H = 36;
 
       function positionThumb(ratio, morphing = false) {
         const clampedRatio = Math.max(0, Math.min(1, ratio));
         const cardW = sliderEl.offsetWidth || 180;
-        const cardH = sliderEl.offsetHeight || 42;
         const maxTravel = Math.max(1, cardW - THUMB_W - 6);
         const x = clampedRatio * maxTravel;
-        const sx = morphing ? 1.12 : 1;
-        const sy = morphing ? 1.22 : 1;
+        const sx = morphing ? 1.14 : 1;
+        const sy = morphing ? 1.24 : 1;
 
         thumbEl.style.transform = `translate3d(${x}px, 0, 0) scale(${sx}, ${sy})`;
+      }
 
-        const effW = THUMB_W * sx;
-        const effH = THUMB_H * sy;
-        const centerX = 3 + x + THUMB_W * 0.5;
-        const centerY = cardH * 0.5;
+      function renderOptics() {
+        const rect = canvasEl.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
 
-        const left = Math.max(0, centerX - effW * 0.5);
-        const right = Math.max(0, cardW - (centerX + effW * 0.5));
-        const top = Math.max(0, centerY - effH * 0.5);
-        const bottom = Math.max(0, cardH - (centerY + effH * 0.5));
+        const w = Math.max(1, Math.round(rect.width * dpr));
+        const h = Math.max(1, Math.round(rect.height * dpr));
 
-        lensLabelEl.style.clipPath = `inset(${top.toFixed(1)}px ${right.toFixed(1)}px ${bottom.toFixed(1)}px ${left.toFixed(1)}px round 999px)`;
-        baseLabelEl.style.clipPath = `polygon(evenodd, 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ${left.toFixed(1)}px ${top.toFixed(1)}px, ${(cardW - right).toFixed(1)}px ${top.toFixed(1)}px, ${(cardW - right).toFixed(1)}px ${(cardH - bottom).toFixed(1)}px, ${left.toFixed(1)}px ${(cardH - bottom).toFixed(1)}px, ${left.toFixed(1)}px ${top.toFixed(1)}px)`;
+        if (canvasEl.width !== w || canvasEl.height !== h) {
+          canvasEl.width = w;
+          canvasEl.height = h;
+          buf.width = w;
+          buf.height = h;
+          imgData = sctx.createImageData(w, h);
+        }
+
+        const padX = 8 * dpr;
+        const padY = 10 * dpr;
+        const cardW = w - padX * 2;
+        const cardH = h - padY * 2;
+        const insetPx = 3 * dpr;
+        const thumbW = THUMB_W * dpr;
+        const thumbH = THUMB_H * dpr;
+        const maxTravel = Math.max(1, cardW - thumbW - insetPx * 2);
+
+        const sx = isSliding ? 1.14 : 1.0;
+        const sy = isSliding ? 1.24 : 1.0;
+        const pillHalfW = (thumbW * sx) * 0.5;
+        const pillHalfH = (thumbH * sy) * 0.5;
+        const pillCenterX = padX + insetPx + currentRatio * maxTravel + thumbW * 0.5;
+        const pillCenterY = h * 0.5;
+
+        bctx.clearRect(0, 0, w, h);
+
+        // 1. Latar & Teks Putih di Luar Lens
+        bctx.save();
+        bctx.font = `600 ${Math.round(11.2 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        bctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+        bctx.textAlign = "center";
+        bctx.textBaseline = "middle";
+        bctx.fillText(getLabelText(), w * 0.5, h * 0.5);
+        bctx.restore();
+
+        // 2. Teks Berwarna Aksen di Dalam Lens (Satu Sumber Teks Tunggal -> 100% Sinkron!)
+        bctx.save();
+        drawRoundedRect(
+          bctx,
+          pillCenterX - pillHalfW * 0.94,
+          pillCenterY - pillHalfH * 0.94,
+          pillHalfW * 1.88,
+          pillHalfH * 1.88,
+          pillHalfH * 0.94
+        );
+        bctx.clip();
+        bctx.clearRect(0, 0, w, h);
+        bctx.font = `650 ${Math.round(11.2 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        bctx.fillStyle = `rgb(${currentAccentRgb.join(",")})`;
+        bctx.textAlign = "center";
+        bctx.textBaseline = "middle";
+        bctx.fillText(getLabelText(), w * 0.5, h * 0.5);
+        bctx.restore();
+
+        if (!isSliding) {
+          sctx.clearRect(0, 0, w, h);
+          sctx.drawImage(buf, 0, 0);
+          return;
+        }
+
+        // 3. Pembiasan Optik Real-time Saat Digeser
+        const source = bctx.getImageData(0, 0, w, h).data;
+        const output = imgData.data;
+        const cornerR = Math.min(pillHalfW, pillHalfH);
+        const boxHalfX = pillHalfW - cornerR;
+        const boxHalfY = pillHalfH - cornerR;
+
+        function readCh(x, y, ch) {
+          const cx = Math.max(0, Math.min(w - 1, x));
+          const cy = Math.max(0, Math.min(h - 1, y));
+          return source[(cy * w + cx) * 4 + ch];
+        }
+
+        for (let y = 0; y < h; y++) {
+          const dy = y - pillCenterY;
+          const qy = Math.abs(dy) - boxHalfY;
+          for (let x = 0; x < w; x++) {
+            const idx = (y * w + x) * 4;
+            const dx = x - pillCenterX;
+            const qx = Math.abs(dx) - boxHalfX;
+            const ox = Math.max(qx, 0);
+            const oy = Math.max(qy, 0);
+            const sdf = Math.sqrt(ox * ox + oy * oy) + Math.min(Math.max(qx, qy), 0) - cornerR;
+
+            if (sdf <= 1.0 * dpr) {
+              const normDepth = Math.max(0, Math.min(1, -sdf / cornerR));
+              const edgeRim = Math.pow(1.0 - normDepth, 3.0);
+              const centerZoom = Math.min(1, normDepth * 1.4);
+              const nx = dx / pillHalfW;
+              const ny = dy / pillHalfH;
+
+              const shiftX = nx * edgeRim * 16 * dpr - dx * 0.14 * centerZoom;
+              const shiftY = ny * edgeRim * 12 * dpr - dy * 0.14 * centerZoom;
+              const dispX = nx * edgeRim * 3.4 * dpr;
+              const dispY = ny * edgeRim * 2.6 * dpr;
+
+              const bx = x + shiftX;
+              const by = y + shiftY;
+              output[idx] = readCh(Math.round(bx + dispX), Math.round(by + dispY), 0);
+              output[idx + 1] = readCh(Math.round(bx), Math.round(by), 1);
+              output[idx + 2] = readCh(Math.round(bx - dispX), Math.round(by - dispY), 2);
+              output[idx + 3] = readCh(Math.round(bx), Math.round(by), 3);
+            } else {
+              output[idx] = source[idx];
+              output[idx + 1] = source[idx + 1];
+              output[idx + 2] = source[idx + 2];
+              output[idx + 3] = source[idx + 3];
+            }
+          }
+        }
+        sctx.putImageData(imgData, 0, 0);
       }
 
       sliderEl.addEventListener("pointerdown", (e) => {
@@ -1996,15 +2078,16 @@
           const steps = getStepsCount();
           currentRatio = steps > 1 ? idx / (steps - 1) : 0;
           positionThumb(currentRatio, false);
-        }
+        },
+        renderOptics
       };
     }
 
-    const bgSliderCtrl = bindLiquidSlider(
+    const bgSliderCtrl = createOpticalSlider(
       bgSlider,
+      bgSliderCanvas,
       bgSliderThumb,
-      bgSliderLabelBase,
-      bgSliderLabelLens,
+      () => currentBgLabel,
       () => 5,
       (idx) => {
         if (bgPresetIndex !== idx) {
@@ -2015,11 +2098,11 @@
       }
     );
 
-    const frameSliderCtrl = bindLiquidSlider(
+    const frameSliderCtrl = createOpticalSlider(
       frameSlider,
+      frameSliderCanvas,
       frameSliderThumb,
-      frameSliderLabelBase,
-      frameSliderLabelLens,
+      () => currentFrameLabel,
       () => frameFinishes.length,
       (idx) => {
         if (frameFinishIndex !== idx) {
@@ -2042,7 +2125,7 @@
     });
 
     /* =========================================================
-       TAB SWITCHING & APPLE iOS 26 LIQUID GLASS NAVBAR PHYSICS
+       TAB SWITCHING & FAST-RESPONSE APPLE iOS 26 NAVBAR PHYSICS
        ========================================================= */
     function switchTab(tabIndex, options = {}) {
       const clamped = Math.max(0, Math.min(2, tabIndex));
@@ -2134,45 +2217,46 @@
 
     function getDropletScale() {
       const a = lensActivity;
-      const speed = pillDragging ? 0.45 : Math.min(1.2, Math.abs(pillVel) * 0.14);
+      const speed = pillDragging ? 0.35 : Math.min(1.0, Math.abs(pillVel) * 0.10);
       return {
-        scaleX: 1 + a * (0.14 + speed * 0.10),
-        scaleY: 1 + a * (0.30 + speed * 0.04)
+        scaleX: 1 + a * (0.16 + speed * 0.08),
+        scaleY: 1 + a * (0.34 + speed * 0.04)
       };
     }
 
     function updateLiquidPillPhysics(dt) {
       if (!pillDragging) {
-        const stiffness = 240;
-        const damping = 2 * Math.sqrt(stiffness) * 0.84;
+        // Snappy spring untuk perpindahan tab
+        const stiffness = 380;
+        const damping = 2 * Math.sqrt(stiffness) * 0.88;
         pillVel += (-stiffness * (pillPos - pillTarget) - damping * pillVel) * dt;
         pillPos += pillVel * dt;
 
-        if (Math.abs(pillTarget - pillPos) < 0.001 && Math.abs(pillVel) < 0.005) {
+        if (Math.abs(pillTarget - pillPos) < 0.002 && Math.abs(pillVel) < 0.01) {
           pillPos = pillTarget;
           pillVel = 0;
         }
       }
 
-      // lensActivity: 1 saat disentuh/dislide/bergerak, 0 mutlak saat idle!
-      const isMoving = Math.abs(pillPos - pillTarget) > 0.012 || Math.abs(pillVel) > 0.04;
+      // Fast, instant response untuk transisi lensa aktif <-> idle (tidak lemot/berat!)
+      const isMoving = Math.abs(pillPos - pillTarget) > 0.025 || Math.abs(pillVel) > 0.12;
       const activityTarget = (pillPressing || pillDragging || isMoving) ? 1.0 : 0.0;
-      const aStiff = 260;
-      const aDamp = 2 * Math.sqrt(aStiff) * 0.90;
+      const aStiff = 680;
+      const aDamp = 2 * Math.sqrt(aStiff) * 0.94;
       lensActivityVel += (-aStiff * (lensActivity - activityTarget) - aDamp * lensActivityVel) * dt;
       lensActivity += lensActivityVel * dt;
-      if (Math.abs(activityTarget - lensActivity) < 0.001 && Math.abs(lensActivityVel) < 0.002) {
+      if (Math.abs(activityTarget - lensActivity) < 0.004 && Math.abs(lensActivityVel) < 0.01) {
         lensActivity = activityTarget;
         lensActivityVel = 0;
       }
 
       // Smooth Spring Zoom untuk seluruh Navbar mengikuti lensActivity
       const zoomTarget = 1.0 + lensActivity * 0.045;
-      const zStiff = 260;
-      const zDamp = 2 * Math.sqrt(zStiff) * 0.88;
+      const zStiff = 680;
+      const zDamp = 2 * Math.sqrt(zStiff) * 0.94;
       navZoomVel += (-zStiff * (navZoom - zoomTarget) - zDamp * navZoomVel) * dt;
       navZoom += navZoomVel * dt;
-      if (Math.abs(zoomTarget - navZoom) < 0.0005 && Math.abs(navZoomVel) < 0.002) {
+      if (Math.abs(zoomTarget - navZoom) < 0.001 && Math.abs(navZoomVel) < 0.005) {
         navZoom = zoomTarget;
         navZoomVel = 0;
       }
@@ -2298,7 +2382,6 @@
       lensHeight
     ) {
       if (activeTab === 0) {
-        // Explore: ambil langsung dari kanvas galeri
         octx.drawImage(
           sceneCanvas,
           sourceLeft,
@@ -2311,7 +2394,6 @@
           lensHeight
         );
       } else if (activeTab === 1) {
-        // Snap: ambil langsung dari live camera feed di balik navbar
         if (cameraStream && cameraVideo.videoWidth > 0 && cameraVideo.videoHeight > 0) {
           const vw = cameraVideo.videoWidth;
           const vh = cameraVideo.videoHeight;
@@ -2352,7 +2434,6 @@
           octx.fillRect(0, 0, lensWidth, lensHeight);
         }
       } else {
-        // Mockup: ambil langsung dari latar tema mockup aktif
         const presets = getBackgroundPresets(capturedPalette);
         const preset = presets[bgPresetIndex] || presets[0];
 
@@ -2442,7 +2523,6 @@
     ) {
       navOpticsCtx.clearRect(0, 0, lensWidth, lensHeight);
 
-      // Gambar latar belakang dinamis sesuai menu aktif
       drawDynamicNavBackdrop(
         navOpticsCtx,
         sourceLeft,
@@ -2452,6 +2532,15 @@
         lensWidth,
         lensHeight
       );
+
+      // Bingkai garis tipis navbar digambar ke dalam optical buffer sehingga ketika
+      // kapsul lensa aktif, tepi bar ikut melengkung/mengecil masuk ke dalam lensa (seperti Gambar 1!)
+      navOpticsCtx.save();
+      drawRoundedRect(navOpticsCtx, padX, padY, navW, navH, navH * 0.5);
+      navOpticsCtx.lineWidth = 1.0 * dpr;
+      navOpticsCtx.strokeStyle = "rgba(255, 255, 255, 0.24)";
+      navOpticsCtx.stroke();
+      navOpticsCtx.restore();
 
       const insetPx = 5 * dpr;
       const tabW = (navW - insetPx * 2) / 3;
@@ -2499,6 +2588,12 @@
         lensHeight
       );
 
+      // Bingkai garis tipis navbar di dalam area pill (akan ditarik mengecil ke dalam oleh optik lensa)
+      drawRoundedRect(navOpticsCtx, padX, padY, navW, navH, navH * 0.5);
+      navOpticsCtx.lineWidth = 1.0 * dpr;
+      navOpticsCtx.strokeStyle = "rgba(255, 255, 255, 0.28)";
+      navOpticsCtx.stroke();
+
       const accentColor = `rgb(${currentAccentRgb.join(",")})`;
       navOpticsCtx.strokeStyle = accentColor;
       navOpticsCtx.fillStyle = accentColor;
@@ -2518,8 +2613,9 @@
     }
 
     /* =========================================================
-       REAL-TIME OPTICAL REFRACTION (ZERO DISTORTION WHEN IDLE,
-       APPLE iOS 26 CONVEX MAGNIFIER + RIM CHROMATIC WHEN SLIDING)
+       REAL-TIME OPTICAL REFRACTION (APPLE iOS 26 PHYSICS)
+       - Idle: 100% Calm (Zero Distortion)
+       - Active: Center Magnifies Icons, Outer Bar Rim Contracts Inward + RGB Edge
        ========================================================= */
     function drawLiquidNavRefraction(now) {
       if (now - lastGlassDraw < 16) return;
@@ -2558,7 +2654,6 @@
       const pillCenterX = padX + insetPx + (pillPos + 0.5) * tabW;
       const pillCenterY = lensHeight * 0.5;
 
-      // Render ikon & latar dinamis ke buffer optik
       renderOpticalNavSource(
         sourceLeft,
         sourceTop,
@@ -2577,7 +2672,7 @@
 
       const act = lensActivity;
 
-      // 100% IDLE: Tanpa efek lensa sama sekali! Langsung tampilkan ikon jernih di dalam kapsul navbar.
+      // 100% IDLE: Tanpa efek lensa sama sekali! Langsung gambar hasil jernih tanpa distorsi.
       if (act <= 0.002) {
         glassCtx.clearRect(0, 0, lensWidth, lensHeight);
         glassCtx.save();
@@ -2588,7 +2683,7 @@
         return;
       }
 
-      // AKTIF SAAT DISLIDE / DISENTUH: Lensa cembung jernih di tengah + pembelokan & dispersi kromatik di rim kapsul!
+      // AKTIF SAAT DISLIDE / DISENTUH:
       let source;
       try {
         source = navOpticsCtx.getImageData(0, 0, lensWidth, lensHeight).data;
@@ -2655,25 +2750,23 @@
           let dispX = 0;
           let dispY = 0;
 
-          // Lensa Cembung Apple iOS 26 (Hanya di area kapsul yang sedang digeser):
-          // Tengah kapsul membesar halus & jernih, rim tepi kapsul membelokkan cahaya dengan dispersi RGB organik
+          // Lensa Apple iOS 26 (Gambar 1):
+          // - Bagian dalam kapsul memperbesar ikon/teks (~1.16x)
+          // - Bagian pinggir kapsul (edgeRim) menarik piksel ke arah luar (+nx, +ny) sehingga
+          //   garis tepi navbar yang masuk ke area lensa tampak menyusut/melengkung ke dalam!
           if (sdfPill <= 1.5 * dpr) {
             const normDepth = Math.max(0, Math.min(1, -sdfPill / cornerR));
-            // Rim tajam hanya pada 24% tepi terluar kapsul
-            const edgeRim = Math.pow(1.0 - normDepth, 3.4);
-            // Area tengah lensa yang memperbesar ikon dengan bersih
-            const centerLens = smoothstep(0.18, 0.72, normDepth);
+            const edgeRim = Math.pow(1.0 - normDepth, 2.6);
+            const centerLens = smoothstep(0.20, 0.72, normDepth);
 
             const nx = dxPill / pillHalfW;
             const ny = dyPill / pillHalfH;
 
-            // Pembesaran tengah (~1.16x) + tarikan lengkung pada rim kaca
-            shiftX = (nx * edgeRim * 24 * dpr - dxPill * 0.14 * centerLens) * act;
-            shiftY = (ny * edgeRim * 18 * dpr - dyPill * 0.14 * centerLens) * act;
+            shiftX = (nx * edgeRim * 28 * dpr - dxPill * 0.15 * centerLens) * act;
+            shiftY = (ny * edgeRim * 24 * dpr - dyPill * 0.15 * centerLens) * act;
 
-            // Dispersi RGB murni hanya di rim lengkungan kaca
-            dispX = nx * edgeRim * 4.2 * dpr * act;
-            dispY = ny * edgeRim * 3.4 * dpr * act;
+            dispX = nx * edgeRim * 4.5 * dpr * act;
+            dispY = ny * edgeRim * 3.8 * dpr * act;
           }
 
           const baseX = x + shiftX;
@@ -2827,9 +2920,11 @@
 
       if (activeTab === 0) {
         renderWebGLScene(now);
+      } else if (activeTab === 2) {
+        bgSliderCtrl.renderOptics();
+        frameSliderCtrl.renderOptics();
       }
 
-      // Selalu update optik & latar dinamis navbar di setiap halaman (Explore, Snap, Mockup)
       drawLiquidNavRefraction(now);
 
       requestAnimationFrame(renderFrame);
