@@ -892,7 +892,7 @@
       ((index % items.length) + items.length) % items.length;
 
     /* =========================================================
-       MATERIAL YOU COLOR EXTRACTION
+       DOMINANT PHOTO COLOR EXTRACTION (PRESERVES TRUE DOMINANT HUE)
        ========================================================= */
     function rgbToHsl(r, g, b) {
       r /= 255; g /= 255; b /= 255;
@@ -957,58 +957,50 @@
         const b = data[i + 2];
         const [h, s, l] = rgbToHsl(r, g, b);
 
+        // Kelompokkan berdasarkan hue asli, dengan bobot utama pada porsi piksel terbanyak di foto
         const hBin = Math.floor(h / 15) % 24;
-        const score = 1 + s * 3.4 + (1 - Math.abs(l - 0.5)) * 1.4;
+        const score = 1.0 + s * 0.65;
 
         if (!buckets.has(hBin)) {
-          buckets.set(hBin, { weight: 0, rSum: 0, gSum: 0, bSum: 0, count: 0, hue: h });
+          buckets.set(hBin, { weight: 0, rSum: 0, gSum: 0, bSum: 0, lSum: 0, sSum: 0, count: 0 });
         }
         const entry = buckets.get(hBin);
         entry.weight += score;
         entry.rSum += r * score;
         entry.gSum += g * score;
         entry.bSum += b * score;
+        entry.sSum += s * score;
+        entry.lSum += l * score;
         entry.count += score;
       }
 
       const sorted = Array.from(buckets.values()).sort((a, b) => b.weight - a.weight);
-      const top = sorted[0] || { rSum: 30, gSum: 55, bSum: 85, count: 1 };
+      const top = sorted[0] || { rSum: 30, gSum: 55, bSum: 85, sSum: 0.3, lSum: 0.4, count: 1 };
 
       const domR = Math.round(top.rSum / top.count);
       const domG = Math.round(top.gSum / top.count);
       const domB = Math.round(top.bSum / top.count);
-      const [domH, domS] = rgbToHsl(domR, domG, domB);
+      const [domH, domS, domL] = rgbToHsl(domR, domG, domB);
 
-      let second = sorted.find((b) => {
-        const bR = b.rSum / b.count;
-        const bG = b.gSum / b.count;
-        const bB = b.bSum / b.count;
-        const [bH] = rgbToHsl(bR, bG, bB);
-        const diff = Math.min(Math.abs(bH - domH), 360 - Math.abs(bH - domH));
-        return diff >= 36;
-      });
+      const avgS = top.sSum / top.count;
+      const avgL = top.lSum / top.count;
 
-      let accH = domS > 0.18 ? domH : 206;
-      let accS = Math.max(0.75, domS);
-      if (second) {
-        const [sH, sS] = rgbToHsl(
-          second.rSum / second.count,
-          second.gSum / second.count,
-          second.bSum / second.count
-        );
-        accH = sH;
-        accS = Math.max(0.78, sS);
-      }
+      // Pertahankan hue dominan foto apa adanya & jaga saturasi alami tanpa dipaksa neon RGB
+      const iconSat = avgS < 0.08 ? 0.0 : Math.min(0.72, Math.max(0.24, domS * 0.9 + avgS * 0.25));
+      // Sesuaikan lightness agar ikon & teks tetap jelas di atas kaca navbar tanpa mengubah identitas warna dominan
+      const iconLight = iconSat === 0
+        ? Math.max(0.78, Math.min(0.92, avgL > 0.5 ? 0.88 : 0.80))
+        : Math.max(0.56, Math.min(0.76, avgL < 0.45 ? 0.64 : avgL > 0.78 ? 0.72 : avgL + 0.08));
 
-      const primaryRgb = hslToRgb(domH, Math.min(0.78, Math.max(0.32, domS * 0.9)), 0.24);
-      const accentRgb = hslToRgb(accH, Math.min(0.98, Math.max(0.82, accS)), 0.58);
-      const mutedRgb = hslToRgb(domH, Math.min(0.45, domS * 0.5), 0.86);
-      const pillRgb = hslToRgb(accH, Math.min(0.85, accS), 0.72);
+      const accentRgb = hslToRgb(domH, iconSat, iconLight);
+      const primaryRgb = hslToRgb(domH, Math.min(0.65, avgS * 0.85), Math.max(0.14, Math.min(0.32, domL * 0.65)));
+      const mutedRgb = hslToRgb(domH, Math.min(0.35, avgS * 0.45), 0.86);
+      const pillRgb = hslToRgb(domH, Math.min(0.65, avgS * 0.75), 0.72);
 
-      const vibrantRgb = hslToRgb(domH, Math.min(0.92, Math.max(0.48, domS)), 0.46);
-      const deepDarkRgb = hslToRgb(domH, Math.min(0.75, Math.max(0.30, domS)), 0.12);
-      const softPastelRgb = hslToRgb(domH, Math.min(0.55, Math.max(0.25, domS * 0.7)), 0.86);
-      const secondaryRgb = hslToRgb(accH, Math.min(0.88, accS), 0.52);
+      const vibrantRgb = hslToRgb(domH, Math.min(0.75, Math.max(0.25, avgS)), 0.48);
+      const deepDarkRgb = hslToRgb(domH, Math.min(0.60, Math.max(0.15, avgS * 0.8)), 0.14);
+      const softPastelRgb = hslToRgb(domH, Math.min(0.45, Math.max(0.15, avgS * 0.6)), 0.85);
+      const secondaryRgb = hslToRgb(domH, Math.min(0.65, Math.max(0.20, avgS * 0.85)), 0.55);
 
       return {
         primary: primaryRgb,
@@ -2231,11 +2223,9 @@
         pillPos = rawPos;
       }
 
-      // Kecepatan instan mengikuti jari untuk riak air
       const instantVel = (pillPos - prevPos) * 45;
       pillVel = pillVel * 0.45 + instantVel * 0.55;
 
-      // Tarikan ke atas / bawah (rubber-band liquid tension seperti iOS 26/27)
       const clampedDy = Math.max(-72, Math.min(36, dy));
       navPullTargetY = clampedDy * 0.34;
     });
@@ -2245,7 +2235,6 @@
       pillDragging = false;
       pillPressing = false;
 
-      // Lepas tarikan ke atas memicu gelombang air (water surface wiggle)
       const releaseEnergy = Math.min(1.6, Math.abs(navPullTargetY) * 0.08 + Math.abs(pillVel) * 0.14);
       navWobbleVel += (pillVel >= 0 ? 1 : -1) * (6.5 + releaseEnergy * 8.0);
       navPullTargetY = 0;
@@ -2273,8 +2262,6 @@
        ========================================================= */
     function getLiquidPillShape() {
       const a = lensActivity;
-      // Air memanjang searah aliran gerak (flow stretch) dan pipih mengikuti tegangan permukaan,
-      // tidak membulat menggembung seperti gelembung sabun.
       const flowSpeed = Math.min(1.2, Math.abs(pillVel) * 0.085);
       const liftStretch = Math.min(0.14, Math.abs(navLiftY) * 0.008);
       const ripple = navWobble * 0.022;
@@ -2287,12 +2274,10 @@
     }
 
     function updateLiquidPillPhysics(dt) {
-      // Sub-stepping 2x agar pegas sangat cepat, responsif, dan bebas osilasi liar
       const steps = 2;
       const h = dt / steps;
 
       for (let s = 0; s < steps; s++) {
-        // 1. Pegas perpindahan pill antar tab (cepat & tegas)
         if (!pillDragging) {
           const stiffness = 680;
           const damping = 2 * Math.sqrt(stiffness) * 0.86;
@@ -2305,7 +2290,6 @@
           }
         }
 
-        // 2. Aktivasi lensa: 0 saat idle (lensa OFF), naik cepat saat slide/sentuh
         const isMoving =
           Math.abs(pillPos - pillTarget) > 0.015 ||
           Math.abs(pillVel) > 0.08 ||
@@ -2320,11 +2304,10 @@
           lensActivityVel = 0;
         }
 
-        // 3. Pegas tarikan vertikal navbar ke atas (Upward Water Lift)
         const liftStiff = pillDragging ? 520 : 340;
         const liftDamp = pillDragging
           ? 2 * Math.sqrt(liftStiff) * 0.85
-          : 2 * Math.sqrt(liftStiff) * 0.44; // Underdamped saat dilepas -> memantul cair seperti air!
+          : 2 * Math.sqrt(liftStiff) * 0.44;
         navLiftVelY += (-liftStiff * (navLiftY - navPullTargetY) - liftDamp * navLiftVelY) * h;
         navLiftY += navLiftVelY * h;
         if (!pillDragging && Math.abs(navLiftY) < 0.03 && Math.abs(navLiftVelY) < 0.08) {
@@ -2332,11 +2315,10 @@
           navLiftVelY = 0;
         }
 
-        // 4. Pegas kemiringan air (Liquid Tilt) mengikuti posisi tab & tarikan ke atas
-        const leverage = (pillPos - 1.0); // -1 di kiri, 0 di tengah, +1 di kanan
+        const leverage = (pillPos - 1.0);
         const targetTilt = leverage * (-navLiftY * 0.24) + pillVel * 0.18;
         const tiltStiff = 280;
-        const tiltDamp = 2 * Math.sqrt(tiltStiff) * 0.42; // Underdamped wiggle
+        const tiltDamp = 2 * Math.sqrt(tiltStiff) * 0.42;
         navTiltVel += (-tiltStiff * (navTilt - targetTilt) - tiltDamp * navTiltVel) * h;
         navTilt += navTiltVel * h;
         if (!pillDragging && Math.abs(navTilt) < 0.02 && Math.abs(navTiltVel) < 0.05) {
@@ -2344,7 +2326,6 @@
           navTiltVel = 0;
         }
 
-        // 5. Gelombang riak permukaan air (Surface Tension Wiggle)
         const wobbleStiff = 260;
         const wobbleDamp = 2 * Math.sqrt(wobbleStiff) * 0.34;
         navWobbleVel += (-wobbleStiff * navWobble - wobbleDamp * navWobbleVel) * h;
@@ -2354,7 +2335,6 @@
           navWobbleVel = 0;
         }
 
-        // 6. Pegas ketinggian pill di dalam air (ikuti tarikan ke atas dengan sedikit inersia cair)
         const targetPillLift = navLiftY * 0.28;
         const pLiftStiff = 420;
         const pLiftDamp = 2 * Math.sqrt(pLiftStiff) * 0.46;
@@ -2364,7 +2344,6 @@
 
       waterPhase += dt * (9.5 + Math.abs(pillVel) * 3.0 + Math.abs(navWobble) * 4.0);
 
-      // Terapkan transformasi Liquid Wiggle pada kontainer Navbar
       const liftRatio = Math.min(1, Math.abs(navLiftY) / 18);
       const navScaleX = 1 + lensActivity * 0.028 - liftRatio * 0.018 + navWobble * 0.006;
       const navScaleY = 1 + lensActivity * 0.032 + liftRatio * 0.034 - navWobble * 0.008;
@@ -2632,7 +2611,6 @@
       const iconY = padY + navH * 0.38;
       const textY = padY + navH * 0.75;
 
-      // 1. Ikon & Teks Putih di Luar Pill
       targetCtx.save();
       targetCtx.strokeStyle = "rgba(255, 255, 255, 0.94)";
       targetCtx.fillStyle = "rgba(255, 255, 255, 0.94)";
@@ -2650,7 +2628,6 @@
       }
       targetCtx.restore();
 
-      // 2. Ikon & Teks Berwarna Ekstraksi Foto di Dalam Pill
       targetCtx.save();
       drawRoundedRect(
         targetCtx,
@@ -2714,7 +2691,6 @@
         lensHeight
       );
 
-      // Bingkai garis tipis navbar di dalam optical buffer agar melengkung cair saat dilewati lensa
       navOpticsCtx.save();
       drawRoundedRect(navOpticsCtx, padX, padY, navW, navH, navH * 0.5);
       navOpticsCtx.lineWidth = 1.0 * dpr;
@@ -2728,7 +2704,6 @@
       const iconY = padY + navH * 0.38;
       const textY = padY + navH * 0.75;
 
-      // 1. Ikon & Teks Putih di Luar Pill
       navOpticsCtx.save();
       navOpticsCtx.strokeStyle = "rgba(255, 255, 255, 0.94)";
       navOpticsCtx.fillStyle = "rgba(255, 255, 255, 0.94)";
@@ -2746,7 +2721,6 @@
       }
       navOpticsCtx.restore();
 
-      // 2. Ikon & Teks Berwarna Ekstraksi Foto di Dalam Pill
       navOpticsCtx.save();
       drawRoundedRect(
         navOpticsCtx,
@@ -2791,11 +2765,6 @@
       navOpticsCtx.restore();
     }
 
-    /* =========================================================
-       REAL-TIME LIQUID WATER OPTICS
-       - IDLE: 100% Lensa OFF (Hanya ikon & teks bening, backdrop CSS asli terlihat murni)
-       - SLIDE / UPWARD PULL: Lensa air aktif dengan gelombang riak & dispersi RGB tipis
-       ========================================================= */
     function drawLiquidNavRefraction() {
       if (!sceneCanvas.width) return;
 
@@ -2821,8 +2790,6 @@
 
       const act = lensActivity;
 
-      // 100% IDLE: Lensa OFF sepenuhnya! Tidak menggambar piksel latar belakang/pembiasan apa pun,
-      // hanya ikon dan teks tajam di atas CSS Liquid Glass asli.
       if (act <= 0.002) {
         const idleKey = `${pillTarget}|${currentAccentRgb.join(",")}|${lensWidth}x${lensHeight}`;
         if (lastIdleDrawnKey === idleKey) return;
@@ -2845,7 +2812,6 @@
 
       lastIdleDrawnKey = "";
 
-      // AKTIF SAAT DISLIDE / DITARIK KE ATAS:
       const dockRect = liquidNav.getBoundingClientRect();
       const left = Math.round((dockRect.left - 14) * dpr);
       const top = Math.round((dockRect.top - 26) * dpr);
@@ -2893,7 +2859,6 @@
       const boxHalfX = Math.max(0, pillHalfW - cornerR);
       const boxHalfY = Math.max(0, pillHalfH - cornerR);
 
-      // Riak air (liquid surface ripple) saat digeser & ditarik ke atas
       const waveAmp = (Math.min(1.4, Math.abs(pillVel) * 0.08 + Math.abs(navWobble) * 0.45 + Math.abs(navLiftY) * 0.03)) * dpr * act;
       const phase = waterPhase;
 
@@ -2915,7 +2880,6 @@
         for (let x = 0; x < lensWidth; x++) {
           const outIndex = (y * lensWidth + x) * 4;
 
-          // Riak permukaan air halus pada batas kapsul agar melengkung cair (bukan gelembung kaku)
           const dxPill = x - pillCenterX;
           const surfaceRipple = waveAmp * Math.sin(dxPill * 0.065 + phase) * Math.cos(dyPill * 0.08 - phase * 0.7);
 
@@ -2948,7 +2912,6 @@
             const nx = dxPill / pillHalfW;
             const ny = dyPill / pillHalfH;
 
-            // Pembiasan air mengalir (water flow refraction + edge meniscus curve)
             shiftX = (-dxPill * 0.13 * (1.0 - lipBend) - nx * lipBend * 8.0 * dpr + surfaceRipple * 0.65) * act;
             shiftY = (-dyPill * 0.13 * (1.0 - lipBend) - ny * lipBend * 6.5 * dpr + surfaceRipple * 0.85) * act;
 
