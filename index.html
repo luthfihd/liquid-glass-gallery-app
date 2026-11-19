@@ -69,7 +69,7 @@
       height: 100%;
       overflow: hidden;
       touch-action: none;
-      transition: opacity 0.28s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .stage.dragging {
@@ -103,8 +103,8 @@
       justify-content: space-between;
       opacity: 0;
       pointer-events: none;
-      transform: translateY(18px) scale(0.98);
-      transition: opacity 0.28s ease, transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+      transform: translateY(16px) scale(0.98);
+      transition: opacity 0.24s ease, transform 0.30s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .snap-view.active {
@@ -156,7 +156,7 @@
       width: 42px;
       height: 42px;
       border-radius: 50%;
-      border: var(--hairline) solid rgba(255, 255, 255, 0.24);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
       background: rgba(255, 255, 255, 0.08);
       -webkit-backdrop-filter: blur(12px) saturate(1.55);
       backdrop-filter: blur(12px) saturate(1.55);
@@ -164,8 +164,8 @@
       display: grid;
       place-items: center;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.20), inset 0 0.5px 0 rgba(255, 255, 255, 0.42);
-      transition: transform 0.16s ease, background 0.16s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.20), inset 0 0.5px 0 rgba(255, 255, 255, 0.40);
+      transition: transform 0.14s ease, background 0.14s ease;
     }
 
     .glass-circle-btn:active {
@@ -191,7 +191,7 @@
       width: 50px;
       height: 50px;
       border-radius: 15px;
-      border: var(--hairline) solid rgba(255, 255, 255, 0.24);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
       background: rgba(255, 255, 255, 0.08);
       -webkit-backdrop-filter: blur(12px) saturate(1.55);
       backdrop-filter: blur(12px) saturate(1.55);
@@ -201,8 +201,8 @@
       cursor: pointer;
       overflow: hidden;
       padding: 0;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22), inset 0 0.5px 0 rgba(255, 255, 255, 0.40);
-      transition: transform 0.16s ease;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22), inset 0 0.5px 0 rgba(255, 255, 255, 0.38);
+      transition: transform 0.14s ease;
     }
 
     .photo-pick-btn:active {
@@ -222,7 +222,7 @@
       display: grid;
       place-items: center;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
-      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .shot-btn-inner {
@@ -230,7 +230,7 @@
       height: 100%;
       border-radius: 50%;
       background: #ffffff;
-      transition: transform 0.14s ease, background 0.14s ease;
+      transition: transform 0.12s ease, background 0.12s ease;
     }
 
     .shot-btn:active {
@@ -243,7 +243,7 @@
     }
 
     /* =========================================================
-       VIEW 3: MOCKUP STUDIO (HAIRLINE BORDERS + CLEAN TEXT SLIDERS)
+       VIEW 3: MOCKUP STUDIO
        ========================================================= */
     .mockup-view {
       position: absolute;
@@ -258,7 +258,7 @@
       opacity: 0;
       pointer-events: none;
       transform: scale(1.03);
-      transition: opacity 0.28s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
       overflow: hidden;
     }
 
@@ -274,7 +274,7 @@
       background-size: cover;
       background-position: center;
       z-index: 0;
-      transition: background 0.4s ease, filter 0.4s ease;
+      transition: background 0.35s ease, filter 0.35s ease;
     }
 
     .mockup-top-bar {
@@ -289,7 +289,7 @@
       flex-shrink: 0;
     }
 
-    /* Segmented Toggle: Ultra-thin Hairline Glass */
+    /* Segmented Toggle */
     .lg-segmented {
       position: relative;
       height: 36px;
@@ -304,11 +304,11 @@
       background: rgba(255, 255, 255, 0.06);
       -webkit-backdrop-filter: blur(8px) saturate(1.55);
       backdrop-filter: blur(8px) saturate(1.55);
-      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.20);
       box-shadow:
         0 4px 14px rgba(0, 0, 0, 0.14),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.38);
-      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
+      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .lg-segmented.is-morphing {
@@ -324,7 +324,7 @@
       align-items: center;
       justify-content: center;
       font-size: 0.71rem;
-      font-weight: 560;
+      font-weight: 600;
       letter-spacing: -0.01em;
       color: rgba(255, 255, 255, 0.90);
       white-space: nowrap;
@@ -350,7 +350,7 @@
       align-items: center;
       justify-content: center;
       font-size: 0.71rem;
-      font-weight: 680;
+      font-weight: 600;
       letter-spacing: -0.01em;
       color: rgb(var(--nav-accent-rgb));
       white-space: nowrap;
@@ -368,11 +368,11 @@
       transform-origin: center center;
       will-change: transform;
       background: rgba(255, 255, 255, 0.08);
-      border: var(--hairline) solid rgba(255, 255, 255, 0.28);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.26);
       box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.14),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.45);
-      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.42);
+      transition: transform 0.20s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .lg-segmented.is-morphing .lg-seg-thumb {
@@ -381,14 +381,14 @@
 
     .save-mockup-btn {
       height: 36px;
-      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.20);
       background: rgba(255, 255, 255, 0.06);
       -webkit-backdrop-filter: blur(8px) saturate(1.55);
       backdrop-filter: blur(8px) saturate(1.55);
       color: #ffffff;
       font: inherit;
       font-size: 0.72rem;
-      font-weight: 620;
+      font-weight: 600;
       padding: 0 13px;
       border-radius: 999px;
       display: inline-flex;
@@ -398,8 +398,8 @@
       flex-shrink: 0;
       box-shadow:
         0 4px 14px rgba(0, 0, 0, 0.14),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.38);
-      transition: transform 0.15s ease, background 0.15s ease;
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
+      transition: transform 0.12s ease, background 0.12s ease;
     }
 
     .save-mockup-btn:active {
@@ -431,7 +431,7 @@
       box-shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
     }
 
-    /* Sliders: Hairline Glass, Zero Excess Text Shadow, Aligned Text */
+    /* Sliders */
     .mockup-sliders {
       position: relative;
       z-index: 3;
@@ -445,7 +445,7 @@
 
     .lg-slider-card {
       position: relative;
-      height: 42px;
+      height: 44px;
       border-radius: 999px;
       padding: 3px;
       display: flex;
@@ -458,11 +458,11 @@
       background: rgba(255, 255, 255, 0.06);
       -webkit-backdrop-filter: blur(8px) saturate(1.55);
       backdrop-filter: blur(8px) saturate(1.55);
-      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.20);
       box-shadow:
         0 4px 14px rgba(0, 0, 0, 0.14),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.38);
-      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
+      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .lg-slider-card.is-morphing {
@@ -473,50 +473,30 @@
       cursor: grabbing;
     }
 
-    .lg-slider-label-base,
-    .lg-slider-label-lens {
+    .lg-slider-canvas {
       position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
+      inset: -10px -8px;
+      width: calc(100% + 16px);
+      height: calc(100% + 20px);
+      z-index: 2;
       pointer-events: none;
-      padding: 0 12px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-shadow: none;
-    }
-
-    .lg-slider-label-base {
-      z-index: 1;
-      color: rgba(255, 255, 255, 0.90);
-    }
-
-    .lg-slider-label-lens {
-      z-index: 3;
-      color: rgb(var(--nav-accent-rgb));
-      background: transparent;
     }
 
     .lg-slider-thumb {
       position: absolute;
-      z-index: 2;
+      z-index: 3;
       top: 3px;
       left: 3px;
-      width: 64px;
-      height: 34px;
+      width: 84px;
+      height: 36px;
       border-radius: 999px;
       pointer-events: none;
       transform-origin: center center;
       will-change: transform;
-      background: rgba(255, 255, 255, 0.08);
-      border: var(--hairline) solid rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.05);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.26);
       box-shadow:
-        0 2px 8px rgba(0, 0, 0, 0.14),
+        0 3px 10px rgba(0, 0, 0, 0.16),
         inset 0 0.5px 0 rgba(255, 255, 255, 0.45);
     }
 
@@ -531,7 +511,7 @@
     }
 
     .capture-flash.flash-anim {
-      animation: shutterFlash 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: shutterFlash 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
     @keyframes shutterFlash {
@@ -540,9 +520,7 @@
     }
 
     /* =========================================================
-       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (APPLE iOS 26)
-       - Idle: Calm Hairline Capsule (No Lens Magnification When Idle)
-       - Slide / Touch: Optical Convex Magnifier + Chromatic Rim Emerges Smoothly
+       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (LIQUID WATER PHYSICS)
        ========================================================= */
     .nav-dock-wrap {
       position: fixed;
@@ -568,12 +546,12 @@
       isolation: isolate;
       touch-action: none;
       background: rgba(255, 255, 255, 0.04);
-      -webkit-backdrop-filter: blur(2px) saturate(1.35);
-      backdrop-filter: blur(2px) saturate(1.35);
-      border: var(--hairline) solid rgba(255, 255, 255, 0.22);
+      -webkit-backdrop-filter: blur(4px) saturate(1.4);
+      backdrop-filter: blur(4px) saturate(1.4);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.20);
       box-shadow:
         0 10px 26px rgba(0, 0, 0, 0.22),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.42),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.38),
         inset 0 -0.5px 0 rgba(255, 255, 255, 0.14);
       transform-origin: center center;
       will-change: transform;
@@ -582,13 +560,13 @@
     #glassLens {
       position: absolute;
       z-index: 2;
-      inset: -18px -10px;
-      width: calc(100% + 20px);
-      height: calc(100% + 36px);
+      inset: -26px -14px;
+      width: calc(100% + 28px);
+      height: calc(100% + 52px);
       pointer-events: none;
     }
 
-    /* Ultra-thin Hairline Pill Rim (Zero Thick Border, Zero Artificial Gradient) */
+    /* Ultra-thin Hairline Pill Rim */
     .active-pill {
       position: absolute;
       z-index: 3;
@@ -604,7 +582,7 @@
       border: var(--hairline) solid rgba(255, 255, 255, 0.26);
       box-shadow:
         0 4px 12px rgba(0, 0, 0, 0.14),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.48);
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.45);
     }
 
     .nav-btn {
@@ -628,12 +606,12 @@
 
 <body>
   <main class="app" id="app">
-    <!-- 1. EXPLORE VIEW (GALLERY UTAMA SESUAI REPO) -->
+    <!-- 1. EXPLORE VIEW -->
     <section class="stage" id="stage" aria-label="Galeri foto vertikal">
       <canvas id="gl"></canvas>
     </section>
 
-    <!-- 2. SNAP VIEW (HALAMAN KAMERA & GALERI) -->
+    <!-- 2. SNAP VIEW -->
     <section class="snap-view" id="snapView" aria-label="Kamera dan tambah foto">
       <video id="cameraVideo" autoplay playsinline muted></video>
       <div class="camera-fallback" id="cameraFallback">
@@ -720,15 +698,13 @@
 
       <div class="mockup-sliders">
         <div class="lg-slider-card" id="bgSlider" aria-label="Geser tema background">
-          <span class="lg-slider-label-base" id="bgSliderLabelBase">BG: Photo Blur</span>
+          <canvas class="lg-slider-canvas" id="bgSliderCanvas" aria-hidden="true"></canvas>
           <div class="lg-slider-thumb" id="bgSliderThumb"></div>
-          <span class="lg-slider-label-lens" id="bgSliderLabelLens" aria-hidden="true">BG: Photo Blur</span>
         </div>
 
         <div class="lg-slider-card" id="frameSlider" aria-label="Geser warna frame perangkat">
-          <span class="lg-slider-label-base" id="frameSliderLabelBase">Frame: Titanium</span>
+          <canvas class="lg-slider-canvas" id="frameSliderCanvas" aria-hidden="true"></canvas>
           <div class="lg-slider-thumb" id="frameSliderThumb"></div>
-          <span class="lg-slider-label-lens" id="frameSliderLabelLens" aria-hidden="true">Frame: Titanium</span>
         </div>
       </div>
     </section>
@@ -809,13 +785,11 @@
 
     // Sliders
     const bgSlider = document.getElementById("bgSlider");
+    const bgSliderCanvas = document.getElementById("bgSliderCanvas");
     const bgSliderThumb = document.getElementById("bgSliderThumb");
-    const bgSliderLabelBase = document.getElementById("bgSliderLabelBase");
-    const bgSliderLabelLens = document.getElementById("bgSliderLabelLens");
     const frameSlider = document.getElementById("frameSlider");
+    const frameSliderCanvas = document.getElementById("frameSliderCanvas");
     const frameSliderThumb = document.getElementById("frameSliderThumb");
-    const frameSliderLabelBase = document.getElementById("frameSliderLabelBase");
-    const frameSliderLabelLens = document.getElementById("frameSliderLabelLens");
 
     const sceneCanvas = document.createElement("canvas");
     const ctx = sceneCanvas.getContext("2d");
@@ -857,12 +831,11 @@
 
     let wheelDelta = 0;
     let wheelTimer = 0;
-    let lastGlassDraw = 0;
     let glassImageData = null;
     let lastAppliedPaletteIndex = -1;
     let currentAccentRgb = [45, 168, 255];
 
-    // Navigation & Pill Spring Physics
+    // Navigation & Liquid Water Wiggle Physics
     let activeTab = 0; // 0: Explore, 1: Snap, 2: Mockup
     let pillPos = 0;
     let pillTarget = 0;
@@ -870,14 +843,26 @@
     let pillDragging = false;
     let pillPressing = false;
     let pillDragStartX = 0;
+    let pillDragStartY = 0;
     let pillDragStartPos = 0;
     let pillMoved = false;
 
-    // Smooth Navbar Zoom & Lens Activity Spring (0 = Idle / Tenang, 1 = Aktif saat Dislide)
-    let navZoom = 1.0;
-    let navZoomVel = 0;
+    // 0 = Idle (100% Lensa Off), 1 = Aktif saat Slide/Sentuh
     let lensActivity = 0.0;
     let lensActivityVel = 0.0;
+
+    // Water Wiggle & Upward Pull Spring States (seperti air ditarik tegangan permukaan)
+    let navLiftY = 0.0;
+    let navLiftVelY = 0.0;
+    let navPullTargetY = 0.0;
+    let navTilt = 0.0;
+    let navTiltVel = 0.0;
+    let navWobble = 0.0;
+    let navWobbleVel = 0.0;
+    let pillLiftY = 0.0;
+    let pillLiftVelY = 0.0;
+    let waterPhase = 0.0;
+    let lastIdleDrawnKey = "";
 
     // Camera state
     let cameraStream = null;
@@ -893,6 +878,8 @@
 
     let bgPresetIndex = 0; // 0..4
     let frameFinishIndex = 0; // 0..3
+    let currentBgLabel = "BG: Photo Blur";
+    let currentFrameLabel = "Frame: Titanium";
 
     const frameFinishes = [
       { name: "Titanium", stops: ["#686e78", "#2d3138", "#555b65", "#1e2126", "#4e545e"] },
@@ -1038,6 +1025,7 @@
     function applyNavMaterialYouPalette(palette) {
       if (!palette) return;
       currentAccentRgb = palette.accent;
+      lastIdleDrawnKey = "";
       const root = document.documentElement;
       root.style.setProperty("--nav-primary-rgb", palette.primary.join(", "));
       root.style.setProperty("--nav-accent-rgb", palette.accent.join(", "));
@@ -1528,9 +1516,7 @@
     function updateMockupBackgroundDOM() {
       const presets = getBackgroundPresets(capturedPalette);
       const preset = presets[bgPresetIndex] || presets[0];
-      const text = `BG: ${preset.name}`;
-      bgSliderLabelBase.textContent = text;
-      bgSliderLabelLens.textContent = text;
+      currentBgLabel = `BG: ${preset.name}`;
 
       if (preset.type === "photo" && capturedImageUrl) {
         mockupBg.style.backgroundImage = `url("${capturedImageUrl}")`;
@@ -1597,9 +1583,7 @@
       syncSegmentedToggles();
 
       const finish = frameFinishes[frameFinishIndex] || frameFinishes[0];
-      const frameText = `Frame: ${finish.name}`;
-      frameSliderLabelBase.textContent = frameText;
-      frameSliderLabelLens.textContent = frameText;
+      currentFrameLabel = `Frame: ${finish.name}`;
 
       const outW = 1200;
       const outH = 2400;
@@ -1899,41 +1883,170 @@
     );
 
     /* =========================================================
-       ALIGNED, BUG-FREE PILL SLIDERS
+       SUB-PIXEL BILINEAR SAMPLER (ZERO PIXEL JITTER)
        ========================================================= */
-    function bindLiquidSlider(sliderEl, thumbEl, baseLabelEl, lensLabelEl, getStepsCount, onStepChange) {
+    function sampleBilinearChannel(source, w, h, fx, fy, ch) {
+      const x = fx < 0 ? 0 : (fx > w - 1 ? w - 1 : fx);
+      const y = fy < 0 ? 0 : (fy > h - 1 ? h - 1 : fy);
+      const x0 = x | 0;
+      const y0 = y | 0;
+      const x1 = x0 + 1 < w ? x0 + 1 : x0;
+      const y1 = y0 + 1 < h ? y0 + 1 : y0;
+      const tx = x - x0;
+      const ty = y - y0;
+      const itx = 1 - tx;
+      const ity = 1 - ty;
+
+      const row0 = y0 * w;
+      const row1 = y1 * w;
+      const c00 = source[(row0 + x0) * 4 + ch];
+      const c10 = source[(row0 + x1) * 4 + ch];
+      const c01 = source[(row1 + x0) * 4 + ch];
+      const c11 = source[(row1 + x1) * 4 + ch];
+
+      return ((c00 * itx + c10 * tx) * ity + (c01 * itx + c11 * tx) * ty + 0.5) | 0;
+    }
+
+    /* =========================================================
+       REAL-TIME OPTICAL REFRACTION SLIDERS
+       ========================================================= */
+    function createOpticalSlider(sliderEl, canvasEl, thumbEl, getLabelText, getStepsCount, onStepChange) {
+      const sctx = canvasEl.getContext("2d", { willReadFrequently: true });
+      const buf = document.createElement("canvas");
+      const bctx = buf.getContext("2d", { willReadFrequently: true });
+      let imgData = null;
+
       let isSliding = false;
       let startX = 0;
       let startRatio = 0;
       let currentRatio = 0;
       let moved = false;
 
-      const THUMB_W = 64;
-      const THUMB_H = 34;
+      const THUMB_W = 84;
+      const THUMB_H = 36;
 
       function positionThumb(ratio, morphing = false) {
         const clampedRatio = Math.max(0, Math.min(1, ratio));
-        const rect = sliderEl.getBoundingClientRect();
-        const cardW = rect.width || 180;
-        const cardH = rect.height || 42;
+        const cardW = sliderEl.offsetWidth || 180;
         const maxTravel = Math.max(1, cardW - THUMB_W - 6);
         const x = clampedRatio * maxTravel;
-        const sx = morphing ? 1.12 : 1;
-        const sy = morphing ? 1.22 : 1;
+        const sx = morphing ? 1.14 : 1;
+        const sy = morphing ? 1.24 : 1;
 
-        thumbEl.style.transform = `translate3d(${x}px, 0, 0) scale(${sx}, ${sy})`;
+        thumbEl.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0) scale(${sx}, ${sy})`;
+      }
 
-        const effW = THUMB_W * sx;
-        const effH = THUMB_H * sy;
-        const centerX = 3 + x + THUMB_W * 0.5;
-        const centerY = cardH * 0.5;
+      function renderOptics() {
+        const unscaledW = sliderEl.offsetWidth + 16;
+        const unscaledH = sliderEl.offsetHeight + 20;
+        if (!unscaledW || !unscaledH) return;
 
-        const left = Math.max(0, centerX - effW * 0.5);
-        const right = Math.max(0, cardW - (centerX + effW * 0.5));
-        const top = Math.max(0, centerY - effH * 0.5);
-        const bottom = Math.max(0, cardH - (centerY + effH * 0.5));
+        const w = Math.max(1, Math.round(unscaledW * dpr));
+        const h = Math.max(1, Math.round(unscaledH * dpr));
 
-        lensLabelEl.style.clipPath = `inset(${top.toFixed(1)}px ${right.toFixed(1)}px ${bottom.toFixed(1)}px ${left.toFixed(1)}px round 999px)`;
+        if (canvasEl.width !== w || canvasEl.height !== h) {
+          canvasEl.width = w;
+          canvasEl.height = h;
+          buf.width = w;
+          buf.height = h;
+          imgData = sctx.createImageData(w, h);
+        }
+
+        const padX = 8 * dpr;
+        const padY = 10 * dpr;
+        const cardW = w - padX * 2;
+        const insetPx = 3 * dpr;
+        const thumbW = THUMB_W * dpr;
+        const thumbH = THUMB_H * dpr;
+        const maxTravel = Math.max(1, cardW - thumbW - insetPx * 2);
+
+        const sx = isSliding ? 1.14 : 1.0;
+        const sy = isSliding ? 1.24 : 1.0;
+        const pillHalfW = (thumbW * sx) * 0.5;
+        const pillHalfH = (thumbH * sy) * 0.5;
+        const pillCenterX = padX + insetPx + currentRatio * maxTravel + thumbW * 0.5;
+        const pillCenterY = h * 0.5;
+
+        bctx.clearRect(0, 0, w, h);
+
+        bctx.save();
+        bctx.font = `600 ${Math.round(11.2 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        bctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+        bctx.textAlign = "center";
+        bctx.textBaseline = "middle";
+        bctx.fillText(getLabelText(), w * 0.5, h * 0.5);
+        bctx.restore();
+
+        bctx.save();
+        drawRoundedRect(
+          bctx,
+          pillCenterX - pillHalfW * 0.94,
+          pillCenterY - pillHalfH * 0.94,
+          pillHalfW * 1.88,
+          pillHalfH * 1.88,
+          pillHalfH * 0.94
+        );
+        bctx.clip();
+        bctx.clearRect(0, 0, w, h);
+        bctx.font = `650 ${Math.round(11.2 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        bctx.fillStyle = `rgb(${currentAccentRgb.join(",")})`;
+        bctx.textAlign = "center";
+        bctx.textBaseline = "middle";
+        bctx.fillText(getLabelText(), w * 0.5, h * 0.5);
+        bctx.restore();
+
+        // Idle = Lens Off (100% crisp tanpa distorsi)
+        if (!isSliding) {
+          sctx.clearRect(0, 0, w, h);
+          sctx.drawImage(buf, 0, 0);
+          return;
+        }
+
+        const source = bctx.getImageData(0, 0, w, h).data;
+        const output = imgData.data;
+        const cornerR = Math.min(pillHalfW, pillHalfH);
+        const boxHalfX = Math.max(0, pillHalfW - cornerR);
+        const boxHalfY = Math.max(0, pillHalfH - cornerR);
+
+        for (let y = 0; y < h; y++) {
+          const dy = y - pillCenterY;
+          const qy = Math.abs(dy) - boxHalfY;
+          const oy = qy > 0 ? qy : 0;
+          const oy2 = oy * oy;
+
+          for (let x = 0; x < w; x++) {
+            const idx = (y * w + x) * 4;
+            const dx = x - pillCenterX;
+            const qx = Math.abs(dx) - boxHalfX;
+            const ox = qx > 0 ? qx : 0;
+            const sdf = Math.sqrt(ox * ox + oy2) + Math.min(Math.max(qx, qy), 0) - cornerR;
+
+            if (sdf <= 1.0 * dpr) {
+              const u = Math.max(0, Math.min(1, 1.0 + sdf / cornerR));
+              const lipBend = Math.pow(u, 4.2);
+              const nx = dx / pillHalfW;
+              const ny = dy / pillHalfH;
+
+              const shiftX = -dx * 0.14 * (1.0 - lipBend) - nx * lipBend * 7.5 * dpr;
+              const shiftY = -dy * 0.14 * (1.0 - lipBend) - ny * lipBend * 6.0 * dpr;
+              const dispX = nx * lipBend * 1.6 * dpr;
+              const dispY = ny * lipBend * 1.2 * dpr;
+
+              const bx = x + shiftX;
+              const by = y + shiftY;
+              output[idx] = sampleBilinearChannel(source, w, h, bx + dispX, by + dispY, 0);
+              output[idx + 1] = sampleBilinearChannel(source, w, h, bx, by, 1);
+              output[idx + 2] = sampleBilinearChannel(source, w, h, bx - dispX, by - dispY, 2);
+              output[idx + 3] = sampleBilinearChannel(source, w, h, bx, by, 3);
+            } else {
+              output[idx] = source[idx];
+              output[idx + 1] = source[idx + 1];
+              output[idx + 2] = source[idx + 2];
+              output[idx + 3] = source[idx + 3];
+            }
+          }
+        }
+        sctx.putImageData(imgData, 0, 0);
       }
 
       sliderEl.addEventListener("pointerdown", (e) => {
@@ -1948,8 +2061,8 @@
 
       sliderEl.addEventListener("pointermove", (e) => {
         if (!isSliding) return;
-        const rect = sliderEl.getBoundingClientRect();
-        const maxTravel = Math.max(1, rect.width - THUMB_W - 6);
+        const cardW = sliderEl.offsetWidth || 180;
+        const maxTravel = Math.max(1, cardW - THUMB_W - 6);
         const dx = e.clientX - startX;
         if (Math.abs(dx) > 4) moved = true;
 
@@ -1995,15 +2108,16 @@
           const steps = getStepsCount();
           currentRatio = steps > 1 ? idx / (steps - 1) : 0;
           positionThumb(currentRatio, false);
-        }
+        },
+        renderOptics
       };
     }
 
-    const bgSliderCtrl = bindLiquidSlider(
+    const bgSliderCtrl = createOpticalSlider(
       bgSlider,
+      bgSliderCanvas,
       bgSliderThumb,
-      bgSliderLabelBase,
-      bgSliderLabelLens,
+      () => currentBgLabel,
       () => 5,
       (idx) => {
         if (bgPresetIndex !== idx) {
@@ -2014,11 +2128,11 @@
       }
     );
 
-    const frameSliderCtrl = bindLiquidSlider(
+    const frameSliderCtrl = createOpticalSlider(
       frameSlider,
+      frameSliderCanvas,
       frameSliderThumb,
-      frameSliderLabelBase,
-      frameSliderLabelLens,
+      () => currentFrameLabel,
       () => frameFinishes.length,
       (idx) => {
         if (frameFinishIndex !== idx) {
@@ -2041,8 +2155,9 @@
     });
 
     /* =========================================================
-       TAB SWITCHING & APPLE iOS 26 LIQUID GLASS NAVBAR PHYSICS
-       (Lensa Pembesar Hanya Muncul Saat Dislide / Ditekan!)
+       TAB SWITCHING & LIQUID WATER WIGGLE NAVBAR PHYSICS
+       - Idle: 100% Lensa Off (Zero Distortion, Static & Crisp)
+       - Slide / Upward Pull: Fast Snap + Liquid Water Wiggle (Not Bubble)
        ========================================================= */
     function switchTab(tabIndex, options = {}) {
       const clamped = Math.max(0, Math.min(2, tabIndex));
@@ -2055,6 +2170,7 @@
 
       activeTab = clamped;
       pillTarget = clamped;
+      lastIdleDrawnKey = "";
 
       if (clamped === 0) {
         stopCamera();
@@ -2084,8 +2200,11 @@
       pillPressing = true;
       pillMoved = false;
       pillDragStartX = event.clientX;
+      pillDragStartY = event.clientY;
       pillDragStartPos = pillPos;
       pillVel = 0;
+      navPullTargetY = 0;
+      navWobbleVel += 4.5;
       try {
         liquidNav.setPointerCapture(event.pointerId);
       } catch (_) {}
@@ -2093,22 +2212,32 @@
 
     liquidNav.addEventListener("pointermove", (event) => {
       if (!pillDragging) return;
-      const rect = liquidNav.getBoundingClientRect();
-      const tabWidth = (rect.width - 10) / 3;
+      const baseW = liquidNav.offsetWidth || 344;
+      const tabWidth = (baseW - 10) / 3;
       const dx = event.clientX - pillDragStartX;
+      const dy = event.clientY - pillDragStartY;
 
-      if (Math.abs(dx) > 5) {
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
         pillMoved = true;
       }
 
+      const prevPos = pillPos;
       const rawPos = pillDragStartPos + dx / tabWidth;
       if (rawPos < 0) {
-        pillPos = rawPos * 0.25;
+        pillPos = rawPos * 0.22;
       } else if (rawPos > 2) {
-        pillPos = 2 + (rawPos - 2) * 0.25;
+        pillPos = 2 + (rawPos - 2) * 0.22;
       } else {
         pillPos = rawPos;
       }
+
+      // Kecepatan instan mengikuti jari untuk riak air
+      const instantVel = (pillPos - prevPos) * 45;
+      pillVel = pillVel * 0.45 + instantVel * 0.55;
+
+      // Tarikan ke atas / bawah (rubber-band liquid tension seperti iOS 26/27)
+      const clampedDy = Math.max(-72, Math.min(36, dy));
+      navPullTargetY = clampedDy * 0.34;
     });
 
     function finishPillDrag(event) {
@@ -2116,8 +2245,14 @@
       pillDragging = false;
       pillPressing = false;
 
+      // Lepas tarikan ke atas memicu gelombang air (water surface wiggle)
+      const releaseEnergy = Math.min(1.6, Math.abs(navPullTargetY) * 0.08 + Math.abs(pillVel) * 0.14);
+      navWobbleVel += (pillVel >= 0 ? 1 : -1) * (6.5 + releaseEnergy * 8.0);
+      navPullTargetY = 0;
+
+      const navRect = liquidNav.getBoundingClientRect();
       const targetTab = (!pillMoved && event && typeof event.clientX === "number")
-        ? Math.max(0, Math.min(2, Math.floor(((event.clientX - liquidNav.getBoundingClientRect().left) / liquidNav.getBoundingClientRect().width) * 3)))
+        ? Math.max(0, Math.min(2, Math.floor(((event.clientX - navRect.left) / navRect.width) * 3)))
         : Math.max(0, Math.min(2, Math.round(pillPos)));
 
       pillMoved = false;
@@ -2129,63 +2264,130 @@
       pillDragging = false;
       pillPressing = false;
       pillMoved = false;
+      navPullTargetY = 0;
       switchTab(Math.max(0, Math.min(2, Math.round(pillPos))));
     });
 
-    function getDropletScale() {
+    /* =========================================================
+       LIQUID WATER SHAPE (DYNAMIC FLUID SQUASH-STRETCH, NOT BUBBLE)
+       ========================================================= */
+    function getLiquidPillShape() {
       const a = lensActivity;
-      const speed = pillDragging ? 0.55 : Math.min(1.3, Math.abs(pillVel) * 0.14);
+      // Air memanjang searah aliran gerak (flow stretch) dan pipih mengikuti tegangan permukaan,
+      // tidak membulat menggembung seperti gelembung sabun.
+      const flowSpeed = Math.min(1.2, Math.abs(pillVel) * 0.085);
+      const liftStretch = Math.min(0.14, Math.abs(navLiftY) * 0.008);
+      const ripple = navWobble * 0.022;
+
       return {
-        scaleX: 1 + a * (0.12 + speed * 0.10),
-        scaleY: 1 + a * (0.28 + speed * 0.04)
+        scaleX: 1 + a * (0.11 + flowSpeed * 0.13 + ripple - liftStretch * 0.35),
+        scaleY: 1 + a * (0.20 + liftStretch - flowSpeed * 0.03 - ripple * 0.85),
+        skewX: (pillVel * 0.55 + navWobble * 0.9) * a
       };
     }
 
     function updateLiquidPillPhysics(dt) {
-      if (!pillDragging) {
-        const stiffness = 240;
-        const damping = 2 * Math.sqrt(stiffness) * 0.84;
-        pillVel += (-stiffness * (pillPos - pillTarget) - damping * pillVel) * dt;
-        pillPos += pillVel * dt;
+      // Sub-stepping 2x agar pegas sangat cepat, responsif, dan bebas osilasi liar
+      const steps = 2;
+      const h = dt / steps;
 
-        if (Math.abs(pillTarget - pillPos) < 0.001 && Math.abs(pillVel) < 0.005) {
-          pillPos = pillTarget;
-          pillVel = 0;
+      for (let s = 0; s < steps; s++) {
+        // 1. Pegas perpindahan pill antar tab (cepat & tegas)
+        if (!pillDragging) {
+          const stiffness = 680;
+          const damping = 2 * Math.sqrt(stiffness) * 0.86;
+          pillVel += (-stiffness * (pillPos - pillTarget) - damping * pillVel) * h;
+          pillPos += pillVel * h;
+
+          if (Math.abs(pillTarget - pillPos) < 0.0015 && Math.abs(pillVel) < 0.008) {
+            pillPos = pillTarget;
+            pillVel = 0;
+          }
         }
+
+        // 2. Aktivasi lensa: 0 saat idle (lensa OFF), naik cepat saat slide/sentuh
+        const isMoving =
+          Math.abs(pillPos - pillTarget) > 0.015 ||
+          Math.abs(pillVel) > 0.08 ||
+          Math.abs(navLiftY) > 0.35;
+        const activityTarget = (pillPressing || pillDragging || isMoving) ? 1.0 : 0.0;
+        const aStiff = activityTarget > lensActivity ? 1400 : 720;
+        const aDamp = 2 * Math.sqrt(aStiff) * 0.95;
+        lensActivityVel += (-aStiff * (lensActivity - activityTarget) - aDamp * lensActivityVel) * h;
+        lensActivity += lensActivityVel * h;
+        if (Math.abs(activityTarget - lensActivity) < 0.002 && Math.abs(lensActivityVel) < 0.008) {
+          lensActivity = activityTarget;
+          lensActivityVel = 0;
+        }
+
+        // 3. Pegas tarikan vertikal navbar ke atas (Upward Water Lift)
+        const liftStiff = pillDragging ? 520 : 340;
+        const liftDamp = pillDragging
+          ? 2 * Math.sqrt(liftStiff) * 0.85
+          : 2 * Math.sqrt(liftStiff) * 0.44; // Underdamped saat dilepas -> memantul cair seperti air!
+        navLiftVelY += (-liftStiff * (navLiftY - navPullTargetY) - liftDamp * navLiftVelY) * h;
+        navLiftY += navLiftVelY * h;
+        if (!pillDragging && Math.abs(navLiftY) < 0.03 && Math.abs(navLiftVelY) < 0.08) {
+          navLiftY = 0;
+          navLiftVelY = 0;
+        }
+
+        // 4. Pegas kemiringan air (Liquid Tilt) mengikuti posisi tab & tarikan ke atas
+        const leverage = (pillPos - 1.0); // -1 di kiri, 0 di tengah, +1 di kanan
+        const targetTilt = leverage * (-navLiftY * 0.24) + pillVel * 0.18;
+        const tiltStiff = 280;
+        const tiltDamp = 2 * Math.sqrt(tiltStiff) * 0.42; // Underdamped wiggle
+        navTiltVel += (-tiltStiff * (navTilt - targetTilt) - tiltDamp * navTiltVel) * h;
+        navTilt += navTiltVel * h;
+        if (!pillDragging && Math.abs(navTilt) < 0.02 && Math.abs(navTiltVel) < 0.05) {
+          navTilt = 0;
+          navTiltVel = 0;
+        }
+
+        // 5. Gelombang riak permukaan air (Surface Tension Wiggle)
+        const wobbleStiff = 260;
+        const wobbleDamp = 2 * Math.sqrt(wobbleStiff) * 0.34;
+        navWobbleVel += (-wobbleStiff * navWobble - wobbleDamp * navWobbleVel) * h;
+        navWobble += navWobbleVel * h;
+        if (!pillDragging && Math.abs(navWobble) < 0.005 && Math.abs(navWobbleVel) < 0.02) {
+          navWobble = 0;
+          navWobbleVel = 0;
+        }
+
+        // 6. Pegas ketinggian pill di dalam air (ikuti tarikan ke atas dengan sedikit inersia cair)
+        const targetPillLift = navLiftY * 0.28;
+        const pLiftStiff = 420;
+        const pLiftDamp = 2 * Math.sqrt(pLiftStiff) * 0.46;
+        pillLiftVelY += (-pLiftStiff * (pillLiftY - targetPillLift) - pLiftDamp * pillLiftVelY) * h;
+        pillLiftY += pillLiftVelY * h;
       }
 
-      // lensActivity: 1 saat disentuh/dislide/bergerak, meluruh ke 0 saat idle!
-      const isMoving = Math.abs(pillPos - pillTarget) > 0.015 || Math.abs(pillVel) > 0.05;
-      const activityTarget = (pillPressing || pillDragging || isMoving) ? 1.0 : 0.0;
-      const aStiff = 260;
-      const aDamp = 2 * Math.sqrt(aStiff) * 0.90;
-      lensActivityVel += (-aStiff * (lensActivity - activityTarget) - aDamp * lensActivityVel) * dt;
-      lensActivity += lensActivityVel * dt;
-      if (Math.abs(activityTarget - lensActivity) < 0.001 && Math.abs(lensActivityVel) < 0.002) {
-        lensActivity = activityTarget;
-        lensActivityVel = 0;
+      waterPhase += dt * (9.5 + Math.abs(pillVel) * 3.0 + Math.abs(navWobble) * 4.0);
+
+      // Terapkan transformasi Liquid Wiggle pada kontainer Navbar
+      const liftRatio = Math.min(1, Math.abs(navLiftY) / 18);
+      const navScaleX = 1 + lensActivity * 0.028 - liftRatio * 0.018 + navWobble * 0.006;
+      const navScaleY = 1 + lensActivity * 0.032 + liftRatio * 0.034 - navWobble * 0.008;
+
+      if (lensActivity <= 0.001 && Math.abs(navLiftY) < 0.03 && Math.abs(navTilt) < 0.02 && Math.abs(navWobble) < 0.005) {
+        liquidNav.style.transform = "translate3d(0px, 0px, 0) rotate(0deg) scale(1, 1)";
+      } else {
+        liquidNav.style.transform =
+          `translate3d(0px, ${navLiftY.toFixed(2)}px, 0) ` +
+          `rotate(${navTilt.toFixed(2)}deg) ` +
+          `scale(${navScaleX.toFixed(4)}, ${navScaleY.toFixed(4)})`;
       }
 
-      // Smooth Spring Zoom untuk seluruh Navbar mengikuti lensActivity
-      const zoomTarget = 1.0 + lensActivity * 0.045;
-      const zStiff = 260;
-      const zDamp = 2 * Math.sqrt(zStiff) * 0.88;
-      navZoomVel += (-zStiff * (navZoom - zoomTarget) - zDamp * navZoomVel) * dt;
-      navZoom += navZoomVel * dt;
-      if (Math.abs(zoomTarget - navZoom) < 0.0005 && Math.abs(navZoomVel) < 0.002) {
-        navZoom = zoomTarget;
-        navZoomVel = 0;
-      }
-      liquidNav.style.transform = `scale(${navZoom.toFixed(4)})`;
-
-      const navRect = liquidNav.getBoundingClientRect();
-      const unscaledW = (navRect.width || 344) / navZoom;
+      const unscaledW = liquidNav.offsetWidth || 344;
       const innerW = unscaledW - 10;
       const baseTabW = innerW / 3;
       const translateX = pillPos * baseTabW;
 
-      const { scaleX, scaleY } = getDropletScale();
-      activePill.style.transform = `translate3d(${translateX}px, 0, 0) scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})`;
+      const { scaleX, scaleY, skewX } = getLiquidPillShape();
+      activePill.style.transform =
+        `translate3d(${translateX.toFixed(2)}px, ${pillLiftY.toFixed(2)}px, 0) ` +
+        `skewX(${skewX.toFixed(2)}deg) ` +
+        `scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})`;
     }
 
     window.addEventListener("beforeunload", () => {
@@ -2263,14 +2465,18 @@
       }
 
       resizeGlassCanvas();
+      lastIdleDrawnKey = "";
+      if (activeTab === 2) {
+        bgSliderCtrl.sync(bgPresetIndex);
+        frameSliderCtrl.sync(frameFinishIndex);
+      }
     }
 
     function resizeGlassCanvas() {
-      const rect = glassCanvas.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-
-      const newWidth = Math.max(1, Math.round((rect.width / navZoom) * dpr));
-      const newHeight = Math.max(1, Math.round((rect.height / navZoom) * dpr));
+      const baseW = liquidNav.offsetWidth || Math.min(344, width - 32);
+      const baseH = liquidNav.offsetHeight || 64;
+      const newWidth = Math.max(1, Math.round((baseW + 28) * dpr));
+      const newHeight = Math.max(1, Math.round((baseH + 52) * dpr));
 
       if (glassCanvas.width !== newWidth || glassCanvas.height !== newHeight) {
         glassCanvas.width = newWidth;
@@ -2278,11 +2484,111 @@
         navOpticsBuffer.width = newWidth;
         navOpticsBuffer.height = newHeight;
         glassImageData = glassCtx.createImageData(newWidth, newHeight);
+        lastIdleDrawnKey = "";
       }
     }
 
     /* =========================================================
-       DRAW SHARP TAB ICONS & LABELS INTO OPTICAL BUFFER
+       DYNAMIC BACKGROUND SAMPLING FOR NAVBAR (ONLY WHEN LENS IS ACTIVE)
+       ========================================================= */
+    function drawDynamicNavBackdrop(
+      octx,
+      sourceLeft,
+      sourceTop,
+      sourceWidth,
+      sourceHeight,
+      lensWidth,
+      lensHeight
+    ) {
+      if (activeTab === 0) {
+        octx.drawImage(
+          sceneCanvas,
+          sourceLeft,
+          sourceTop,
+          sourceWidth,
+          sourceHeight,
+          0,
+          0,
+          lensWidth,
+          lensHeight
+        );
+      } else if (activeTab === 1) {
+        if (cameraStream && cameraVideo.videoWidth > 0 && cameraVideo.videoHeight > 0) {
+          const vw = cameraVideo.videoWidth;
+          const vh = cameraVideo.videoHeight;
+          const screenW = sceneCanvas.width;
+          const screenH = sceneCanvas.height;
+          const videoAspect = vw / vh;
+          const screenAspect = screenW / screenH;
+
+          let drawW = screenW;
+          let drawH = screenH;
+          let offX = 0;
+          let offY = 0;
+
+          if (videoAspect > screenAspect) {
+            drawW = screenH * videoAspect;
+            offX = (screenW - drawW) / 2;
+          } else {
+            drawH = screenW / videoAspect;
+            offY = (screenH - drawH) / 2;
+          }
+
+          const sx = ((sourceLeft - offX) / drawW) * vw;
+          const sy = ((sourceTop - offY) / drawH) * vh;
+          const sw = (sourceWidth / drawW) * vw;
+          const sh = (sourceHeight / drawH) * vh;
+
+          octx.save();
+          if (facingMode === "user") {
+            octx.translate(lensWidth, 0);
+            octx.scale(-1, 1);
+            octx.drawImage(cameraVideo, vw - sx - sw, sy, sw, sh, 0, 0, lensWidth, lensHeight);
+          } else {
+            octx.drawImage(cameraVideo, sx, sy, sw, sh, 0, 0, lensWidth, lensHeight);
+          }
+          octx.restore();
+        } else {
+          octx.fillStyle = "#0b1622";
+          octx.fillRect(0, 0, lensWidth, lensHeight);
+        }
+      } else {
+        const presets = getBackgroundPresets(capturedPalette);
+        const preset = presets[bgPresetIndex] || presets[0];
+
+        if (preset.type === "photo" && images.length) {
+          const activeIndex = wrapIndex(Math.round(scroll));
+          const blurSnap = backdropSnapshots[activeIndex];
+          if (blurSnap) {
+            const scaleX = blurSnap.width / sceneCanvas.width;
+            const scaleY = blurSnap.height / sceneCanvas.height;
+            octx.drawImage(
+              blurSnap,
+              sourceLeft * scaleX,
+              sourceTop * scaleY,
+              sourceWidth * scaleX,
+              sourceHeight * scaleY,
+              0,
+              0,
+              lensWidth,
+              lensHeight
+            );
+            octx.fillStyle = "rgba(6, 12, 20, 0.35)";
+            octx.fillRect(0, 0, lensWidth, lensHeight);
+            return;
+          }
+        }
+
+        const grad = octx.createLinearGradient(0, 0, lensWidth, lensHeight);
+        grad.addColorStop(0, preset.c2 || "#121e2b");
+        grad.addColorStop(1, preset.c3 || "#071019");
+        octx.fillStyle = grad;
+        octx.fillRect(0, 0, lensWidth, lensHeight);
+      }
+    }
+
+    /* =========================================================
+       DRAW SHARP TAB ICONS & LABELS
        ========================================================= */
     function drawTabVectorIcon(octx, tabIdx, cx, cy, s) {
       octx.beginPath();
@@ -2319,6 +2625,67 @@
       }
     }
 
+    function drawTabLabelsAndIcons(targetCtx, padX, padY, navW, navH, pillCenterX, pillCenterY, pillHalfW, pillHalfH) {
+      const insetPx = 5 * dpr;
+      const tabW = (navW - insetPx * 2) / 3;
+      const labels = ["Explore", "Snap", "Mockup"];
+      const iconY = padY + navH * 0.38;
+      const textY = padY + navH * 0.75;
+
+      // 1. Ikon & Teks Putih di Luar Pill
+      targetCtx.save();
+      targetCtx.strokeStyle = "rgba(255, 255, 255, 0.94)";
+      targetCtx.fillStyle = "rgba(255, 255, 255, 0.94)";
+      targetCtx.lineWidth = 1.85 * dpr;
+      targetCtx.lineCap = "round";
+      targetCtx.lineJoin = "round";
+      targetCtx.font = `600 ${Math.round(10.5 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      targetCtx.textAlign = "center";
+      targetCtx.textBaseline = "middle";
+
+      for (let i = 0; i < 3; i++) {
+        const cx = padX + insetPx + (i + 0.5) * tabW;
+        drawTabVectorIcon(targetCtx, i, cx, iconY, dpr);
+        targetCtx.fillText(labels[i], cx, textY);
+      }
+      targetCtx.restore();
+
+      // 2. Ikon & Teks Berwarna Ekstraksi Foto di Dalam Pill
+      targetCtx.save();
+      drawRoundedRect(
+        targetCtx,
+        pillCenterX - pillHalfW * 0.95,
+        pillCenterY - pillHalfH * 0.95,
+        pillHalfW * 1.90,
+        pillHalfH * 1.90,
+        pillHalfH * 0.95
+      );
+      targetCtx.clip();
+      targetCtx.clearRect(
+        pillCenterX - pillHalfW,
+        pillCenterY - pillHalfH,
+        pillHalfW * 2,
+        pillHalfH * 2
+      );
+
+      const accentColor = `rgb(${currentAccentRgb.join(",")})`;
+      targetCtx.strokeStyle = accentColor;
+      targetCtx.fillStyle = accentColor;
+      targetCtx.lineWidth = 2.0 * dpr;
+      targetCtx.lineCap = "round";
+      targetCtx.lineJoin = "round";
+      targetCtx.font = `680 ${Math.round(10.6 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      targetCtx.textAlign = "center";
+      targetCtx.textBaseline = "middle";
+
+      for (let i = 0; i < 3; i++) {
+        const cx = padX + insetPx + (i + 0.5) * tabW;
+        drawTabVectorIcon(targetCtx, i, cx, iconY, dpr);
+        targetCtx.fillText(labels[i], cx, textY);
+      }
+      targetCtx.restore();
+    }
+
     function renderOpticalNavSource(
       sourceLeft,
       sourceTop,
@@ -2331,21 +2698,29 @@
       navW,
       navH,
       pillCenterX,
+      pillCenterY,
       pillHalfW,
       pillHalfH
     ) {
       navOpticsCtx.clearRect(0, 0, lensWidth, lensHeight);
-      navOpticsCtx.drawImage(
-        sceneCanvas,
+
+      drawDynamicNavBackdrop(
+        navOpticsCtx,
         sourceLeft,
         sourceTop,
         sourceWidth,
         sourceHeight,
-        0,
-        0,
         lensWidth,
         lensHeight
       );
+
+      // Bingkai garis tipis navbar di dalam optical buffer agar melengkung cair saat dilewati lensa
+      navOpticsCtx.save();
+      drawRoundedRect(navOpticsCtx, padX, padY, navW, navH, navH * 0.5);
+      navOpticsCtx.lineWidth = 1.0 * dpr;
+      navOpticsCtx.strokeStyle = "rgba(255, 255, 255, 0.24)";
+      navOpticsCtx.stroke();
+      navOpticsCtx.restore();
 
       const insetPx = 5 * dpr;
       const tabW = (navW - insetPx * 2) / 3;
@@ -2375,30 +2750,33 @@
       navOpticsCtx.save();
       drawRoundedRect(
         navOpticsCtx,
-        pillCenterX - pillHalfW * 0.92,
-        lensHeight * 0.5 - pillHalfH * 0.92,
-        pillHalfW * 1.84,
-        pillHalfH * 1.84,
-        pillHalfH * 0.92
+        pillCenterX - pillHalfW * 0.95,
+        pillCenterY - pillHalfH * 0.95,
+        pillHalfW * 1.90,
+        pillHalfH * 1.90,
+        pillHalfH * 0.95
       );
       navOpticsCtx.clip();
 
-      navOpticsCtx.drawImage(
-        sceneCanvas,
+      drawDynamicNavBackdrop(
+        navOpticsCtx,
         sourceLeft,
         sourceTop,
         sourceWidth,
         sourceHeight,
-        0,
-        0,
         lensWidth,
         lensHeight
       );
 
+      drawRoundedRect(navOpticsCtx, padX, padY, navW, navH, navH * 0.5);
+      navOpticsCtx.lineWidth = 1.0 * dpr;
+      navOpticsCtx.strokeStyle = "rgba(255, 255, 255, 0.28)";
+      navOpticsCtx.stroke();
+
       const accentColor = `rgb(${currentAccentRgb.join(",")})`;
       navOpticsCtx.strokeStyle = accentColor;
       navOpticsCtx.fillStyle = accentColor;
-      navOpticsCtx.lineWidth = 2.05 * dpr;
+      navOpticsCtx.lineWidth = 2.0 * dpr;
       navOpticsCtx.lineCap = "round";
       navOpticsCtx.lineJoin = "round";
       navOpticsCtx.font = `680 ${Math.round(10.6 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
@@ -2407,21 +2785,19 @@
 
       for (let i = 0; i < 3; i++) {
         const cx = padX + insetPx + (i + 0.5) * tabW;
-        drawTabVectorIcon(navOpticsCtx, i, cx, iconY, dpr * (1 + lensActivity * 0.04));
+        drawTabVectorIcon(navOpticsCtx, i, cx, iconY, dpr);
         navOpticsCtx.fillText(labels[i], cx, textY);
       }
       navOpticsCtx.restore();
     }
 
     /* =========================================================
-       REAL-TIME OPTICAL REFRACTION (ACTIVE ONLY WHEN SLIDING!)
+       REAL-TIME LIQUID WATER OPTICS
+       - IDLE: 100% Lensa OFF (Hanya ikon & teks bening, backdrop CSS asli terlihat murni)
+       - SLIDE / UPWARD PULL: Lensa air aktif dengan gelombang riak & dispersi RGB tipis
        ========================================================= */
-    function drawLiquidNavRefraction(now) {
-      if (now - lastGlassDraw < 16) return;
-      lastGlassDraw = now;
-
-      const rect = glassCanvas.getBoundingClientRect();
-      if (!rect.width || !rect.height || !sceneCanvas.width) return;
+    function drawLiquidNavRefraction() {
+      if (!sceneCanvas.width) return;
 
       resizeGlassCanvas();
 
@@ -2429,39 +2805,57 @@
       const lensHeight = glassCanvas.height;
       if (!lensWidth || !lensHeight || !glassImageData) return;
 
-      const left = Math.round(rect.left * dpr);
-      const top = Math.round(rect.top * dpr);
-      const dispW = Math.round(rect.width * dpr);
-      const dispH = Math.round(rect.height * dpr);
-
-      const sourceLeft = Math.max(0, Math.min(sceneCanvas.width - 1, left));
-      const sourceTop = Math.max(0, Math.min(sceneCanvas.height - 1, top));
-      const sourceWidth = Math.max(1, Math.min(sceneCanvas.width - sourceLeft, dispW));
-      const sourceHeight = Math.max(1, Math.min(sceneCanvas.height - sourceTop, dispH));
-
-      const padX = 10 * dpr;
-      const padY = 18 * dpr;
+      const padX = 14 * dpr;
+      const padY = 26 * dpr;
       const navW = lensWidth - padX * 2;
       const navH = lensHeight - padY * 2;
       const insetPx = 5 * dpr;
       const tabW = (navW - insetPx * 2) / 3;
 
-      const { scaleX, scaleY } = getDropletScale();
-
-      const barHalfW = navW * 0.5;
-      const barHalfH = navH * 0.5;
-      const barCornerR = barHalfH;
-      const barBoxX = barHalfW - barCornerR;
-      const barBoxY = 0;
+      const { scaleX, scaleY } = getLiquidPillShape();
 
       const pillHalfW = (tabW * scaleX) * 0.5;
       const pillHalfH = ((navH - insetPx * 2) * scaleY) * 0.5;
       const pillCenterX = padX + insetPx + (pillPos + 0.5) * tabW;
-      const pillCenterY = lensHeight * 0.5;
+      const pillCenterY = lensHeight * 0.5 + pillLiftY * dpr;
 
-      const cornerR = Math.min(pillHalfW, pillHalfH);
-      const boxHalfX = pillHalfW - cornerR;
-      const boxHalfY = pillHalfH - cornerR;
+      const act = lensActivity;
+
+      // 100% IDLE: Lensa OFF sepenuhnya! Tidak menggambar piksel latar belakang/pembiasan apa pun,
+      // hanya ikon dan teks tajam di atas CSS Liquid Glass asli.
+      if (act <= 0.002) {
+        const idleKey = `${pillTarget}|${currentAccentRgb.join(",")}|${lensWidth}x${lensHeight}`;
+        if (lastIdleDrawnKey === idleKey) return;
+        lastIdleDrawnKey = idleKey;
+
+        glassCtx.clearRect(0, 0, lensWidth, lensHeight);
+        drawTabLabelsAndIcons(
+          glassCtx,
+          padX,
+          padY,
+          navW,
+          navH,
+          pillCenterX,
+          lensHeight * 0.5,
+          tabW * 0.5,
+          (navH - insetPx * 2) * 0.5
+        );
+        return;
+      }
+
+      lastIdleDrawnKey = "";
+
+      // AKTIF SAAT DISLIDE / DITARIK KE ATAS:
+      const dockRect = liquidNav.getBoundingClientRect();
+      const left = Math.round((dockRect.left - 14) * dpr);
+      const top = Math.round((dockRect.top - 26) * dpr);
+      const dispW = Math.round((dockRect.width + 28) * dpr);
+      const dispH = Math.round((dockRect.height + 52) * dpr);
+
+      const sourceLeft = Math.max(0, Math.min(sceneCanvas.width - 1, left));
+      const sourceTop = Math.max(0, Math.min(sceneCanvas.height - 1, top));
+      const sourceWidth = Math.max(1, Math.min(sceneCanvas.width - sourceLeft, dispW));
+      const sourceHeight = Math.max(1, Math.min(sceneCanvas.height - sourceTop, dispH));
 
       renderOpticalNavSource(
         sourceLeft,
@@ -2475,6 +2869,7 @@
         navW,
         navH,
         pillCenterX,
+        pillCenterY,
         pillHalfW,
         pillHalfH
       );
@@ -2488,40 +2883,50 @@
       }
 
       const output = glassImageData.data;
-      const act = lensActivity;
+
+      const barHalfW = navW * 0.5;
+      const barHalfH = navH * 0.5;
+      const barCornerR = barHalfH;
+      const barBoxX = Math.max(0, barHalfW - barCornerR);
+
+      const cornerR = Math.min(pillHalfW, pillHalfH);
+      const boxHalfX = Math.max(0, pillHalfW - cornerR);
+      const boxHalfY = Math.max(0, pillHalfH - cornerR);
+
+      // Riak air (liquid surface ripple) saat digeser & ditarik ke atas
+      const waveAmp = (Math.min(1.4, Math.abs(pillVel) * 0.08 + Math.abs(navWobble) * 0.45 + Math.abs(navLiftY) * 0.03)) * dpr * act;
+      const phase = waterPhase;
 
       function smoothstep(edge0, edge1, value) {
         const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
         return t * t * (3 - 2 * t);
       }
 
-      function readChannel(x, y, channel) {
-        const sx = Math.max(0, Math.min(lensWidth - 1, x));
-        const sy = Math.max(0, Math.min(lensHeight - 1, y));
-        return source[(sy * lensWidth + sx) * 4 + channel];
-      }
-
       for (let y = 0; y < lensHeight; y++) {
-        const dyBar = y - pillCenterY;
-        const qyBar = Math.abs(dyBar) - barBoxY;
+        const dyBar = y - lensHeight * 0.5;
+        const oyBar = Math.abs(dyBar);
+        const oyBar2 = oyBar * oyBar;
 
         const dyPill = y - pillCenterY;
         const qyPill = Math.abs(dyPill) - boxHalfY;
+        const oyPill = qyPill > 0 ? qyPill : 0;
+        const oyPill2 = oyPill * oyPill;
 
         for (let x = 0; x < lensWidth; x++) {
           const outIndex = (y * lensWidth + x) * 4;
 
+          // Riak permukaan air halus pada batas kapsul agar melengkung cair (bukan gelembung kaku)
+          const dxPill = x - pillCenterX;
+          const surfaceRipple = waveAmp * Math.sin(dxPill * 0.065 + phase) * Math.cos(dyPill * 0.08 - phase * 0.7);
+
           const dxBar = x - lensWidth * 0.5;
           const qxBar = Math.abs(dxBar) - barBoxX;
-          const oxBar = Math.max(qxBar, 0);
-          const oyBar = Math.max(qyBar, 0);
-          const sdfBar = Math.sqrt(oxBar * oxBar + oyBar * oyBar) + Math.min(Math.max(qxBar, qyBar), 0) - barCornerR;
+          const oxBar = qxBar > 0 ? qxBar : 0;
+          const sdfBar = Math.sqrt(oxBar * oxBar + oyBar2) + Math.min(Math.max(qxBar, oyBar), 0) - barCornerR;
 
-          const dxPill = x - pillCenterX;
           const qxPill = Math.abs(dxPill) - boxHalfX;
-          const oxPill = Math.max(qxPill, 0);
-          const oyPill = Math.max(qyPill, 0);
-          const sdfPill = Math.sqrt(oxPill * oxPill + oyPill * oyPill) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR;
+          const oxPill = qxPill > 0 ? qxPill : 0;
+          const sdfPill = Math.sqrt(oxPill * oxPill + oyPill2) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR + surfaceRipple * 0.45;
 
           const unionSdf = Math.min(sdfBar, sdfPill);
           if (unionSdf > 1.5 * dpr) {
@@ -2531,43 +2936,32 @@
 
           const alphaMask = 1.0 - smoothstep(-1.0 * dpr, 1.5 * dpr, unionSdf);
 
-          const barDepth = Math.max(0, Math.min(1, -sdfBar / barCornerR));
-          const barRim = Math.pow(1.0 - barDepth, 2.5);
-          const nxBar = dxBar / barHalfW;
-          const nyBar = dyBar / barHalfH;
+          let shiftX = 0;
+          let shiftY = 0;
+          let dispX = 0;
+          let dispY = 0;
 
-          // Pembiasan tepi bar halus saat idle, menguat saat dislide
-          let shiftX = nxBar * barRim * (8 + act * 8) * dpr;
-          let shiftY = nyBar * barRim * (7 + act * 7) * dpr;
-          let dispX = nxBar * barRim * (1.2 + act * 1.4) * dpr;
-          let dispY = nyBar * barRim * (1.2 + act * 1.4) * dpr;
-
-          // Pembiasan lensa pembesar & dispersi RGB di kapsul HANYA muncul saat dislide (act > 0)!
-          if (act > 0.001 && sdfPill <= 1.5 * dpr) {
-            const normDepth = Math.max(0, Math.min(1, -sdfPill / cornerR));
-            const edgeRim = Math.pow(1.0 - normDepth, 2.8);
-            const centerZoom = smoothstep(0.15, 0.85, normDepth);
+          if (sdfPill <= 1.2 * dpr) {
+            const u = Math.max(0, Math.min(1, 1.0 + sdfPill / cornerR));
+            const lipBend = Math.pow(u, 4.2);
 
             const nx = dxPill / pillHalfW;
             const ny = dyPill / pillHalfH;
 
-            shiftX = nx * (edgeRim * 28 * dpr - centerZoom * 7.5 * dpr) * act;
-            shiftY = ny * (edgeRim * 22 * dpr - centerZoom * 5.5 * dpr) * act;
+            // Pembiasan air mengalir (water flow refraction + edge meniscus curve)
+            shiftX = (-dxPill * 0.13 * (1.0 - lipBend) - nx * lipBend * 8.0 * dpr + surfaceRipple * 0.65) * act;
+            shiftY = (-dyPill * 0.13 * (1.0 - lipBend) - ny * lipBend * 6.5 * dpr + surfaceRipple * 0.85) * act;
 
-            dispX = nx * edgeRim * 5.2 * dpr * act;
-            dispY = ny * edgeRim * 4.2 * dpr * act;
+            dispX = nx * lipBend * 1.65 * dpr * act;
+            dispY = ny * lipBend * 1.30 * dpr * act;
           }
 
           const baseX = x + shiftX;
           const baseY = y + shiftY;
 
-          const rVal = readChannel(Math.round(baseX + dispX), Math.round(baseY + dispY), 0);
-          const gVal = readChannel(Math.round(baseX), Math.round(baseY), 1);
-          const bVal = readChannel(Math.round(baseX - dispX), Math.round(baseY - dispY), 2);
-
-          output[outIndex] = rVal;
-          output[outIndex + 1] = gVal;
-          output[outIndex + 2] = bVal;
+          output[outIndex] = sampleBilinearChannel(source, lensWidth, lensHeight, baseX + dispX, baseY + dispY, 0);
+          output[outIndex + 1] = sampleBilinearChannel(source, lensWidth, lensHeight, baseX, baseY, 1);
+          output[outIndex + 2] = sampleBilinearChannel(source, lensWidth, lensHeight, baseX - dispX, baseY - dispY, 2);
           output[outIndex + 3] = Math.round(alphaMask * 255);
         }
       }
@@ -2663,9 +3057,6 @@
 
     function renderWebGLScene(now) {
       drawScene();
-      if (activeTab === 0) {
-        drawLiquidNavRefraction(now);
-      }
       uploadSceneTexture();
 
       gl.useProgram(program);
@@ -2712,7 +3103,12 @@
 
       if (activeTab === 0) {
         renderWebGLScene(now);
+      } else if (activeTab === 2) {
+        bgSliderCtrl.renderOptics();
+        frameSliderCtrl.renderOptics();
       }
+
+      drawLiquidNavRefraction();
 
       requestAnimationFrame(renderFrame);
     }
