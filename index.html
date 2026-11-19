@@ -1900,11 +1900,12 @@
       }
 
       function renderOptics() {
-        const rect = canvasEl.getBoundingClientRect();
-        if (!rect.width || !rect.height) return;
+        const unscaledW = sliderEl.offsetWidth + 16;
+        const unscaledH = sliderEl.offsetHeight + 20;
+        if (!unscaledW || !unscaledH) return;
 
-        const w = Math.max(1, Math.round(rect.width * dpr));
-        const h = Math.max(1, Math.round(rect.height * dpr));
+        const w = Math.max(1, Math.round(unscaledW * dpr));
+        const h = Math.max(1, Math.round(unscaledH * dpr));
 
         if (canvasEl.width !== w || canvasEl.height !== h) {
           canvasEl.width = w;
@@ -1966,41 +1967,42 @@
           return;
         }
 
-        // 3. Pembiasan Optik Real-time Saat Digeser
+        // 3. Pembiasan Optik Real-time Saat Digeser (Convex Dome Lens + Thin RGB Rim)
         const source = bctx.getImageData(0, 0, w, h).data;
         const output = imgData.data;
         const cornerR = Math.min(pillHalfW, pillHalfH);
-        const boxHalfX = pillHalfW - cornerR;
-        const boxHalfY = pillHalfH - cornerR;
+        const boxHalfX = Math.max(0, pillHalfW - cornerR);
+        const boxHalfY = Math.max(0, pillHalfH - cornerR);
 
         function readCh(x, y, ch) {
-          const cx = Math.max(0, Math.min(w - 1, x));
-          const cy = Math.max(0, Math.min(h - 1, y));
+          const cx = x < 0 ? 0 : (x >= w ? w - 1 : x);
+          const cy = y < 0 ? 0 : (y >= h ? h - 1 : y);
           return source[(cy * w + cx) * 4 + ch];
         }
 
         for (let y = 0; y < h; y++) {
           const dy = y - pillCenterY;
           const qy = Math.abs(dy) - boxHalfY;
+          const oy = qy > 0 ? qy : 0;
+          const oy2 = oy * oy;
+
           for (let x = 0; x < w; x++) {
             const idx = (y * w + x) * 4;
             const dx = x - pillCenterX;
             const qx = Math.abs(dx) - boxHalfX;
-            const ox = Math.max(qx, 0);
-            const oy = Math.max(qy, 0);
-            const sdf = Math.sqrt(ox * ox + oy * oy) + Math.min(Math.max(qx, qy), 0) - cornerR;
+            const ox = qx > 0 ? qx : 0;
+            const sdf = Math.sqrt(ox * ox + oy2) + Math.min(Math.max(qx, qy), 0) - cornerR;
 
             if (sdf <= 1.0 * dpr) {
-              const normDepth = Math.max(0, Math.min(1, -sdf / cornerR));
-              const edgeRim = Math.pow(1.0 - normDepth, 3.0);
-              const centerZoom = Math.min(1, normDepth * 1.4);
+              const u = Math.max(0, Math.min(1, 1.0 + sdf / cornerR));
+              const lipBend = Math.pow(u, 4.2);
               const nx = dx / pillHalfW;
               const ny = dy / pillHalfH;
 
-              const shiftX = nx * edgeRim * 16 * dpr - dx * 0.14 * centerZoom;
-              const shiftY = ny * edgeRim * 12 * dpr - dy * 0.14 * centerZoom;
-              const dispX = nx * edgeRim * 3.4 * dpr;
-              const dispY = ny * edgeRim * 2.6 * dpr;
+              const shiftX = -dx * 0.14 * (1.0 - lipBend) - nx * lipBend * 7.5 * dpr;
+              const shiftY = -dy * 0.14 * (1.0 - lipBend) - ny * lipBend * 6.0 * dpr;
+              const dispX = nx * lipBend * 1.6 * dpr;
+              const dispY = ny * lipBend * 1.2 * dpr;
 
               const bx = x + shiftX;
               const by = y + shiftY;
@@ -2354,11 +2356,10 @@
     }
 
     function resizeGlassCanvas() {
-      const rect = glassCanvas.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-
-      const newWidth = Math.max(1, Math.round((rect.width / navZoom) * dpr));
-      const newHeight = Math.max(1, Math.round((rect.height / navZoom) * dpr));
+      const baseW = liquidNav.offsetWidth || Math.min(344, width - 32);
+      const baseH = liquidNav.offsetHeight || 64;
+      const newWidth = Math.max(1, Math.round((baseW + 20) * dpr));
+      const newHeight = Math.max(1, Math.round((baseH + 36) * dpr));
 
       if (glassCanvas.width !== newWidth || glassCanvas.height !== newHeight) {
         glassCanvas.width = newWidth;
@@ -2615,14 +2616,13 @@
     /* =========================================================
        REAL-TIME OPTICAL REFRACTION (APPLE iOS 26 PHYSICS)
        - Idle: 100% Calm (Zero Distortion)
-       - Active: Center Magnifies Icons, Outer Bar Rim Contracts Inward + RGB Edge
+       - Active: Clean Convex Magnification + Smooth Edge Curve & Thin RGB Rim (Image 1, 2, 3)
        ========================================================= */
     function drawLiquidNavRefraction(now) {
       if (now - lastGlassDraw < 16) return;
       lastGlassDraw = now;
 
-      const rect = glassCanvas.getBoundingClientRect();
-      if (!rect.width || !rect.height || !sceneCanvas.width) return;
+      if (!sceneCanvas.width) return;
 
       resizeGlassCanvas();
 
@@ -2630,10 +2630,11 @@
       const lensHeight = glassCanvas.height;
       if (!lensWidth || !lensHeight || !glassImageData) return;
 
-      const left = Math.round(rect.left * dpr);
-      const top = Math.round(rect.top * dpr);
-      const dispW = Math.round(rect.width * dpr);
-      const dispH = Math.round(rect.height * dpr);
+      const dockRect = liquidNav.parentElement.getBoundingClientRect();
+      const left = Math.round((dockRect.left - 10) * dpr);
+      const top = Math.round((dockRect.top - 18) * dpr);
+      const dispW = Math.round((dockRect.width + 20) * dpr);
+      const dispH = Math.round((dockRect.height + 36) * dpr);
 
       const sourceLeft = Math.max(0, Math.min(sceneCanvas.width - 1, left));
       const sourceTop = Math.max(0, Math.min(sceneCanvas.height - 1, top));
@@ -2697,12 +2698,12 @@
       const barHalfW = navW * 0.5;
       const barHalfH = navH * 0.5;
       const barCornerR = barHalfH;
-      const barBoxX = barHalfW - barCornerR;
+      const barBoxX = Math.max(0, barHalfW - barCornerR);
       const barBoxY = 0;
 
       const cornerR = Math.min(pillHalfW, pillHalfH);
-      const boxHalfX = pillHalfW - cornerR;
-      const boxHalfY = pillHalfH - cornerR;
+      const boxHalfX = Math.max(0, pillHalfW - cornerR);
+      const boxHalfY = Math.max(0, pillHalfH - cornerR);
 
       function smoothstep(edge0, edge1, value) {
         const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
@@ -2710,32 +2711,34 @@
       }
 
       function readChannel(x, y, channel) {
-        const sx = Math.max(0, Math.min(lensWidth - 1, x));
-        const sy = Math.max(0, Math.min(lensHeight - 1, y));
+        const sx = x < 0 ? 0 : (x >= lensWidth ? lensWidth - 1 : x);
+        const sy = y < 0 ? 0 : (y >= lensHeight ? lensHeight - 1 : y);
         return source[(sy * lensWidth + sx) * 4 + channel];
       }
 
       for (let y = 0; y < lensHeight; y++) {
         const dyBar = y - pillCenterY;
         const qyBar = Math.abs(dyBar) - barBoxY;
+        const oyBar = qyBar > 0 ? qyBar : 0;
+        const oyBar2 = oyBar * oyBar;
 
         const dyPill = y - pillCenterY;
         const qyPill = Math.abs(dyPill) - boxHalfY;
+        const oyPill = qyPill > 0 ? qyPill : 0;
+        const oyPill2 = oyPill * oyPill;
 
         for (let x = 0; x < lensWidth; x++) {
           const outIndex = (y * lensWidth + x) * 4;
 
           const dxBar = x - lensWidth * 0.5;
           const qxBar = Math.abs(dxBar) - barBoxX;
-          const oxBar = Math.max(qxBar, 0);
-          const oyBar = Math.max(qyBar, 0);
-          const sdfBar = Math.sqrt(oxBar * oxBar + oyBar * oyBar) + Math.min(Math.max(qxBar, qyBar), 0) - barCornerR;
+          const oxBar = qxBar > 0 ? qxBar : 0;
+          const sdfBar = Math.sqrt(oxBar * oxBar + oyBar2) + Math.min(Math.max(qxBar, qyBar), 0) - barCornerR;
 
           const dxPill = x - pillCenterX;
           const qxPill = Math.abs(dxPill) - boxHalfX;
-          const oxPill = Math.max(qxPill, 0);
-          const oyPill = Math.max(qyPill, 0);
-          const sdfPill = Math.sqrt(oxPill * oxPill + oyPill * oyPill) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR;
+          const oxPill = qxPill > 0 ? qxPill : 0;
+          const sdfPill = Math.sqrt(oxPill * oxPill + oyPill2) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR;
 
           const unionSdf = Math.min(sdfBar, sdfPill);
           if (unionSdf > 1.5 * dpr) {
@@ -2750,23 +2753,23 @@
           let dispX = 0;
           let dispY = 0;
 
-          // Lensa Apple iOS 26 (Gambar 1):
-          // - Bagian dalam kapsul memperbesar ikon/teks (~1.16x)
-          // - Bagian pinggir kapsul (edgeRim) menarik piksel ke arah luar (+nx, +ny) sehingga
-          //   garis tepi navbar yang masuk ke area lensa tampak menyusut/melengkung ke dalam!
-          if (sdfPill <= 1.5 * dpr) {
-            const normDepth = Math.max(0, Math.min(1, -sdfPill / cornerR));
-            const edgeRim = Math.pow(1.0 - normDepth, 2.6);
-            const centerLens = smoothstep(0.20, 0.72, normDepth);
+          // Pembiasan lensa cembung sejati (Gambar 1, 2, 3):
+          // - Bagian tengah kapsul memperbesar konten di belakangnya secara jernih (~1.16x)
+          // - Bagian bibir tepi kapsul (lipBend) menarik sampel ke arah dalam (-nx, -ny) sehingga
+          //   garis tepi bar & teks yang terpotong pinggiran lensa melengkung/menyempit rapi tanpa keluar batas
+          // - Dispersi RGB tipis & halus hanya di tepi bibir kapsul
+          if (sdfPill <= 1.2 * dpr) {
+            const u = Math.max(0, Math.min(1, 1.0 + sdfPill / cornerR));
+            const lipBend = Math.pow(u, 4.2);
 
             const nx = dxPill / pillHalfW;
             const ny = dyPill / pillHalfH;
 
-            shiftX = (nx * edgeRim * 28 * dpr - dxPill * 0.15 * centerLens) * act;
-            shiftY = (ny * edgeRim * 24 * dpr - dyPill * 0.15 * centerLens) * act;
+            shiftX = (-dxPill * 0.14 * (1.0 - lipBend) - nx * lipBend * 8.5 * dpr) * act;
+            shiftY = (-dyPill * 0.14 * (1.0 - lipBend) - ny * lipBend * 7.0 * dpr) * act;
 
-            dispX = nx * edgeRim * 4.5 * dpr * act;
-            dispY = ny * edgeRim * 3.8 * dpr * act;
+            dispX = nx * lipBend * 1.75 * dpr * act;
+            dispY = ny * lipBend * 1.35 * dpr * act;
           }
 
           const baseX = x + shiftX;
