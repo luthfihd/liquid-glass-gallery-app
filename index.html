@@ -462,11 +462,8 @@
       box-shadow:
         0 4px 14px rgba(0, 0, 0, 0.14),
         inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
-      transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    .lg-slider-card.is-morphing {
-      transform: scale(1.035);
+      transform-origin: center center;
+      will-change: transform;
     }
 
     .lg-slider-card:active {
@@ -475,9 +472,9 @@
 
     .lg-slider-canvas {
       position: absolute;
-      inset: -10px -8px;
-      width: calc(100% + 16px);
-      height: calc(100% + 20px);
+      inset: -16px -10px;
+      width: calc(100% + 20px);
+      height: calc(100% + 32px);
       z-index: 2;
       pointer-events: none;
     }
@@ -494,10 +491,10 @@
       transform-origin: center center;
       will-change: transform;
       background: rgba(255, 255, 255, 0.05);
-      border: var(--hairline) solid rgba(255, 255, 255, 0.26);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.28);
       box-shadow:
-        0 3px 10px rgba(0, 0, 0, 0.16),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.45);
+        0 4px 14px rgba(0, 0, 0, 0.18),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.48);
     }
 
     /* CAPTURE FLASH OVERLAY */
@@ -957,7 +954,6 @@
         const b = data[i + 2];
         const [h, s, l] = rgbToHsl(r, g, b);
 
-        // Kelompokkan berdasarkan hue asli, dengan bobot utama pada porsi piksel terbanyak di foto
         const hBin = Math.floor(h / 15) % 24;
         const score = 1.0 + s * 0.65;
 
@@ -985,9 +981,7 @@
       const avgS = top.sSum / top.count;
       const avgL = top.lSum / top.count;
 
-      // Pertahankan hue dominan foto apa adanya & jaga saturasi alami tanpa dipaksa neon RGB
       const iconSat = avgS < 0.08 ? 0.0 : Math.min(0.72, Math.max(0.24, domS * 0.9 + avgS * 0.25));
-      // Sesuaikan lightness agar ikon & teks tetap jelas di atas kaca navbar tanpa mengubah identitas warna dominan
       const iconLight = iconSat === 0
         ? Math.max(0.78, Math.min(0.92, avgL > 0.5 ? 0.88 : 0.80))
         : Math.max(0.56, Math.min(0.76, avgL < 0.45 ? 0.64 : avgL > 0.78 ? 0.72 : avgL + 0.08));
@@ -1900,7 +1894,7 @@
     }
 
     /* =========================================================
-       REAL-TIME OPTICAL REFRACTION SLIDERS
+       REAL-TIME OPTICAL REFRACTION SLIDERS (WITH SPRING & WIGGLE)
        ========================================================= */
     function createOpticalSlider(sliderEl, canvasEl, thumbEl, getLabelText, getStepsCount, onStepChange) {
       const sctx = canvasEl.getContext("2d", { willReadFrequently: true });
@@ -1910,27 +1904,83 @@
 
       let isSliding = false;
       let startX = 0;
+      let startY = 0;
       let startRatio = 0;
-      let currentRatio = 0;
+      let ratio = 0;
+      let targetRatio = 0;
+      let ratioVel = 0;
+      let liftY = 0;
+      let liftVelY = 0;
+      let pullTargetY = 0;
+      let wobble = 0;
+      let wobbleVel = 0;
+      let activity = 0;
+      let activityVel = 0;
       let moved = false;
 
       const THUMB_W = 84;
       const THUMB_H = 36;
 
-      function positionThumb(ratio, morphing = false) {
-        const clampedRatio = Math.max(0, Math.min(1, ratio));
+      function updateSpring(dt) {
+        const steps = 2;
+        const h = dt / steps;
+        for (let s = 0; s < steps; s++) {
+          if (!isSliding) {
+            const k = 640;
+            const d = 2 * Math.sqrt(k) * 0.86;
+            ratioVel += (-k * (ratio - targetRatio) - d * ratioVel) * h;
+            ratio += ratioVel * h;
+            if (Math.abs(targetRatio - ratio) < 0.0015 && Math.abs(ratioVel) < 0.008) {
+              ratio = targetRatio;
+              ratioVel = 0;
+            }
+          }
+
+          const moving = Math.abs(targetRatio - ratio) > 0.015 || Math.abs(ratioVel) > 0.08 || Math.abs(liftY) > 0.3;
+          const actTarget = (isSliding || moving) ? 1.0 : 0.0;
+          const aK = actTarget > activity ? 1350 : 720;
+          const aD = 2 * Math.sqrt(aK) * 0.94;
+          activityVel += (-aK * (activity - actTarget) - aD * activityVel) * h;
+          activity += activityVel * h;
+          if (Math.abs(actTarget - activity) < 0.002 && Math.abs(activityVel) < 0.008) {
+            activity = actTarget;
+            activityVel = 0;
+          }
+
+          const lK = isSliding ? 500 : 340;
+          const lD = isSliding ? 2 * Math.sqrt(lK) * 0.85 : 2 * Math.sqrt(lK) * 0.45;
+          liftVelY += (-lK * (liftY - pullTargetY) - lD * liftVelY) * h;
+          liftY += liftVelY * h;
+
+          const wK = 270;
+          const wD = 2 * Math.sqrt(wK) * 0.36;
+          wobbleVel += (-wK * wobble - wD * wobbleVel) * h;
+          wobble += wobbleVel * h;
+        }
+
         const cardW = sliderEl.offsetWidth || 180;
         const maxTravel = Math.max(1, cardW - THUMB_W - 6);
-        const x = clampedRatio * maxTravel;
-        const sx = morphing ? 1.14 : 1;
-        const sy = morphing ? 1.24 : 1;
+        const x = ratio * maxTravel;
+        const flow = Math.min(1.1, Math.abs(ratioVel) * 0.14);
+        const sx = 1 + activity * (0.14 + flow * 0.12 + wobble * 0.018);
+        const sy = 1 + activity * (0.28 + Math.min(0.14, Math.abs(liftY) * 0.01) - wobble * 0.014);
+        const skew = (ratioVel * 0.65 + wobble * 0.8) * activity;
 
-        thumbEl.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0) scale(${sx}, ${sy})`;
+        thumbEl.style.transform =
+          `translate3d(${x.toFixed(2)}px, ${(liftY * 0.28).toFixed(2)}px, 0) ` +
+          `skewX(${skew.toFixed(2)}deg) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`;
+
+        if (activity <= 0.001 && Math.abs(liftY) < 0.03 && Math.abs(wobble) < 0.005) {
+          sliderEl.style.transform = "translate3d(0px, 0px, 0) scale(1, 1)";
+        } else {
+          const nsy = 1 + activity * 0.03 + Math.min(0.035, Math.abs(liftY) * 0.002);
+          sliderEl.style.transform = `translate3d(0px, ${liftY.toFixed(2)}px, 0) scale(1, ${nsy.toFixed(4)})`;
+        }
       }
 
       function renderOptics() {
-        const unscaledW = sliderEl.offsetWidth + 16;
-        const unscaledH = sliderEl.offsetHeight + 20;
+        const unscaledW = sliderEl.offsetWidth + 20;
+        const unscaledH = sliderEl.offsetHeight + 32;
         if (!unscaledW || !unscaledH) return;
 
         const w = Math.max(1, Math.round(unscaledW * dpr));
@@ -1944,20 +1994,21 @@
           imgData = sctx.createImageData(w, h);
         }
 
-        const padX = 8 * dpr;
-        const padY = 10 * dpr;
+        const padX = 10 * dpr;
+        const padY = 16 * dpr;
         const cardW = w - padX * 2;
         const insetPx = 3 * dpr;
         const thumbW = THUMB_W * dpr;
         const thumbH = THUMB_H * dpr;
         const maxTravel = Math.max(1, cardW - thumbW - insetPx * 2);
 
-        const sx = isSliding ? 1.14 : 1.0;
-        const sy = isSliding ? 1.24 : 1.0;
+        const flow = Math.min(1.1, Math.abs(ratioVel) * 0.14);
+        const sx = 1 + activity * (0.14 + flow * 0.12 + wobble * 0.018);
+        const sy = 1 + activity * (0.28 + Math.min(0.14, Math.abs(liftY) * 0.01) - wobble * 0.014);
         const pillHalfW = (thumbW * sx) * 0.5;
         const pillHalfH = (thumbH * sy) * 0.5;
-        const pillCenterX = padX + insetPx + currentRatio * maxTravel + thumbW * 0.5;
-        const pillCenterY = h * 0.5;
+        const pillCenterX = padX + insetPx + ratio * maxTravel + thumbW * 0.5;
+        const pillCenterY = h * 0.5 + liftY * 0.28 * dpr;
 
         bctx.clearRect(0, 0, w, h);
 
@@ -1987,8 +2038,7 @@
         bctx.fillText(getLabelText(), w * 0.5, h * 0.5);
         bctx.restore();
 
-        // Idle = Lens Off (100% crisp tanpa distorsi)
-        if (!isSliding) {
+        if (activity <= 0.002) {
           sctx.clearRect(0, 0, w, h);
           sctx.drawImage(buf, 0, 0);
           return;
@@ -2013,16 +2063,16 @@
             const ox = qx > 0 ? qx : 0;
             const sdf = Math.sqrt(ox * ox + oy2) + Math.min(Math.max(qx, qy), 0) - cornerR;
 
-            if (sdf <= 1.0 * dpr) {
+            if (sdf <= 1.2 * dpr) {
               const u = Math.max(0, Math.min(1, 1.0 + sdf / cornerR));
-              const lipBend = Math.pow(u, 4.2);
+              const lipBend = Math.pow(u, 4.0);
               const nx = dx / pillHalfW;
               const ny = dy / pillHalfH;
 
-              const shiftX = -dx * 0.14 * (1.0 - lipBend) - nx * lipBend * 7.5 * dpr;
-              const shiftY = -dy * 0.14 * (1.0 - lipBend) - ny * lipBend * 6.0 * dpr;
-              const dispX = nx * lipBend * 1.6 * dpr;
-              const dispY = ny * lipBend * 1.2 * dpr;
+              const shiftX = (-dx * 0.15 * (1.0 - lipBend) - nx * lipBend * 8.0 * dpr) * activity;
+              const shiftY = (-dy * 0.15 * (1.0 - lipBend) - ny * lipBend * 6.5 * dpr) * activity;
+              const dispX = nx * lipBend * 1.8 * dpr * activity;
+              const dispY = ny * lipBend * 1.4 * dpr * activity;
 
               const bx = x + shiftX;
               const by = y + shiftY;
@@ -2045,10 +2095,13 @@
         isSliding = true;
         moved = false;
         startX = e.clientX;
-        startRatio = currentRatio;
+        startY = e.clientY;
+        startRatio = ratio;
+        ratioVel = 0;
+        pullTargetY = 0;
+        wobbleVel += 4.0;
         sliderEl.classList.add("is-morphing");
         try { sliderEl.setPointerCapture(e.pointerId); } catch (_) {}
-        positionThumb(currentRatio, true);
       });
 
       sliderEl.addEventListener("pointermove", (e) => {
@@ -2056,13 +2109,22 @@
         const cardW = sliderEl.offsetWidth || 180;
         const maxTravel = Math.max(1, cardW - THUMB_W - 6);
         const dx = e.clientX - startX;
-        if (Math.abs(dx) > 4) moved = true;
+        const dy = e.clientY - startY;
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
 
-        currentRatio = Math.max(0, Math.min(1, startRatio + dx / maxTravel));
-        positionThumb(currentRatio, true);
+        const prevRatio = ratio;
+        const raw = startRatio + dx / maxTravel;
+        if (raw < 0) ratio = raw * 0.25;
+        else if (raw > 1) ratio = 1 + (raw - 1) * 0.25;
+        else ratio = raw;
+
+        targetRatio = ratio;
+        ratioVel = ratioVel * 0.45 + ((ratio - prevRatio) * 45) * 0.55;
+        pullTargetY = Math.max(-36, Math.min(20, dy * 0.35));
 
         const steps = getStepsCount();
-        const idx = Math.min(steps - 1, Math.round(currentRatio * (steps - 1)));
+        const clampedR = Math.max(0, Math.min(1, ratio));
+        const idx = Math.min(steps - 1, Math.round(clampedR * (steps - 1)));
         onStepChange(idx);
       });
 
@@ -2070,37 +2132,44 @@
         if (!isSliding) return;
         isSliding = false;
         sliderEl.classList.remove("is-morphing");
-        const steps = getStepsCount();
+        wobbleVel += (ratioVel >= 0 ? 1 : -1) * (5.5 + Math.abs(pullTargetY) * 0.12);
+        pullTargetY = 0;
 
+        const steps = getStepsCount();
         if (!moved && e && typeof e.clientX === "number") {
           const rect = sliderEl.getBoundingClientRect();
           const relRatio = Math.max(0, Math.min(1, (e.clientX - rect.left - THUMB_W * 0.5) / Math.max(1, rect.width - THUMB_W)));
           const tappedIdx = Math.min(steps - 1, Math.round(relRatio * (steps - 1)));
-          const curIdx = Math.min(steps - 1, Math.round(currentRatio * (steps - 1)));
+          const curIdx = Math.min(steps - 1, Math.round(Math.max(0, Math.min(1, ratio)) * (steps - 1)));
           const nextIdx = tappedIdx === curIdx ? (curIdx + 1) % steps : tappedIdx;
-          currentRatio = steps > 1 ? nextIdx / (steps - 1) : 0;
+          targetRatio = steps > 1 ? nextIdx / (steps - 1) : 0;
           onStepChange(nextIdx);
         } else {
-          const snapIdx = Math.min(steps - 1, Math.round(currentRatio * (steps - 1)));
-          currentRatio = steps > 1 ? snapIdx / (steps - 1) : 0;
+          const snapIdx = Math.min(steps - 1, Math.round(Math.max(0, Math.min(1, ratio)) * (steps - 1)));
+          targetRatio = steps > 1 ? snapIdx / (steps - 1) : 0;
           onStepChange(snapIdx);
         }
-        positionThumb(currentRatio, false);
       }
 
       sliderEl.addEventListener("pointerup", endSlide);
       sliderEl.addEventListener("pointercancel", () => {
         isSliding = false;
         sliderEl.classList.remove("is-morphing");
-        positionThumb(currentRatio, false);
+        pullTargetY = 0;
+        const steps = getStepsCount();
+        const snapIdx = Math.min(steps - 1, Math.round(Math.max(0, Math.min(1, ratio)) * (steps - 1)));
+        targetRatio = steps > 1 ? snapIdx / (steps - 1) : 0;
+        onStepChange(snapIdx);
       });
 
       return {
         sync(idx) {
           const steps = getStepsCount();
-          currentRatio = steps > 1 ? idx / (steps - 1) : 0;
-          positionThumb(currentRatio, false);
+          ratio = steps > 1 ? idx / (steps - 1) : 0;
+          targetRatio = ratio;
+          ratioVel = 0;
         },
+        updateSpring,
         renderOptics
       };
     }
@@ -2148,8 +2217,6 @@
 
     /* =========================================================
        TAB SWITCHING & LIQUID WATER WIGGLE NAVBAR PHYSICS
-       - Idle: 100% Lensa Off (Zero Distortion, Static & Crisp)
-       - Slide / Upward Pull: Fast Snap + Liquid Water Wiggle (Not Bubble)
        ========================================================= */
     function switchTab(tabIndex, options = {}) {
       const clamped = Math.max(0, Math.min(2, tabIndex));
@@ -2257,9 +2324,6 @@
       switchTab(Math.max(0, Math.min(2, Math.round(pillPos))));
     });
 
-    /* =========================================================
-       LIQUID WATER SHAPE (DYNAMIC FLUID SQUASH-STRETCH, NOT BUBBLE)
-       ========================================================= */
     function getLiquidPillShape() {
       const a = lensActivity;
       const flowSpeed = Math.min(1.2, Math.abs(pillVel) * 0.085);
@@ -2267,8 +2331,8 @@
       const ripple = navWobble * 0.022;
 
       return {
-        scaleX: 1 + a * (0.11 + flowSpeed * 0.13 + ripple - liftStretch * 0.35),
-        scaleY: 1 + a * (0.20 + liftStretch - flowSpeed * 0.03 - ripple * 0.85),
+        scaleX: 1 + a * (0.14 + flowSpeed * 0.14 + ripple - liftStretch * 0.35),
+        scaleY: 1 + a * (0.28 + liftStretch - flowSpeed * 0.03 - ripple * 0.85),
         skewX: (pillVel * 0.55 + navWobble * 0.9) * a
       };
     }
@@ -3067,6 +3131,8 @@
       if (activeTab === 0) {
         renderWebGLScene(now);
       } else if (activeTab === 2) {
+        bgSliderCtrl.updateSpring(dt);
+        frameSliderCtrl.updateSpring(dt);
         bgSliderCtrl.renderOptics();
         frameSliderCtrl.renderOptics();
       }
