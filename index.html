@@ -15,7 +15,7 @@
   <style>
     :root {
       --nav-primary-rgb: 24, 42, 62;
-      --nav-accent-rgb: 45, 168, 255;
+      --nav-accent-rgb: 72, 182, 255;
       --nav-muted-rgb: 222, 232, 245;
       --nav-pill-rgb: 255, 255, 255;
       --hairline: 0.5px;
@@ -60,7 +60,7 @@
     }
 
     /* =========================================================
-       VIEW 1: EXPLORE (EXACT REPO CAROUSEL & CONCAVE LENS)
+       VIEW 1: EXPLORE
        ========================================================= */
     .stage {
       position: absolute;
@@ -312,7 +312,7 @@
     }
 
     .lg-segmented.is-morphing {
-      transform: scale(1.04);
+      transform: scale(1.03);
     }
 
     .lg-seg-btn-base {
@@ -431,7 +431,7 @@
       box-shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
     }
 
-    /* Sliders */
+    /* Sliders - Matched to Navbar Track & Lens */
     .mockup-sliders {
       position: relative;
       z-index: 3;
@@ -445,9 +445,9 @@
 
     .lg-slider-card {
       position: relative;
-      height: 44px;
+      height: 46px;
       border-radius: 999px;
-      padding: 3px;
+      padding: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -455,14 +455,14 @@
       isolation: isolate;
       touch-action: none;
       cursor: grab;
-      background: rgba(255, 255, 255, 0.06);
-      -webkit-backdrop-filter: blur(8px) saturate(1.55);
-      backdrop-filter: blur(8px) saturate(1.55);
+      background: rgba(255, 255, 255, 0.04);
+      -webkit-backdrop-filter: blur(6px) saturate(1.45);
+      backdrop-filter: blur(6px) saturate(1.45);
       border: var(--hairline) solid rgba(255, 255, 255, 0.20);
       box-shadow:
-        0 4px 14px rgba(0, 0, 0, 0.14),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
-      transform-origin: center center;
+        0 8px 22px rgba(0, 0, 0, 0.18),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.36),
+        inset 0 -0.5px 0 rgba(255, 255, 255, 0.14);
       will-change: transform;
     }
 
@@ -472,9 +472,9 @@
 
     .lg-slider-canvas {
       position: absolute;
-      inset: -16px -10px;
+      inset: -18px -10px;
       width: calc(100% + 20px);
-      height: calc(100% + 32px);
+      height: calc(100% + 36px);
       z-index: 2;
       pointer-events: none;
     }
@@ -483,18 +483,18 @@
       position: absolute;
       z-index: 3;
       top: 3px;
-      left: 3px;
+      left: 4px;
       width: 84px;
-      height: 36px;
+      height: 38px;
       border-radius: 999px;
       pointer-events: none;
       transform-origin: center center;
       will-change: transform;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.06);
       border: var(--hairline) solid rgba(255, 255, 255, 0.28);
       box-shadow:
-        0 4px 14px rgba(0, 0, 0, 0.18),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.48);
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.46);
     }
 
     /* CAPTURE FLASH OVERLAY */
@@ -517,7 +517,7 @@
     }
 
     /* =========================================================
-       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (LIQUID WATER PHYSICS)
+       FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (GROUNDED + SQUISH)
        ========================================================= */
     .nav-dock-wrap {
       position: fixed;
@@ -550,8 +550,7 @@
         0 10px 26px rgba(0, 0, 0, 0.22),
         inset 0 0.5px 0 rgba(255, 255, 255, 0.38),
         inset 0 -0.5px 0 rgba(255, 255, 255, 0.14);
-      transform-origin: center center;
-      will-change: transform;
+      transform: translate3d(0px, 0px, 0);
     }
 
     #glassLens {
@@ -563,23 +562,23 @@
       pointer-events: none;
     }
 
-    /* Ultra-thin Hairline Pill Rim */
+    /* Refractive Lens Pill with Squish */
     .active-pill {
       position: absolute;
       z-index: 3;
-      top: 5px;
+      top: 4px;
       left: 5px;
       width: calc((100% - 10px) / 3);
-      height: calc(100% - 10px);
+      height: calc(100% - 8px);
       border-radius: 999px;
       pointer-events: none;
       transform-origin: center center;
       will-change: transform;
       background: rgba(255, 255, 255, 0.05);
-      border: var(--hairline) solid rgba(255, 255, 255, 0.26);
+      border: var(--hairline) solid rgba(255, 255, 255, 0.28);
       box-shadow:
         0 4px 12px rgba(0, 0, 0, 0.14),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.45);
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.46);
     }
 
     .nav-btn {
@@ -830,9 +829,9 @@
     let wheelTimer = 0;
     let glassImageData = null;
     let lastAppliedPaletteIndex = -1;
-    let currentAccentRgb = [45, 168, 255];
+    let currentAccentRgb = [72, 182, 255];
 
-    // Navigation & Liquid Water Wiggle Physics
+    // Navigation Lens & Squish Physics (Grounded track, no lift/wobble)
     let activeTab = 0; // 0: Explore, 1: Snap, 2: Mockup
     let pillPos = 0;
     let pillTarget = 0;
@@ -840,25 +839,12 @@
     let pillDragging = false;
     let pillPressing = false;
     let pillDragStartX = 0;
-    let pillDragStartY = 0;
     let pillDragStartPos = 0;
     let pillMoved = false;
 
-    // 0 = Idle (100% Lensa Off), 1 = Aktif saat Slide/Sentuh
+    // 0 = Idle (Lens Off), 1 = Aktif saat Geser/Sentuh/Transisi
     let lensActivity = 0.0;
     let lensActivityVel = 0.0;
-
-    // Water Wiggle & Upward Pull Spring States (seperti air ditarik tegangan permukaan)
-    let navLiftY = 0.0;
-    let navLiftVelY = 0.0;
-    let navPullTargetY = 0.0;
-    let navTilt = 0.0;
-    let navTiltVel = 0.0;
-    let navWobble = 0.0;
-    let navWobbleVel = 0.0;
-    let pillLiftY = 0.0;
-    let pillLiftVelY = 0.0;
-    let waterPhase = 0.0;
     let lastIdleDrawnKey = "";
 
     // Camera state
@@ -889,7 +875,7 @@
       ((index % items.length) + items.length) % items.length;
 
     /* =========================================================
-       DOMINANT PHOTO COLOR EXTRACTION (PRESERVES TRUE DOMINANT HUE)
+       NATURAL / ORGANIC DOMINANT COLOR & ACCENT EXTRACTION
        ========================================================= */
     function rgbToHsl(r, g, b) {
       r /= 255; g /= 255; b /= 255;
@@ -937,8 +923,23 @@
       return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
     }
 
+    function circularHueAverage(samples) {
+      let sinSum = 0;
+      let cosSum = 0;
+      let weightSum = 0;
+      for (const item of samples) {
+        const rad = (item.h * Math.PI) / 180;
+        sinSum += Math.sin(rad) * item.w;
+        cosSum += Math.cos(rad) * item.w;
+        weightSum += item.w;
+      }
+      if (weightSum <= 0.0001) return 205;
+      const deg = (Math.atan2(sinSum / weightSum, cosSum / weightSum) * 180) / Math.PI;
+      return (deg + 360) % 360;
+    }
+
     function extractMaterialYouPalette(image) {
-      const sampleSize = 36;
+      const sampleSize = 40;
       const c = document.createElement("canvas");
       c.width = sampleSize;
       c.height = sampleSize;
@@ -946,7 +947,10 @@
       sctx.drawImage(image, 0, 0, sampleSize, sampleSize);
 
       const data = sctx.getImageData(0, 0, sampleSize, sampleSize).data;
-      const buckets = new Map();
+
+      let totalR = 0, totalG = 0, totalB = 0, totalCount = 0;
+      const hueSamples = [];
+      const vividCandidates = [];
 
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
@@ -954,47 +958,61 @@
         const b = data[i + 2];
         const [h, s, l] = rgbToHsl(r, g, b);
 
-        const hBin = Math.floor(h / 15) % 24;
-        const score = 1.0 + s * 0.65;
+        totalR += r;
+        totalG += g;
+        totalB += b;
+        totalCount++;
 
-        if (!buckets.has(hBin)) {
-          buckets.set(hBin, { weight: 0, rSum: 0, gSum: 0, bSum: 0, lSum: 0, sSum: 0, count: 0 });
+        // Bobot alami: menghindari area terlalu gelap/terang ekstrem dan memberi ruang pada warna yang punya karakter
+        const midLum = 1 - Math.abs(l - 0.52) * 1.3;
+        const lumFactor = Math.max(0.2, midLum);
+        const weight = (0.35 + s * 1.85) * lumFactor;
+
+        if (s > 0.06) {
+          hueSamples.push({ h, w: weight, s, l });
         }
-        const entry = buckets.get(hBin);
-        entry.weight += score;
-        entry.rSum += r * score;
-        entry.gSum += g * score;
-        entry.bSum += b * score;
-        entry.sSum += s * score;
-        entry.lSum += l * score;
-        entry.count += score;
+
+        if (s > 0.14 && l > 0.16 && l < 0.86) {
+          vividCandidates.push({ h, s, l, score: s * 1.4 + lumFactor * 0.6 });
+        }
       }
 
-      const sorted = Array.from(buckets.values()).sort((a, b) => b.weight - a.weight);
-      const top = sorted[0] || { rSum: 30, gSum: 55, bSum: 85, sSum: 0.3, lSum: 0.4, count: 1 };
+      const avgR = totalR / Math.max(1, totalCount);
+      const avgG = totalG / Math.max(1, totalCount);
+      const avgB = totalB / Math.max(1, totalCount);
+      const [, baseS, baseL] = rgbToHsl(avgR, avgG, avgB);
 
-      const domR = Math.round(top.rSum / top.count);
-      const domG = Math.round(top.gSum / top.count);
-      const domB = Math.round(top.bSum / top.count);
-      const [domH, domS, domL] = rgbToHsl(domR, domG, domB);
+      const flowHue = circularHueAverage(hueSamples);
 
-      const avgS = top.sSum / top.count;
-      const avgL = top.lSum / top.count;
+      // Pilih kandidat warna paling hidup secara organik
+      vividCandidates.sort((a, b) => b.score - a.score);
+      const topVivid = vividCandidates.slice(0, Math.max(1, Math.floor(vividCandidates.length * 0.25)));
+      const accentHue = topVivid.length
+        ? circularHueAverage(topVivid.map((v) => ({ h: v.h, w: v.score })))
+        : flowHue;
 
-      const iconSat = avgS < 0.08 ? 0.0 : Math.min(0.72, Math.max(0.24, domS * 0.9 + avgS * 0.25));
-      const iconLight = iconSat === 0
-        ? Math.max(0.78, Math.min(0.92, avgL > 0.5 ? 0.88 : 0.80))
-        : Math.max(0.56, Math.min(0.76, avgL < 0.45 ? 0.64 : avgL > 0.78 ? 0.72 : avgL + 0.08));
+      const avgVividS = topVivid.length
+        ? topVivid.reduce((acc, v) => acc + v.s, 0) / topVivid.length
+        : baseS;
+      const avgVividL = topVivid.length
+        ? topVivid.reduce((acc, v) => acc + v.l, 0) / topVivid.length
+        : baseL;
 
-      const accentRgb = hslToRgb(domH, iconSat, iconLight);
-      const primaryRgb = hslToRgb(domH, Math.min(0.65, avgS * 0.85), Math.max(0.14, Math.min(0.32, domL * 0.65)));
-      const mutedRgb = hslToRgb(domH, Math.min(0.35, avgS * 0.45), 0.86);
-      const pillRgb = hslToRgb(domH, Math.min(0.65, avgS * 0.75), 0.72);
+      // Aksen cerah & mudah terbaca di atas kaca gelap/terang tanpa dipaksa kaku
+      const accentSat = avgVividS < 0.08 ? 0.0 : Math.min(0.88, Math.max(0.22, avgVividS * 1.05));
+      const accentLight = accentSat === 0
+        ? Math.max(0.80, Math.min(0.94, baseL + 0.25))
+        : Math.max(0.58, Math.min(0.82, avgVividL < 0.5 ? 0.68 : Math.min(0.82, avgVividL + 0.12)));
 
-      const vibrantRgb = hslToRgb(domH, Math.min(0.75, Math.max(0.25, avgS)), 0.48);
-      const deepDarkRgb = hslToRgb(domH, Math.min(0.60, Math.max(0.15, avgS * 0.8)), 0.14);
-      const softPastelRgb = hslToRgb(domH, Math.min(0.45, Math.max(0.15, avgS * 0.6)), 0.85);
-      const secondaryRgb = hslToRgb(domH, Math.min(0.65, Math.max(0.20, avgS * 0.85)), 0.55);
+      const accentRgb = hslToRgb(accentHue, accentSat, accentLight);
+      const primaryRgb = hslToRgb(flowHue, Math.min(0.70, baseS * 0.9), Math.max(0.12, Math.min(0.36, baseL * 0.7)));
+      const mutedRgb = hslToRgb(flowHue, Math.min(0.38, baseS * 0.5), 0.86);
+      const pillRgb = hslToRgb(accentHue, Math.min(0.72, accentSat * 0.85), 0.72);
+
+      const vibrantRgb = hslToRgb(accentHue, Math.min(0.82, Math.max(0.24, avgVividS)), 0.50);
+      const deepDarkRgb = hslToRgb(flowHue, Math.min(0.65, Math.max(0.14, baseS * 0.85)), 0.14);
+      const softPastelRgb = hslToRgb(flowHue, Math.min(0.48, Math.max(0.14, baseS * 0.65)), 0.85);
+      const secondaryRgb = hslToRgb((accentHue + 28) % 360, Math.min(0.72, Math.max(0.22, avgVividS * 0.9)), 0.56);
 
       return {
         primary: primaryRgb,
@@ -1020,7 +1038,7 @@
     }
 
     /* =========================================================
-       WEBGL SHADERS (EXACT REPO CONCAVE LENS FRAME)
+       WEBGL SHADERS
        ========================================================= */
     const vertexSource = `#version 300 es
       precision highp float;
@@ -1418,7 +1436,7 @@
       const activeIndex = wrapIndex(Math.round(scroll));
       capturedPalette = itemPalettes[activeIndex] || {
         primary: [24, 42, 62],
-        accent: [45, 168, 255],
+        accent: [72, 182, 255],
         muted: [222, 232, 245],
         pill: [255, 255, 255],
         vibrant: [56, 118, 178],
@@ -1546,7 +1564,7 @@
     function updateSegmentedLensClip(thumbEl, lensLayerEl, base0El, base1El, ratio, morphing) {
       const xPct = ratio * 100;
       const scaleX = morphing ? 1.12 : 1;
-      const scaleY = morphing ? 1.24 : 1;
+      const scaleY = morphing ? 1.20 : 1;
       thumbEl.style.transform = `translate3d(${xPct}%, 0, 0) scale(${scaleX}, ${scaleY})`;
 
       const leftPct = Math.max(0, Math.min(50, ratio * 50));
@@ -1661,7 +1679,7 @@
         mctx.strokeStyle = "rgba(255, 255, 255, 0.34)";
         mctx.stroke();
 
-        const acc = capturedPalette ? capturedPalette.accent : [45, 168, 255];
+        const acc = capturedPalette ? capturedPalette.accent : [72, 182, 255];
         const labels = ["Explore", "Snap", "Mockup"];
         mctx.font = "680 22px -apple-system, system-ui, sans-serif";
         mctx.textAlign = "center";
@@ -1894,7 +1912,7 @@
     }
 
     /* =========================================================
-       REAL-TIME OPTICAL REFRACTION SLIDERS (WITH SPRING & WIGGLE)
+       OPTICAL REFRACTION SLIDERS (MATCHED TO NAVBAR: GROUNDED + SQUISH)
        ========================================================= */
     function createOpticalSlider(sliderEl, canvasEl, thumbEl, getLabelText, getStepsCount, onStepChange) {
       const sctx = canvasEl.getContext("2d", { willReadFrequently: true });
@@ -1904,29 +1922,32 @@
 
       let isSliding = false;
       let startX = 0;
-      let startY = 0;
       let startRatio = 0;
       let ratio = 0;
       let targetRatio = 0;
       let ratioVel = 0;
-      let liftY = 0;
-      let liftVelY = 0;
-      let pullTargetY = 0;
-      let wobble = 0;
-      let wobbleVel = 0;
       let activity = 0;
       let activityVel = 0;
       let moved = false;
 
       const THUMB_W = 84;
-      const THUMB_H = 36;
+      const THUMB_H = 38;
+
+      function getSquishShape() {
+        const a = activity;
+        const speed = Math.min(1.25, Math.abs(ratioVel) * 0.14);
+        const sx = 1 + a * (0.14 + speed * 0.16);
+        const sy = 1 + a * (0.24 - speed * 0.04);
+        const skew = ratioVel * 0.55 * a;
+        return { sx, sy, skew };
+      }
 
       function updateSpring(dt) {
         const steps = 2;
         const h = dt / steps;
         for (let s = 0; s < steps; s++) {
           if (!isSliding) {
-            const k = 640;
+            const k = 660;
             const d = 2 * Math.sqrt(k) * 0.86;
             ratioVel += (-k * (ratio - targetRatio) - d * ratioVel) * h;
             ratio += ratioVel * h;
@@ -1936,51 +1957,33 @@
             }
           }
 
-          const moving = Math.abs(targetRatio - ratio) > 0.015 || Math.abs(ratioVel) > 0.08 || Math.abs(liftY) > 0.3;
+          const moving = Math.abs(targetRatio - ratio) > 0.015 || Math.abs(ratioVel) > 0.08;
           const actTarget = (isSliding || moving) ? 1.0 : 0.0;
-          const aK = actTarget > activity ? 1350 : 720;
-          const aD = 2 * Math.sqrt(aK) * 0.94;
+          const aK = actTarget > activity ? 1400 : 720;
+          const aD = 2 * Math.sqrt(aK) * 0.95;
           activityVel += (-aK * (activity - actTarget) - aD * activityVel) * h;
           activity += activityVel * h;
           if (Math.abs(actTarget - activity) < 0.002 && Math.abs(activityVel) < 0.008) {
             activity = actTarget;
             activityVel = 0;
           }
-
-          const lK = isSliding ? 500 : 340;
-          const lD = isSliding ? 2 * Math.sqrt(lK) * 0.85 : 2 * Math.sqrt(lK) * 0.45;
-          liftVelY += (-lK * (liftY - pullTargetY) - lD * liftVelY) * h;
-          liftY += liftVelY * h;
-
-          const wK = 270;
-          const wD = 2 * Math.sqrt(wK) * 0.36;
-          wobbleVel += (-wK * wobble - wD * wobbleVel) * h;
-          wobble += wobbleVel * h;
         }
 
         const cardW = sliderEl.offsetWidth || 180;
-        const maxTravel = Math.max(1, cardW - THUMB_W - 6);
+        const maxTravel = Math.max(1, cardW - THUMB_W - 8);
         const x = ratio * maxTravel;
-        const flow = Math.min(1.1, Math.abs(ratioVel) * 0.14);
-        const sx = 1 + activity * (0.14 + flow * 0.12 + wobble * 0.018);
-        const sy = 1 + activity * (0.28 + Math.min(0.14, Math.abs(liftY) * 0.01) - wobble * 0.014);
-        const skew = (ratioVel * 0.65 + wobble * 0.8) * activity;
+        const { sx, sy, skew } = getSquishShape();
 
         thumbEl.style.transform =
-          `translate3d(${x.toFixed(2)}px, ${(liftY * 0.28).toFixed(2)}px, 0) ` +
+          `translate3d(${x.toFixed(2)}px, 0px, 0) ` +
           `skewX(${skew.toFixed(2)}deg) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`;
 
-        if (activity <= 0.001 && Math.abs(liftY) < 0.03 && Math.abs(wobble) < 0.005) {
-          sliderEl.style.transform = "translate3d(0px, 0px, 0) scale(1, 1)";
-        } else {
-          const nsy = 1 + activity * 0.03 + Math.min(0.035, Math.abs(liftY) * 0.002);
-          sliderEl.style.transform = `translate3d(0px, ${liftY.toFixed(2)}px, 0) scale(1, ${nsy.toFixed(4)})`;
-        }
+        sliderEl.style.transform = "translate3d(0px, 0px, 0)";
       }
 
       function renderOptics() {
         const unscaledW = sliderEl.offsetWidth + 20;
-        const unscaledH = sliderEl.offsetHeight + 32;
+        const unscaledH = sliderEl.offsetHeight + 36;
         if (!unscaledW || !unscaledH) return;
 
         const w = Math.max(1, Math.round(unscaledW * dpr));
@@ -1995,26 +1998,23 @@
         }
 
         const padX = 10 * dpr;
-        const padY = 16 * dpr;
         const cardW = w - padX * 2;
-        const insetPx = 3 * dpr;
+        const insetPx = 4 * dpr;
         const thumbW = THUMB_W * dpr;
         const thumbH = THUMB_H * dpr;
         const maxTravel = Math.max(1, cardW - thumbW - insetPx * 2);
 
-        const flow = Math.min(1.1, Math.abs(ratioVel) * 0.14);
-        const sx = 1 + activity * (0.14 + flow * 0.12 + wobble * 0.018);
-        const sy = 1 + activity * (0.28 + Math.min(0.14, Math.abs(liftY) * 0.01) - wobble * 0.014);
+        const { sx, sy } = getSquishShape();
         const pillHalfW = (thumbW * sx) * 0.5;
         const pillHalfH = (thumbH * sy) * 0.5;
         const pillCenterX = padX + insetPx + ratio * maxTravel + thumbW * 0.5;
-        const pillCenterY = h * 0.5 + liftY * 0.28 * dpr;
+        const pillCenterY = h * 0.5;
 
         bctx.clearRect(0, 0, w, h);
 
         bctx.save();
         bctx.font = `600 ${Math.round(11.2 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
-        bctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+        bctx.fillStyle = "rgba(255, 255, 255, 0.94)";
         bctx.textAlign = "center";
         bctx.textBaseline = "middle";
         bctx.fillText(getLabelText(), w * 0.5, h * 0.5);
@@ -2031,7 +2031,7 @@
         );
         bctx.clip();
         bctx.clearRect(0, 0, w, h);
-        bctx.font = `650 ${Math.round(11.2 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        bctx.font = `680 ${Math.round(11.2 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
         bctx.fillStyle = `rgb(${currentAccentRgb.join(",")})`;
         bctx.textAlign = "center";
         bctx.textBaseline = "middle";
@@ -2069,10 +2069,10 @@
               const nx = dx / pillHalfW;
               const ny = dy / pillHalfH;
 
-              const shiftX = (-dx * 0.15 * (1.0 - lipBend) - nx * lipBend * 8.0 * dpr) * activity;
-              const shiftY = (-dy * 0.15 * (1.0 - lipBend) - ny * lipBend * 6.5 * dpr) * activity;
-              const dispX = nx * lipBend * 1.8 * dpr * activity;
-              const dispY = ny * lipBend * 1.4 * dpr * activity;
+              const shiftX = (-dx * 0.14 * (1.0 - lipBend) - nx * lipBend * 8.0 * dpr) * activity;
+              const shiftY = (-dy * 0.14 * (1.0 - lipBend) - ny * lipBend * 6.5 * dpr) * activity;
+              const dispX = nx * lipBend * 1.75 * dpr * activity;
+              const dispY = ny * lipBend * 1.35 * dpr * activity;
 
               const bx = x + shiftX;
               const by = y + shiftY;
@@ -2095,22 +2095,17 @@
         isSliding = true;
         moved = false;
         startX = e.clientX;
-        startY = e.clientY;
         startRatio = ratio;
         ratioVel = 0;
-        pullTargetY = 0;
-        wobbleVel += 4.0;
-        sliderEl.classList.add("is-morphing");
         try { sliderEl.setPointerCapture(e.pointerId); } catch (_) {}
       });
 
       sliderEl.addEventListener("pointermove", (e) => {
         if (!isSliding) return;
         const cardW = sliderEl.offsetWidth || 180;
-        const maxTravel = Math.max(1, cardW - THUMB_W - 6);
+        const maxTravel = Math.max(1, cardW - THUMB_W - 8);
         const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+        if (Math.abs(dx) > 4) moved = true;
 
         const prevRatio = ratio;
         const raw = startRatio + dx / maxTravel;
@@ -2120,7 +2115,6 @@
 
         targetRatio = ratio;
         ratioVel = ratioVel * 0.45 + ((ratio - prevRatio) * 45) * 0.55;
-        pullTargetY = Math.max(-36, Math.min(20, dy * 0.35));
 
         const steps = getStepsCount();
         const clampedR = Math.max(0, Math.min(1, ratio));
@@ -2131,9 +2125,6 @@
       function endSlide(e) {
         if (!isSliding) return;
         isSliding = false;
-        sliderEl.classList.remove("is-morphing");
-        wobbleVel += (ratioVel >= 0 ? 1 : -1) * (5.5 + Math.abs(pullTargetY) * 0.12);
-        pullTargetY = 0;
 
         const steps = getStepsCount();
         if (!moved && e && typeof e.clientX === "number") {
@@ -2154,8 +2145,6 @@
       sliderEl.addEventListener("pointerup", endSlide);
       sliderEl.addEventListener("pointercancel", () => {
         isSliding = false;
-        sliderEl.classList.remove("is-morphing");
-        pullTargetY = 0;
         const steps = getStepsCount();
         const snapIdx = Math.min(steps - 1, Math.round(Math.max(0, Math.min(1, ratio)) * (steps - 1)));
         targetRatio = steps > 1 ? snapIdx / (steps - 1) : 0;
@@ -2216,7 +2205,7 @@
     });
 
     /* =========================================================
-       TAB SWITCHING & LIQUID WATER WIGGLE NAVBAR PHYSICS
+       TAB SWITCHING & GROUNDED SQUISH NAVBAR PHYSICS
        ========================================================= */
     function switchTab(tabIndex, options = {}) {
       const clamped = Math.max(0, Math.min(2, tabIndex));
@@ -2259,11 +2248,8 @@
       pillPressing = true;
       pillMoved = false;
       pillDragStartX = event.clientX;
-      pillDragStartY = event.clientY;
       pillDragStartPos = pillPos;
       pillVel = 0;
-      navPullTargetY = 0;
-      navWobbleVel += 4.5;
       try {
         liquidNav.setPointerCapture(event.pointerId);
       } catch (_) {}
@@ -2274,9 +2260,8 @@
       const baseW = liquidNav.offsetWidth || 344;
       const tabWidth = (baseW - 10) / 3;
       const dx = event.clientX - pillDragStartX;
-      const dy = event.clientY - pillDragStartY;
 
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+      if (Math.abs(dx) > 4) {
         pillMoved = true;
       }
 
@@ -2292,19 +2277,12 @@
 
       const instantVel = (pillPos - prevPos) * 45;
       pillVel = pillVel * 0.45 + instantVel * 0.55;
-
-      const clampedDy = Math.max(-72, Math.min(36, dy));
-      navPullTargetY = clampedDy * 0.34;
     });
 
     function finishPillDrag(event) {
       if (!pillDragging) return;
       pillDragging = false;
       pillPressing = false;
-
-      const releaseEnergy = Math.min(1.6, Math.abs(navPullTargetY) * 0.08 + Math.abs(pillVel) * 0.14);
-      navWobbleVel += (pillVel >= 0 ? 1 : -1) * (6.5 + releaseEnergy * 8.0);
-      navPullTargetY = 0;
 
       const navRect = liquidNav.getBoundingClientRect();
       const targetTab = (!pillMoved && event && typeof event.clientX === "number")
@@ -2320,20 +2298,17 @@
       pillDragging = false;
       pillPressing = false;
       pillMoved = false;
-      navPullTargetY = 0;
       switchTab(Math.max(0, Math.min(2, Math.round(pillPos))));
     });
 
     function getLiquidPillShape() {
       const a = lensActivity;
-      const flowSpeed = Math.min(1.2, Math.abs(pillVel) * 0.085);
-      const liftStretch = Math.min(0.14, Math.abs(navLiftY) * 0.008);
-      const ripple = navWobble * 0.022;
+      const flowSpeed = Math.min(1.25, Math.abs(pillVel) * 0.09);
 
       return {
-        scaleX: 1 + a * (0.14 + flowSpeed * 0.14 + ripple - liftStretch * 0.35),
-        scaleY: 1 + a * (0.28 + liftStretch - flowSpeed * 0.03 - ripple * 0.85),
-        skewX: (pillVel * 0.55 + navWobble * 0.9) * a
+        scaleX: 1 + a * (0.14 + flowSpeed * 0.16),
+        scaleY: 1 + a * (0.26 - flowSpeed * 0.04),
+        skewX: pillVel * 0.55 * a
       };
     }
 
@@ -2356,8 +2331,7 @@
 
         const isMoving =
           Math.abs(pillPos - pillTarget) > 0.015 ||
-          Math.abs(pillVel) > 0.08 ||
-          Math.abs(navLiftY) > 0.35;
+          Math.abs(pillVel) > 0.08;
         const activityTarget = (pillPressing || pillDragging || isMoving) ? 1.0 : 0.0;
         const aStiff = activityTarget > lensActivity ? 1400 : 720;
         const aDamp = 2 * Math.sqrt(aStiff) * 0.95;
@@ -2367,59 +2341,10 @@
           lensActivity = activityTarget;
           lensActivityVel = 0;
         }
-
-        const liftStiff = pillDragging ? 520 : 340;
-        const liftDamp = pillDragging
-          ? 2 * Math.sqrt(liftStiff) * 0.85
-          : 2 * Math.sqrt(liftStiff) * 0.44;
-        navLiftVelY += (-liftStiff * (navLiftY - navPullTargetY) - liftDamp * navLiftVelY) * h;
-        navLiftY += navLiftVelY * h;
-        if (!pillDragging && Math.abs(navLiftY) < 0.03 && Math.abs(navLiftVelY) < 0.08) {
-          navLiftY = 0;
-          navLiftVelY = 0;
-        }
-
-        const leverage = (pillPos - 1.0);
-        const targetTilt = leverage * (-navLiftY * 0.24) + pillVel * 0.18;
-        const tiltStiff = 280;
-        const tiltDamp = 2 * Math.sqrt(tiltStiff) * 0.42;
-        navTiltVel += (-tiltStiff * (navTilt - targetTilt) - tiltDamp * navTiltVel) * h;
-        navTilt += navTiltVel * h;
-        if (!pillDragging && Math.abs(navTilt) < 0.02 && Math.abs(navTiltVel) < 0.05) {
-          navTilt = 0;
-          navTiltVel = 0;
-        }
-
-        const wobbleStiff = 260;
-        const wobbleDamp = 2 * Math.sqrt(wobbleStiff) * 0.34;
-        navWobbleVel += (-wobbleStiff * navWobble - wobbleDamp * navWobbleVel) * h;
-        navWobble += navWobbleVel * h;
-        if (!pillDragging && Math.abs(navWobble) < 0.005 && Math.abs(navWobbleVel) < 0.02) {
-          navWobble = 0;
-          navWobbleVel = 0;
-        }
-
-        const targetPillLift = navLiftY * 0.28;
-        const pLiftStiff = 420;
-        const pLiftDamp = 2 * Math.sqrt(pLiftStiff) * 0.46;
-        pillLiftVelY += (-pLiftStiff * (pillLiftY - targetPillLift) - pLiftDamp * pillLiftVelY) * h;
-        pillLiftY += pillLiftVelY * h;
       }
 
-      waterPhase += dt * (9.5 + Math.abs(pillVel) * 3.0 + Math.abs(navWobble) * 4.0);
-
-      const liftRatio = Math.min(1, Math.abs(navLiftY) / 18);
-      const navScaleX = 1 + lensActivity * 0.028 - liftRatio * 0.018 + navWobble * 0.006;
-      const navScaleY = 1 + lensActivity * 0.032 + liftRatio * 0.034 - navWobble * 0.008;
-
-      if (lensActivity <= 0.001 && Math.abs(navLiftY) < 0.03 && Math.abs(navTilt) < 0.02 && Math.abs(navWobble) < 0.005) {
-        liquidNav.style.transform = "translate3d(0px, 0px, 0) rotate(0deg) scale(1, 1)";
-      } else {
-        liquidNav.style.transform =
-          `translate3d(0px, ${navLiftY.toFixed(2)}px, 0) ` +
-          `rotate(${navTilt.toFixed(2)}deg) ` +
-          `scale(${navScaleX.toFixed(4)}, ${navScaleY.toFixed(4)})`;
-      }
+      // Navbar track tetap diam di tempat (no lift, no tilt, no wobble)
+      liquidNav.style.transform = "translate3d(0px, 0px, 0)";
 
       const unscaledW = liquidNav.offsetWidth || 344;
       const innerW = unscaledW - 10;
@@ -2428,7 +2353,7 @@
 
       const { scaleX, scaleY, skewX } = getLiquidPillShape();
       activePill.style.transform =
-        `translate3d(${translateX.toFixed(2)}px, ${pillLiftY.toFixed(2)}px, 0) ` +
+        `translate3d(${translateX.toFixed(2)}px, 0px, 0) ` +
         `skewX(${skewX.toFixed(2)}deg) ` +
         `scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})`;
     }
@@ -2439,7 +2364,7 @@
     });
 
     /* =========================================================
-       VIEWPORT & RESIZE (EXACT REPO DIMENSIONS)
+       VIEWPORT & RESIZE
        ========================================================= */
     function getFullScreenDimensions() {
       const isStandalone =
@@ -2532,7 +2457,7 @@
     }
 
     /* =========================================================
-       DYNAMIC BACKGROUND SAMPLING FOR NAVBAR (ONLY WHEN LENS IS ACTIVE)
+       DYNAMIC BACKGROUND SAMPLING FOR NAVBAR (WHEN LENS IS ACTIVE)
        ========================================================= */
     function drawDynamicNavBackdrop(
       octx,
@@ -2850,7 +2775,7 @@
       const pillHalfW = (tabW * scaleX) * 0.5;
       const pillHalfH = ((navH - insetPx * 2) * scaleY) * 0.5;
       const pillCenterX = padX + insetPx + (pillPos + 0.5) * tabW;
-      const pillCenterY = lensHeight * 0.5 + pillLiftY * dpr;
+      const pillCenterY = lensHeight * 0.5;
 
       const act = lensActivity;
 
@@ -2923,9 +2848,6 @@
       const boxHalfX = Math.max(0, pillHalfW - cornerR);
       const boxHalfY = Math.max(0, pillHalfH - cornerR);
 
-      const waveAmp = (Math.min(1.4, Math.abs(pillVel) * 0.08 + Math.abs(navWobble) * 0.45 + Math.abs(navLiftY) * 0.03)) * dpr * act;
-      const phase = waterPhase;
-
       function smoothstep(edge0, edge1, value) {
         const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
         return t * t * (3 - 2 * t);
@@ -2945,7 +2867,6 @@
           const outIndex = (y * lensWidth + x) * 4;
 
           const dxPill = x - pillCenterX;
-          const surfaceRipple = waveAmp * Math.sin(dxPill * 0.065 + phase) * Math.cos(dyPill * 0.08 - phase * 0.7);
 
           const dxBar = x - lensWidth * 0.5;
           const qxBar = Math.abs(dxBar) - barBoxX;
@@ -2954,7 +2875,7 @@
 
           const qxPill = Math.abs(dxPill) - boxHalfX;
           const oxPill = qxPill > 0 ? qxPill : 0;
-          const sdfPill = Math.sqrt(oxPill * oxPill + oyPill2) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR + surfaceRipple * 0.45;
+          const sdfPill = Math.sqrt(oxPill * oxPill + oyPill2) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR;
 
           const unionSdf = Math.min(sdfBar, sdfPill);
           if (unionSdf > 1.5 * dpr) {
@@ -2976,11 +2897,11 @@
             const nx = dxPill / pillHalfW;
             const ny = dyPill / pillHalfH;
 
-            shiftX = (-dxPill * 0.13 * (1.0 - lipBend) - nx * lipBend * 8.0 * dpr + surfaceRipple * 0.65) * act;
-            shiftY = (-dyPill * 0.13 * (1.0 - lipBend) - ny * lipBend * 6.5 * dpr + surfaceRipple * 0.85) * act;
+            shiftX = (-dxPill * 0.14 * (1.0 - lipBend) - nx * lipBend * 8.5 * dpr) * act;
+            shiftY = (-dyPill * 0.14 * (1.0 - lipBend) - ny * lipBend * 7.0 * dpr) * act;
 
-            dispX = nx * lipBend * 1.65 * dpr * act;
-            dispY = ny * lipBend * 1.30 * dpr * act;
+            dispX = nx * lipBend * 1.75 * dpr * act;
+            dispY = ny * lipBend * 1.35 * dpr * act;
           }
 
           const baseX = x + shiftX;
