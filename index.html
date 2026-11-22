@@ -2055,7 +2055,7 @@ function updateSpring(dt) {
 
   // Slider container zooms slightly when lens is active
   const barZoom = 1 + clamp(zoomS.x, -0.05, 1.2) * 0.048;
-  sliderEl.style.transform = `translate3d(0px, ${liftYS.x.toFixed(2)}px, 0) scale(${barZoom.toFixed(4)})`;
+sliderEl.style.transform = `translate3d(0px, 0px, 0) scale(${barZoom.toFixed(4)})`;
 }
 
 function renderOptics() {
@@ -2431,10 +2431,10 @@ const pc = clamp(pressSpring.x, 0, 1);
 
 // Navbar container zooms in smoothly when lens is active
 const navScale = 1 + clamp(navZoomSpring.x, -0.05, 1.2) * 0.045;
-if (pc <= 0.002 && Math.abs(liftYSpring.x) < 0.03) {
-liquidNav.style.transform = "translate3d(0px, 0px, 0) scale(1)";
+if (pc <= 0.002) {
+  liquidNav.style.transform = "translate3d(0px, 0px, 0) scale(1)";
 } else {
-liquidNav.style.transform = `translate3d(0px, ${liftYSpring.x.toFixed(2)}px, 0) scale(${navScale.toFixed(4)})`;
+  liquidNav.style.transform = `translate3d(0px, 0px, 0) scale(${navScale.toFixed(4)})`;
 }
 
 // Hide flat resting pill when clear glass lens is active (zero double-lens)
