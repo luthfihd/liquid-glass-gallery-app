@@ -289,18 +289,20 @@ gap: 6px;
 flex-shrink: 0;
 }
 
-/* Segmented Toggle */
+/* Segmented Toggle with Full Liquid Glass Lens + Jelly */
 .lg-segmented {
 position: relative;
+flex: 1 1 0;
+min-width: 118px;
 height: 36px;
 border-radius: 999px;
 padding: 3px;
-display: grid;
-grid-template-columns: 1fr 1fr;
+display: flex;
 align-items: center;
 overflow: visible;
 isolation: isolate;
 touch-action: none;
+cursor: grab;
 background: rgba(255, 255, 255, 0.06);
 -webkit-backdrop-filter: blur(8px) saturate(1.55);
 backdrop-filter: blur(8px) saturate(1.55);
@@ -308,52 +310,21 @@ border: var(--hairline) solid rgba(255, 255, 255, 0.20);
 box-shadow:
 0 4px 14px rgba(0, 0, 0, 0.14),
 inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
-transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+transform-origin: center center;
+will-change: transform;
 }
 
-.lg-segmented.is-morphing {
-transform: scale(1.04);
+.lg-segmented:active {
+cursor: grabbing;
 }
 
-.lg-seg-btn-base {
-position: relative;
-z-index: 1;
-height: 100%;
-padding: 0 11px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 0.71rem;
-font-weight: 600;
-letter-spacing: -0.01em;
-color: rgba(255, 255, 255, 0.90);
-white-space: nowrap;
-pointer-events: none;
-}
-
-.lg-seg-lens-layer {
+.lg-seg-canvas {
 position: absolute;
+inset: -22px -14px;
+width: calc(100% + 28px);
+height: calc(100% + 44px);
 z-index: 3;
-inset: 3px;
-display: grid;
-grid-template-columns: 1fr 1fr;
-align-items: center;
 pointer-events: none;
-background: transparent;
-border-radius: 999px;
-}
-
-.lg-seg-btn-lens {
-height: 100%;
-padding: 0 11px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 0.71rem;
-font-weight: 600;
-letter-spacing: -0.01em;
-color: rgb(var(--nav-accent-rgb));
-white-space: nowrap;
 }
 
 .lg-seg-thumb {
@@ -366,17 +337,13 @@ height: calc(100% - 6px);
 border-radius: 999px;
 pointer-events: none;
 transform-origin: center center;
-will-change: transform;
+will-change: transform, opacity;
 background: rgba(255, 255, 255, 0.08);
 border: var(--hairline) solid rgba(255, 255, 255, 0.26);
 box-shadow:
 0 2px 8px rgba(0, 0, 0, 0.14),
 inset 0 0.5px 0 rgba(255, 255, 255, 0.42);
-transition: transform 0.20s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.lg-segmented.is-morphing .lg-seg-thumb {
-transition: none;
+transition: opacity 0.07s linear;
 }
 
 .save-mockup-btn {
@@ -431,7 +398,7 @@ border: var(--hairline) solid rgba(255, 255, 255, 0.18);
 box-shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
 }
 
-/* Sliders (Unified Single Lens + Zoom + Bouncy Spring) */
+/* Sliders (Unified Single Lens + Jelly Spring) */
 .mockup-sliders {
 position: relative;
 z-index: 3;
@@ -496,7 +463,7 @@ border: var(--hairline) solid rgba(255, 255, 255, 0.28);
 box-shadow:
 0 4px 14px rgba(0, 0, 0, 0.18),
 inset 0 0.5px 0 rgba(255, 255, 255, 0.48);
-transition: opacity 0.08s linear;
+transition: opacity 0.07s linear;
 }
 
 /* CAPTURE FLASH OVERLAY */
@@ -582,7 +549,7 @@ border: var(--hairline) solid rgba(255, 255, 255, 0.28);
 box-shadow:
 0 4px 12px rgba(0, 0, 0, 0.14),
 inset 0 0.5px 0 rgba(255, 255, 255, 0.45);
-transition: opacity 0.08s linear;
+transition: opacity 0.07s linear;
 }
 
 .nav-btn {
@@ -663,23 +630,13 @@ display: none;
 
 <div class="mockup-top-bar">
 <div class="lg-segmented" id="deviceToggle" role="group" aria-label="Pilih frame perangkat">
-<span class="lg-seg-btn-base" id="devBase0">iPhone</span>
-<span class="lg-seg-btn-base" id="devBase1">Android</span>
+<canvas class="lg-seg-canvas" id="deviceToggleCanvas" aria-hidden="true"></canvas>
 <div class="lg-seg-thumb" id="deviceToggleThumb"></div>
-<div class="lg-seg-lens-layer" id="deviceToggleLensLayer" aria-hidden="true">
-<span class="lg-seg-btn-lens">iPhone</span>
-<span class="lg-seg-btn-lens">Android</span>
-</div>
 </div>
 
 <div class="lg-segmented" id="navToggle" role="group" aria-label="Tampilkan Navbar di Screenshot">
-<span class="lg-seg-btn-base" id="navBase0">Nav On</span>
-<span class="lg-seg-btn-base" id="navBase1">Nav Off</span>
+<canvas class="lg-seg-canvas" id="navToggleCanvas" aria-hidden="true"></canvas>
 <div class="lg-seg-thumb" id="navToggleThumb"></div>
-<div class="lg-seg-lens-layer" id="navToggleLensLayer" aria-hidden="true">
-<span class="lg-seg-btn-lens">Nav On</span>
-<span class="lg-seg-btn-lens">Nav Off</span>
-</div>
 </div>
 
 <button class="save-mockup-btn" id="saveMockupBtn" type="button">
@@ -772,15 +729,11 @@ const mockupView = document.getElementById("mockupView");
 const mockupBg = document.getElementById("mockupBg");
 const mockupPreviewCanvas = document.getElementById("mockupPreviewCanvas");
 const deviceToggle = document.getElementById("deviceToggle");
+const deviceToggleCanvas = document.getElementById("deviceToggleCanvas");
 const deviceToggleThumb = document.getElementById("deviceToggleThumb");
-const deviceToggleLensLayer = document.getElementById("deviceToggleLensLayer");
-const devBase0 = document.getElementById("devBase0");
-const devBase1 = document.getElementById("devBase1");
 const navToggle = document.getElementById("navToggle");
+const navToggleCanvas = document.getElementById("navToggleCanvas");
 const navToggleThumb = document.getElementById("navToggleThumb");
-const navToggleLensLayer = document.getElementById("navToggleLensLayer");
-const navBase0 = document.getElementById("navBase0");
-const navBase1 = document.getElementById("navBase1");
 const saveMockupBtn = document.getElementById("saveMockupBtn");
 
 // Sliders
@@ -837,7 +790,7 @@ let currentAccentRgb = [45, 168, 255];
 
 /* =========================================================
    REPO PHYSICS PORT (physics.ts & glass-lens.tsx)
-   Analytical damped springs with out-of-phase X/Y wobble
+   Analytical damped springs with out-of-phase jelly wobble
    ========================================================= */
 function stepSpring(s, targetVal, omega, zeta, dt) {
   const d = s.x - targetVal;
@@ -858,7 +811,7 @@ function stepSpring(s, targetVal, omega, zeta, dt) {
   }
   const settled =
     Math.abs(s.x - targetVal) < 5e-4 * Math.max(1, Math.abs(targetVal)) &&
-    Math.abs(s.v) < 0.005;
+    Math.abs(s.v) < 0.004;
   if (settled) {
     s.x = targetVal;
     s.v = 0;
@@ -873,13 +826,14 @@ const smoothstep = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
-// Repo constants (physics.ts & glass-lens.tsx)
-const SLIDE_SPRING = { omega: 16.5, zeta: 0.44 }; // bouncy overshoot on release
-const PRESS_SPRING = { omega: 16.0, zeta: 0.56 }; // press speed 16, bounce 0.44
-const HOVER_X = { omega: 17.0, zeta: 0.42 };      // out-of-phase liquid wobble X
-const HOVER_Y = { omega: 12.0, zeta: 0.34 };      // out-of-phase liquid wobble Y
-const TRAVEL_W = 0.14;                            // +14% width swell when open
-const TRAVEL_H = 0.36;                            // +36% height overflow outside bar
+// Repo constants tuned for lively jelly bounce & out-of-phase squash/stretch
+const SLIDE_SPRING = { omega: 16.0, zeta: 0.36 }; // lively overshoot & bounce
+const PRESS_SPRING = { omega: 15.5, zeta: 0.48 };
+const HOVER_X = { omega: 17.5, zeta: 0.34 };      // out-of-phase jelly X
+const HOVER_Y = { omega: 11.5, zeta: 0.28 };      // out-of-phase jelly Y
+const JELLY_WOBBLE = { omega: 14.5, zeta: 0.26 }; // high-elasticity jelly oscillation
+const TRAVEL_W = 0.15;                            // +15% width swell when open
+const TRAVEL_H = 0.38;                            // +38% height overflow outside bar
 
 // Navigation Lens State
 let activeTab = 0; // 0: Explore, 1: Snap, 2: Mockup
@@ -888,7 +842,6 @@ let pillTarget = 0;
 let pillDragging = false;
 let pillPressing = false;
 let pillDragStartX = 0;
-let pillDragStartY = 0;
 let pillDragStartPos = 0;
 let pillMoved = false;
 
@@ -896,8 +849,8 @@ const pressSpring = { x: 0, v: 0 };
 const swellXSpring = { x: 0, v: 0 };
 const swellYSpring = { x: 0, v: 0 };
 const navZoomSpring = { x: 0, v: 0 };
-const liftYSpring = { x: 0, v: 0 };
-let navPullTargetY = 0.0;
+const navJellySpring = { x: 0, v: 0 }; // subtle jelly wobble on container (no vertical lift)
+let jellyPhase = 0;
 let lastIdleDrawnKey = "";
 
 // Camera state
@@ -1239,9 +1192,10 @@ sy = (image.height - sh) / 2;
 context.drawImage(image, sx, sy, sw, sh, x, y, w, h);
 }
 
-function createBlurredCanvas(image, targetW, targetH, passes = 5) {
-const smallW = Math.max(16, Math.round(targetW / 18));
-const smallH = Math.max(16, Math.round(targetH / 18));
+/* Reduced blur intensity for backdrop below cards */
+function createBlurredCanvas(image, targetW, targetH, passes = 2) {
+const smallW = Math.max(48, Math.round(targetW / 5));
+const smallH = Math.max(48, Math.round(targetH / 5));
 
 const tempA = document.createElement("canvas");
 tempA.width = smallW;
@@ -1252,8 +1206,8 @@ ctxA.imageSmoothingQuality = "high";
 drawImageToContext(ctxA, image, 0, 0, smallW, smallH);
 
 const tempB = document.createElement("canvas");
-tempB.width = Math.max(12, Math.round(smallW * 0.65));
-tempB.height = Math.max(12, Math.round(smallH * 0.65));
+tempB.width = Math.max(36, Math.round(smallW * 0.78));
+tempB.height = Math.max(36, Math.round(smallH * 0.78));
 const ctxB = tempB.getContext("2d");
 ctxB.imageSmoothingEnabled = true;
 ctxB.imageSmoothingQuality = "high";
@@ -1306,7 +1260,7 @@ return snap;
 function createBackdropForImage(image) {
 const w = Math.max(1, Math.round(sceneCanvas.width / 2));
 const h = Math.max(1, Math.round(sceneCanvas.height / 2));
-return createBlurredCanvas(image, w, h, 5);
+return createBlurredCanvas(image, w, h, 2);
 }
 
 function buildItemSnapshots() {
@@ -1545,7 +1499,7 @@ currentBgLabel = `BG: ${preset.name}`;
 
 if (preset.type === "photo" && capturedImageUrl) {
 mockupBg.style.backgroundImage = `url("${capturedImageUrl}")`;
-mockupBg.style.filter = "blur(36px) saturate(1.25) brightness(0.62)";
+mockupBg.style.filter = "blur(24px) saturate(1.25) brightness(0.66)";
 } else {
 mockupBg.style.backgroundImage = `radial-gradient(circle at 22% 18%, ${preset.c1} 0%, ${preset.c2} 52%, ${preset.c3} 100%)`;
 mockupBg.style.filter = "none";
@@ -1568,7 +1522,7 @@ const activeIndex = wrapIndex(Math.round(scroll));
 const blurSnap = backdropSnapshots[activeIndex];
 if (blurSnap) {
 drawImageToContext(mctx, blurSnap, 0, 0, outW, outH);
-mctx.fillStyle = "rgba(6, 12, 20, 0.28)";
+mctx.fillStyle = "rgba(6, 12, 20, 0.24)";
 mctx.fillRect(0, 0, outW, outH);
 return;
 }
@@ -1582,30 +1536,8 @@ mctx.fillStyle = grad;
 mctx.fillRect(0, 0, outW, outH);
 }
 
-function updateSegmentedLensClip(thumbEl, lensLayerEl, base0El, base1El, ratio, morphing) {
-const xPct = ratio * 100;
-const scaleX = morphing ? 1.12 : 1;
-const scaleY = morphing ? 1.24 : 1;
-thumbEl.style.transform = `translate3d(${xPct}%, 0, 0) scale(${scaleX}, ${scaleY})`;
-
-const leftPct = Math.max(0, Math.min(50, ratio * 50));
-const rightPct = Math.max(0, Math.min(50, 50 - leftPct));
-lensLayerEl.style.clipPath = `inset(-8px ${rightPct}% -8px ${leftPct}% round 999px)`;
-
-base0El.style.opacity = Math.max(0, Math.min(1, ratio * 1.4));
-base1El.style.opacity = Math.max(0, Math.min(1, (1 - ratio) * 1.4));
-}
-
-function syncSegmentedToggles() {
-const isIphone = currentMockupDevice === "iphone";
-updateSegmentedLensClip(deviceToggleThumb, deviceToggleLensLayer, devBase0, devBase1, isIphone ? 0 : 1, false);
-updateSegmentedLensClip(navToggleThumb, navToggleLensLayer, navBase0, navBase1, includeNavInSS ? 0 : 1, false);
-}
-
 function renderDeviceMockup() {
 if (!capturedRawScene) return;
-
-syncSegmentedToggles();
 
 const finish = frameFinishes[frameFinishIndex] || frameFinishes[0];
 currentFrameLabel = `Frame: ${finish.name}`;
@@ -1826,88 +1758,6 @@ mctx.restore();
 }
 
 /* =========================================================
-SEGMENTED TOGGLES
-========================================================= */
-function bindSegmentedToggle(containerEl, thumbEl, lensLayerEl, base0El, base1El, getCurrentIdx, onSelectIndex) {
-let draggingSeg = false;
-let startX = 0;
-let startRatio = 0;
-let currentRatio = 0;
-let moved = false;
-
-containerEl.addEventListener("pointerdown", (e) => {
-draggingSeg = true;
-moved = false;
-startX = e.clientX;
-startRatio = getCurrentIdx();
-currentRatio = startRatio;
-containerEl.classList.add("is-morphing");
-try { containerEl.setPointerCapture(e.pointerId); } catch (_) {}
-updateSegmentedLensClip(thumbEl, lensLayerEl, base0El, base1El, currentRatio, true);
-});
-
-containerEl.addEventListener("pointermove", (e) => {
-if (!draggingSeg) return;
-const rect = containerEl.getBoundingClientRect();
-const halfW = (rect.width - 6) / 2;
-const dx = e.clientX - startX;
-if (Math.abs(dx) > 4) moved = true;
-
-currentRatio = Math.max(-0.08, Math.min(1.08, startRatio + dx / halfW));
-updateSegmentedLensClip(thumbEl, lensLayerEl, base0El, base1El, currentRatio, true);
-});
-
-function endSeg(e) {
-if (!draggingSeg) return;
-draggingSeg = false;
-containerEl.classList.remove("is-morphing");
-
-let targetIdx;
-if (!moved && e && e.clientX !== undefined) {
-const rect = containerEl.getBoundingClientRect();
-const relX = e.clientX - rect.left;
-targetIdx = relX < rect.width / 2 ? 0 : 1;
-} else {
-targetIdx = currentRatio >= 0.5 ? 1 : 0;
-}
-onSelectIndex(targetIdx);
-}
-
-containerEl.addEventListener("pointerup", endSeg);
-containerEl.addEventListener("pointercancel", () => {
-draggingSeg = false;
-containerEl.classList.remove("is-morphing");
-onSelectIndex(getCurrentIdx());
-});
-}
-
-bindSegmentedToggle(
-deviceToggle,
-deviceToggleThumb,
-deviceToggleLensLayer,
-devBase0,
-devBase1,
-() => (currentMockupDevice === "iphone" ? 0 : 1),
-(idx) => {
-currentMockupDevice = idx === 0 ? "iphone" : "android";
-renderDeviceMockup();
-}
-);
-
-bindSegmentedToggle(
-navToggle,
-navToggleThumb,
-navToggleLensLayer,
-navBase0,
-navBase1,
-() => (includeNavInSS ? 0 : 1),
-(idx) => {
-includeNavInSS = idx === 0;
-renderDeviceMockup();
-}
-);
-
-/* =========================================================
 SUB-PIXEL BILINEAR SAMPLER (ZERO PIXEL JITTER)
 ========================================================= */
 function sampleBilinearChannel(source, w, h, fx, fy, ch) {
@@ -1933,9 +1783,8 @@ return ((c00 * itx + c10 * tx) * ity + (c01 * itx + c11 * tx) * ty + 0.5) | 0;
 }
 
 /* =========================================================
-REPO GLASS OPTICS PASS (runtime.ts & glass-lens.tsx port)
-Single unified convex magnifying lens + edge refraction +
-chromatic dispersion + crystal rim + top reflection
+CLEAN SINGLE CONVEX GLASS LENS OPTICS (NO THICK LEFT/RIGHT OUTLINE)
+Magnification + smooth edge refraction + subtle chromatic dispersion
 ========================================================= */
 function shadeSingleGlassLensPixel(
   source, w, h, x, y,
@@ -1943,7 +1792,7 @@ function shadeSingleGlassLensPixel(
   cornerR, sdfPill, pc, dprScale,
   output, outIndex
 ) {
-  const bevel = Math.max(cornerR * 0.88, 12 * dprScale);
+  const bevel = Math.max(cornerR * 0.85, 11 * dprScale);
   const t = Math.pow(clamp(-sdfPill / bevel, 0, 1), 1 / 1.4);
   const dome = Math.sqrt(Math.max(0, 1 - (1 - t) * (1 - t)));
 
@@ -1954,19 +1803,19 @@ function shadeSingleGlassLensPixel(
   const dirX = nx / gLen;
   const dirY = ny / gLen;
 
-  // Convex magnification (pulls underlying content inward so it looks magnified)
-  const magFactor = 1.0 / (0.14 * pc * dome + 1.0);
+  // Convex magnification (pulls underlying content inward so it enlarges cleanly)
+  const magFactor = 1.0 / (0.145 * pc * dome + 1.0);
   const magShiftX = dxPill * (magFactor - 1.0);
   const magShiftY = dyPill * (magFactor - 1.0);
 
-  // Edge refraction (pow(edge, 1.6) from runtime.ts)
-  const edge = smoothstep(bevel * 0.45, 0, -sdfPill);
-  const refractMag = (18.5 * dprScale * pc) * Math.pow(edge, 1.6);
+  // Smooth edge refraction (pow(edge, 1.65))
+  const edge = smoothstep(bevel * 0.48, 0, -sdfPill);
+  const refractMag = (17.5 * dprScale * pc) * Math.pow(edge, 1.65);
   const shiftX = magShiftX - dirX * refractMag;
   const shiftY = magShiftY - dirY * refractMag * 0.72;
 
-  // Chromatic dispersion at bevel edge
-  const disp = 0.16 * pc;
+  // Subtle chromatic dispersion near lens bevel
+  const disp = 0.14 * pc;
   const rx = x + shiftX * (1 + disp);
   const ry = y + shiftY * (1 + disp);
   const gx = x + shiftX;
@@ -1978,309 +1827,417 @@ function shadeSingleGlassLensPixel(
   let g = sampleBilinearChannel(source, w, h, gx, gy, 1);
   let b = sampleBilinearChannel(source, w, h, bx, by, 2);
 
-  // Subtle top reflection & inner shading (runtime.ts)
-  const topRefl = smoothstep(0.75, -0.05, ny) * (1 - nx * 0.12) * 0.16 * pc;
+  // Clean subtle top shading (no thick left/right outline strokes)
+  const topRefl = smoothstep(0.75, -0.05, ny) * (1 - nx * 0.10) * 0.13 * pc;
   r *= (1 - topRefl);
   g *= (1 - topRefl);
-  b *= (1 - topRefl * 0.72);
+  b *= (1 - topRefl * 0.75);
 
-  // Crisp crystal rim highlight + fresnel edge
-  const rimW = Math.max(1.25 * dprScale, 1);
-  const rimBand = smoothstep(rimW * 1.8, 0, Math.abs(sdfPill + rimW * 1.4));
-  const right = clamp(dirX, 0, 1);
-  const left = clamp(-dirX, 0, 1);
+  // Ultra-thin micro-fresnel glint (clean rim without thick outline on left/right)
+  const rimW = Math.max(1.0 * dprScale, 0.8);
+  const rimBand = smoothstep(rimW * 1.4, 0, Math.abs(sdfPill + rimW * 1.1));
+  const up = clamp(-dirY, 0, 1);
   const down = clamp(dirY, 0, 1);
-  const rimFalloff = Math.exp(-Math.pow(dyPill / Math.max(1, pillHalfH * 0.85), 2));
-  const rimDir = right * right * rimFalloff * 0.95 + down * down * 0.25 + left * left * 0.60;
-  const rimStrength = rimBand * rimDir * 0.65 * pc;
+  const rimStrength = rimBand * (0.14 + up * 0.14 + down * 0.08) * pc;
 
-  const rimR = lerp(255, 210, down * 0.5) * rimStrength;
-  const rimG = lerp(255, 232, down * 0.5) * rimStrength;
-  const rimB = 255 * rimStrength;
-
-  output[outIndex] = Math.min(255, (r + rimR + 0.5) | 0);
-  output[outIndex + 1] = Math.min(255, (g + rimG + 0.5) | 0);
-  output[outIndex + 2] = Math.min(255, (b + rimB + 0.5) | 0);
+  const rimAdd = 255 * rimStrength;
+  output[outIndex] = Math.min(255, (r + rimAdd + 0.5) | 0);
+  output[outIndex + 1] = Math.min(255, (g + rimAdd + 0.5) | 0);
+  output[outIndex + 2] = Math.min(255, (b + rimAdd + 0.5) | 0);
 }
 
 /* =========================================================
-ALL SLIDERS: UNIFIED SINGLE LENS + ZOOM + BOUNCY SPRING
+UNIFIED LIQUID GLASS + JELLY ENGINE FOR ALL SLIDERS & TOGGLES
+Applies identical navbar optics & jelly bounce to:
+- deviceToggle (iPhone / Android)
+- navToggle (Nav On / Nav Off)
+- bgSlider (BG theme)
+- frameSlider (Frame finish)
 ========================================================= */
-function createOpticalSlider(sliderEl, canvasEl, thumbEl, getLabelText, getStepsCount, onStepChange) {
-const sctx = canvasEl.getContext("2d", { willReadFrequently: true });
-const buf = document.createElement("canvas");
-const bctx = buf.getContext("2d", { willReadFrequently: true });
-let imgData = null;
+function createUnifiedLiquidControl(options) {
+  const {
+    containerEl,
+    canvasEl,
+    thumbEl,
+    padXCss,
+    padYCss,
+    insetCss,
+    fixedThumbWidth, // null for 50% segmented toggle, number (e.g. 84) for slider
+    fontSizeCss,
+    getStepsCount,
+    getCurrentIndex,
+    onSelectIndex,
+    drawContent // (ctx, w, h, padX, padY, innerW, innerH, isAccentPass) => void
+  } = options;
 
-let isSliding = false;
-let startX = 0;
-let startY = 0;
-let startRatio = 0;
-const ratioSpring = { x: 0, v: 0 };
-let targetRatio = 0;
-const pressSpringS = { x: 0, v: 0 };
-const swellXS = { x: 0, v: 0 };
-const swellYS = { x: 0, v: 0 };
-const zoomS = { x: 0, v: 0 };
-const liftYS = { x: 0, v: 0 };
-let pullTargetY = 0;
-let moved = false;
+  const sctx = canvasEl.getContext("2d", { willReadFrequently: true });
+  const buf = document.createElement("canvas");
+  const bctx = buf.getContext("2d", { willReadFrequently: true });
+  let imgData = null;
 
-const THUMB_W = 84;
-const THUMB_H = 36;
+  let isDragging = false;
+  let startX = 0;
+  let startRatio = 0;
+  const ratioSpring = { x: 0, v: 0 };
+  let targetRatio = 0;
 
-function updateSpring(dt) {
-  if (!isSliding) {
-    // Analytical bouncy spring (zeta = 0.44 overshoots & bounces cleanly)
-    stepSpring(ratioSpring, targetRatio, SLIDE_SPRING.omega, SLIDE_SPRING.zeta, dt);
+  const pressS = { x: 0, v: 0 };
+  const swellXS = { x: 0, v: 0 };
+  const swellYS = { x: 0, v: 0 };
+  const zoomS = { x: 0, v: 0 };
+  const jellyS = { x: 0, v: 0 };
+  let phase = 0;
+  let moved = false;
+
+  function getThumbMetrics(cardW, cardH) {
+    const inset = insetCss * dpr;
+    const innerW = Math.max(1, cardW - inset * 2);
+    const innerH = Math.max(1, cardH - inset * 2);
+    const tW = fixedThumbWidth ? fixedThumbWidth * dpr : innerW * 0.5;
+    const tH = innerH;
+    const maxTravel = Math.max(1, innerW - tW);
+    return { inset, innerW, innerH, tW, tH, maxTravel };
   }
 
-  const traveling = !isSliding && (Math.abs(targetRatio - ratioSpring.x) > 0.015 || Math.abs(ratioSpring.v) > 0.06);
-  const openTarget = (isSliding || traveling) ? 1.0 : 0.0;
+  function updateSpring(dt) {
+    if (!isDragging) {
+      stepSpring(ratioSpring, targetRatio, SLIDE_SPRING.omega, SLIDE_SPRING.zeta, dt);
+    }
 
-  stepSpring(pressSpringS, openTarget, PRESS_SPRING.omega, PRESS_SPRING.zeta, dt);
-  stepSpring(swellXS, openTarget, HOVER_X.omega, HOVER_X.zeta, dt);
-  stepSpring(swellYS, openTarget, HOVER_Y.omega, HOVER_Y.zeta, dt);
-  stepSpring(zoomS, openTarget, 15.0, 0.52, dt);
-  stepSpring(liftYS, pullTargetY, isSliding ? 18.0 : 14.0, isSliding ? 0.78 : 0.42, dt);
+    const traveling = !isDragging && (Math.abs(targetRatio - ratioSpring.x) > 0.012 || Math.abs(ratioSpring.v) > 0.05);
+    const openTarget = (isDragging || traveling) ? 1.0 : 0.0;
 
-  const cardW = sliderEl.offsetWidth || 180;
-  const maxTravel = Math.max(1, cardW - THUMB_W - 6);
-  const x = ratioSpring.x * maxTravel;
-  const pc = clamp(pressSpringS.x, 0, 1);
+    stepSpring(pressS, openTarget, PRESS_SPRING.omega, PRESS_SPRING.zeta, dt);
+    stepSpring(swellXS, openTarget, HOVER_X.omega, HOVER_X.zeta, dt);
+    stepSpring(swellYS, openTarget, HOVER_Y.omega, HOVER_Y.zeta, dt);
+    stepSpring(zoomS, openTarget, 15.0, 0.44, dt);
+    stepSpring(jellyS, 0, JELLY_WOBBLE.omega, JELLY_WOBBLE.zeta, dt);
 
-  // Hide flat resting thumb when single glass lens is visible (zero double-lens)
-  thumbEl.style.opacity = pc > 0.04 ? "0" : "1";
-  thumbEl.style.transform = `translate3d(${x.toFixed(2)}px, 0px, 0)`;
+    phase += dt * (11.0 + Math.abs(ratioSpring.v) * 3.5 + Math.abs(jellyS.x) * 4.5);
 
-  // Slider container zooms slightly when lens is active
-  const barZoom = 1 + clamp(zoomS.x, -0.05, 1.2) * 0.048;
-sliderEl.style.transform = `translate3d(0px, 0px, 0) scale(${barZoom.toFixed(4)})`;
-}
+    const cardW = containerEl.offsetWidth || 140;
+    const cardH = containerEl.offsetHeight || 36;
+    const { inset, innerW, tW, maxTravel } = getThumbMetrics(cardW * dpr, cardH * dpr);
+    const xCss = (ratioSpring.x * maxTravel) / dpr;
+    const pc = clamp(pressS.x, 0, 1);
 
-function renderOptics() {
-  const unscaledW = sliderEl.offsetWidth + 32;
-  const unscaledH = sliderEl.offsetHeight + 52;
-  if (!unscaledW || !unscaledH) return;
+    // Hide flat resting thumb when single glass lens is active
+    thumbEl.style.opacity = pc > 0.04 ? "0" : "1";
+    if (!fixedThumbWidth) {
+      thumbEl.style.width = `${(innerW / 2) / dpr}px`;
+    }
+    thumbEl.style.transform = `translate3d(${xCss.toFixed(2)}px, 0px, 0)`;
 
-  const w = Math.max(1, Math.round(unscaledW * dpr));
-  const h = Math.max(1, Math.round(unscaledH * dpr));
-
-  if (canvasEl.width !== w || canvasEl.height !== h) {
-    canvasEl.width = w;
-    canvasEl.height = h;
-    buf.width = w;
-    buf.height = h;
-    imgData = sctx.createImageData(w, h);
+    // Container stays anchored vertically (translateY = 0) with subtle jelly squash/stretch + zoom
+    const z = clamp(zoomS.x, -0.05, 1.25);
+    const jellyOsc = jellyS.x * 0.022;
+    const barScaleX = 1 + z * 0.042 + jellyOsc;
+    const barScaleY = 1 + z * 0.048 - jellyOsc * 1.15;
+    containerEl.style.transform = `translate3d(0px, 0px, 0) scale(${barScaleX.toFixed(4)}, ${barScaleY.toFixed(4)})`;
   }
 
-  const padX = 16 * dpr;
-  const cardW = w - padX * 2;
-  const insetPx = 3 * dpr;
-  const thumbW = THUMB_W * dpr;
-  const thumbH = THUMB_H * dpr;
-  const maxTravel = Math.max(1, cardW - thumbW - insetPx * 2);
+  function renderOptics() {
+    const baseW = containerEl.offsetWidth;
+    const baseH = containerEl.offsetHeight;
+    if (!baseW || !baseH) return;
 
-  const pc = clamp(pressSpringS.x, 0, 1);
-  const velStretch = Math.min(0.14, Math.abs(ratioSpring.v) * 0.08);
-  const scaleX = 1 + TRAVEL_W * swellXS.x + velStretch;
-  const scaleY = 1 + TRAVEL_H * swellYS.x - velStretch * 0.35;
+    const unscaledW = baseW + padXCss * 2;
+    const unscaledH = baseH + padYCss * 2;
+    const w = Math.max(1, Math.round(unscaledW * dpr));
+    const h = Math.max(1, Math.round(unscaledH * dpr));
 
-  const pillHalfW = (thumbW * scaleX) * 0.5;
-  const pillHalfH = (thumbH * scaleY) * 0.5;
-  const pillCenterX = padX + insetPx + ratioSpring.x * maxTravel + thumbW * 0.5;
-  const pillCenterY = h * 0.5;
+    if (canvasEl.width !== w || canvasEl.height !== h) {
+      canvasEl.width = w;
+      canvasEl.height = h;
+      buf.width = w;
+      buf.height = h;
+      imgData = sctx.createImageData(w, h);
+    }
 
-  bctx.clearRect(0, 0, w, h);
+    const padX = padXCss * dpr;
+    const padY = padYCss * dpr;
+    const cardW = w - padX * 2;
+    const cardH = h - padY * 2;
+    const { inset, innerW, innerH, tW, tH, maxTravel } = getThumbMetrics(cardW, cardH);
 
-  // Base label
-  bctx.save();
-  bctx.font = `600 ${Math.round(11.2 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
-  bctx.fillStyle = "rgba(255, 255, 255, 0.92)";
-  bctx.textAlign = "center";
-  bctx.textBaseline = "middle";
-  bctx.fillText(getLabelText(), w * 0.5, h * 0.5);
-  bctx.restore();
+    const pc = clamp(pressS.x, 0, 1);
+    const velStretch = Math.min(0.24, Math.abs(ratioSpring.v) * 0.085);
+    const jellySquash = jellyS.x * 0.045;
+    const scaleX = 1 + TRAVEL_W * swellXS.x + velStretch + jellySquash;
+    const scaleY = 1 + TRAVEL_H * swellYS.x - velStretch * 0.42 - jellySquash * 1.2;
 
-  // Active accent label clipped cleanly inside single lens
-  bctx.save();
-  drawRoundedRect(
-    bctx,
-    pillCenterX - pillHalfW,
-    pillCenterY - pillHalfH,
-    pillHalfW * 2,
-    pillHalfH * 2,
-    pillHalfH
-  );
-  bctx.clip();
-  bctx.clearRect(0, 0, w, h);
+    const pillHalfW = (tW * scaleX) * 0.5;
+    const pillHalfH = (tH * scaleY) * 0.5;
+    const pillCenterX = padX + inset + ratioSpring.x * maxTravel + tW * 0.5;
+    const pillCenterY = h * 0.5;
 
-  if (pc > 0.04) {
-    bctx.fillStyle = `rgba(255, 255, 255, ${0.07 * pc})`;
-    bctx.fillRect(0, 0, w, h);
-  }
+    bctx.clearRect(0, 0, w, h);
 
-  bctx.font = `650 ${Math.round(11.2 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
-  bctx.fillStyle = `rgb(${currentAccentRgb.join(",")})`;
-  bctx.textAlign = "center";
-  bctx.textBaseline = "middle";
-  bctx.fillText(getLabelText(), w * 0.5, h * 0.5);
-  bctx.restore();
+    // Base (unselected) text/content pass
+    bctx.save();
+    bctx.font = `600 ${Math.round(fontSizeCss * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    bctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+    bctx.textAlign = "center";
+    bctx.textBaseline = "middle";
+    drawContent(bctx, w, h, padX + inset, padY + inset, innerW, innerH, false);
+    bctx.restore();
 
-  if (pc <= 0.02) {
-    sctx.clearRect(0, 0, w, h);
-    sctx.drawImage(buf, 0, 0);
-    return;
-  }
+    // Active (accent) text/content clipped cleanly inside single lens
+    bctx.save();
+    drawRoundedRect(
+      bctx,
+      pillCenterX - pillHalfW,
+      pillCenterY - pillHalfH,
+      pillHalfW * 2,
+      pillHalfH * 2,
+      pillHalfH
+    );
+    bctx.clip();
+    bctx.clearRect(0, 0, w, h);
 
-  const source = bctx.getImageData(0, 0, w, h).data;
-  const output = imgData.data;
-  const cornerR = Math.min(pillHalfW, pillHalfH);
-  const boxHalfX = Math.max(0, pillHalfW - cornerR);
-  const boxHalfY = Math.max(0, pillHalfH - cornerR);
+    if (pc > 0.04) {
+      bctx.fillStyle = `rgba(255, 255, 255, ${0.06 * pc})`;
+      bctx.fillRect(0, 0, w, h);
+    }
 
-  for (let y = 0; y < h; y++) {
-    const dy = y - pillCenterY;
-    const qy = Math.abs(dy) - boxHalfY;
-    const oy = qy > 0 ? qy : 0;
-    const oy2 = oy * oy;
+    bctx.font = `660 ${Math.round(fontSizeCss * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    bctx.fillStyle = `rgb(${currentAccentRgb.join(",")})`;
+    bctx.textAlign = "center";
+    bctx.textBaseline = "middle";
+    drawContent(bctx, w, h, padX + inset, padY + inset, innerW, innerH, true);
+    bctx.restore();
 
-    for (let x = 0; x < w; x++) {
-      const idx = (y * w + x) * 4;
-      const dx = x - pillCenterX;
-      const qx = Math.abs(dx) - boxHalfX;
-      const ox = qx > 0 ? qx : 0;
-      const sdf = Math.sqrt(ox * ox + oy2) + Math.min(Math.max(qx, qy), 0) - cornerR;
+    if (pc <= 0.02) {
+      sctx.clearRect(0, 0, w, h);
+      sctx.drawImage(buf, 0, 0);
+      return;
+    }
 
-      if (sdf <= 1.4 * dpr) {
-        shadeSingleGlassLensPixel(
-          source, w, h, x, y,
-          dx, dy, pillHalfW, pillHalfH,
-          cornerR, sdf, pc, dpr,
-          output, idx
-        );
-        const mask = 1.0 - smoothstep(-1.0 * dpr, 1.4 * dpr, sdf);
-        const baseA = source[idx + 3];
-        output[idx + 3] = Math.max(baseA, Math.round(mask * 255));
-      } else {
-        output[idx] = source[idx];
-        output[idx + 1] = source[idx + 1];
-        output[idx + 2] = source[idx + 2];
-        output[idx + 3] = source[idx + 3];
+    const source = bctx.getImageData(0, 0, w, h).data;
+    const output = imgData.data;
+    const cornerR = Math.min(pillHalfW, pillHalfH);
+    const boxHalfX = Math.max(0, pillHalfW - cornerR);
+    const boxHalfY = Math.max(0, pillHalfH - cornerR);
+
+    // Subtle organic jelly edge ripple while moving/bouncing
+    const edgeRippleAmp = (Math.min(1.6, Math.abs(ratioSpring.v) * 0.14 + Math.abs(jellyS.x) * 0.55)) * dpr * pc;
+
+    for (let y = 0; y < h; y++) {
+      const dy = y - pillCenterY;
+      const qy = Math.abs(dy) - boxHalfY;
+      const oy = qy > 0 ? qy : 0;
+      const oy2 = oy * oy;
+
+      for (let x = 0; x < w; x++) {
+        const idx = (y * w + x) * 4;
+        const dx = x - pillCenterX;
+        const qx = Math.abs(dx) - boxHalfX;
+        const ox = qx > 0 ? qx : 0;
+
+        const ripple = edgeRippleAmp * Math.sin(dx * 0.075 + phase) * Math.cos(dy * 0.085 - phase * 0.8);
+        const sdf = Math.sqrt(ox * ox + oy2) + Math.min(Math.max(qx, qy), 0) - cornerR + ripple * 0.35;
+
+        if (sdf <= 1.2 * dpr) {
+          shadeSingleGlassLensPixel(
+            source, w, h, x, y,
+            dx, dy, pillHalfW, pillHalfH,
+            cornerR, sdf, pc, dpr,
+            output, idx
+          );
+          const mask = 1.0 - smoothstep(-0.9 * dpr, 1.2 * dpr, sdf);
+          const baseA = source[idx + 3];
+          output[idx + 3] = Math.max(baseA, Math.round(mask * 255));
+        } else {
+          output[idx] = source[idx];
+          output[idx + 1] = source[idx + 1];
+          output[idx + 2] = source[idx + 2];
+          output[idx + 3] = source[idx + 3];
+        }
       }
     }
+    sctx.putImageData(imgData, 0, 0);
   }
-  sctx.putImageData(imgData, 0, 0);
-}
 
-sliderEl.addEventListener("pointerdown", (e) => {
-  isSliding = true;
-  moved = false;
-  startX = e.clientX;
-  startY = e.clientY;
-  startRatio = ratioSpring.x;
-  ratioSpring.v = 0;
-  pullTargetY = 0;
-  try { sliderEl.setPointerCapture(e.pointerId); } catch (_) {}
-});
+  containerEl.addEventListener("pointerdown", (e) => {
+    isDragging = true;
+    moved = false;
+    startX = e.clientX;
+    startRatio = ratioSpring.x;
+    ratioSpring.v = 0;
+    jellyS.v += 4.2;
+    try { containerEl.setPointerCapture(e.pointerId); } catch (_) {}
+  });
 
-sliderEl.addEventListener("pointermove", (e) => {
-  if (!isSliding) return;
-  const cardW = sliderEl.offsetWidth || 180;
-  const maxTravel = Math.max(1, cardW - THUMB_W - 6);
-  const dx = e.clientX - startX;
-  const dy = e.clientY - startY;
-  if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+  containerEl.addEventListener("pointermove", (e) => {
+    if (!isDragging) return;
+    const cardW = containerEl.offsetWidth || 140;
+    const cardH = containerEl.offsetHeight || 36;
+    const { maxTravel } = getThumbMetrics(cardW * dpr, cardH * dpr);
+    const maxTravelCss = Math.max(1, maxTravel / dpr);
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 4) moved = true;
 
-  const prevRatio = ratioSpring.x;
-  const raw = startRatio + dx / maxTravel;
-  if (raw < 0) ratioSpring.x = raw * 0.25;
-  else if (raw > 1) ratioSpring.x = 1 + (raw - 1) * 0.25;
-  else ratioSpring.x = raw;
+    const prevRatio = ratioSpring.x;
+    const raw = startRatio + dx / maxTravelCss;
+    if (raw < 0) ratioSpring.x = raw * 0.24;
+    else if (raw > 1) ratioSpring.x = 1 + (raw - 1) * 0.24;
+    else ratioSpring.x = raw;
 
-  targetRatio = ratioSpring.x;
-  ratioSpring.v = ratioSpring.v * 0.4 + ((ratioSpring.x - prevRatio) * 50) * 0.6;
-  pullTargetY = Math.max(-18, Math.min(12, dy * 0.22));
+    targetRatio = ratioSpring.x;
+    ratioSpring.v = ratioSpring.v * 0.35 + ((ratioSpring.x - prevRatio) * 55) * 0.65;
 
-  const steps = getStepsCount();
-  const clampedR = clamp(ratioSpring.x, 0, 1);
-  const idx = Math.min(steps - 1, Math.round(clampedR * (steps - 1)));
-  onStepChange(idx);
-});
+    const steps = getStepsCount();
+    const idx = Math.min(steps - 1, Math.round(clamp(ratioSpring.x, 0, 1) * (steps - 1)));
+    onSelectIndex(idx);
+  });
 
-function endSlide(e) {
-  if (!isSliding) return;
-  isSliding = false;
-  pullTargetY = 0;
+  function endPointer(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    jellyS.v += (ratioSpring.v >= 0 ? 1 : -1) * (5.5 + Math.min(6, Math.abs(ratioSpring.v) * 1.4));
 
-  const steps = getStepsCount();
-  if (!moved && e && typeof e.clientX === "number") {
-    const rect = sliderEl.getBoundingClientRect();
-    const relRatio = clamp((e.clientX - rect.left - THUMB_W * 0.5) / Math.max(1, rect.width - THUMB_W), 0, 1);
-    const tappedIdx = Math.min(steps - 1, Math.round(relRatio * (steps - 1)));
-    const curIdx = Math.min(steps - 1, Math.round(clamp(ratioSpring.x, 0, 1) * (steps - 1)));
-    const nextIdx = tappedIdx === curIdx ? (curIdx + 1) % steps : tappedIdx;
+    const steps = getStepsCount();
+    const curIdx = getCurrentIndex();
+    let nextIdx;
+
+    if (!moved && e && typeof e.clientX === "number") {
+      const rect = containerEl.getBoundingClientRect();
+      if (steps === 2) {
+        const tappedIdx = (e.clientX - rect.left) < rect.width * 0.5 ? 0 : 1;
+        nextIdx = tappedIdx === curIdx ? (1 - curIdx) : tappedIdx;
+      } else {
+        const tW = fixedThumbWidth || rect.width * 0.5;
+        const relRatio = clamp((e.clientX - rect.left - tW * 0.5) / Math.max(1, rect.width - tW), 0, 1);
+        const tappedIdx = Math.min(steps - 1, Math.round(relRatio * (steps - 1)));
+        nextIdx = tappedIdx === curIdx ? (curIdx + 1) % steps : tappedIdx;
+      }
+      ratioSpring.v = (nextIdx > curIdx ? 1 : -1) * 4.8;
+    } else {
+      nextIdx = Math.min(steps - 1, Math.round(clamp(ratioSpring.x, 0, 1) * (steps - 1)));
+    }
+
     targetRatio = steps > 1 ? nextIdx / (steps - 1) : 0;
-    ratioSpring.v = (nextIdx > curIdx ? 1 : -1) * 3.8;
-    onStepChange(nextIdx);
-  } else {
+    onSelectIndex(nextIdx);
+  }
+
+  containerEl.addEventListener("pointerup", endPointer);
+  containerEl.addEventListener("pointercancel", () => {
+    isDragging = false;
+    const steps = getStepsCount();
     const snapIdx = Math.min(steps - 1, Math.round(clamp(ratioSpring.x, 0, 1) * (steps - 1)));
     targetRatio = steps > 1 ? snapIdx / (steps - 1) : 0;
-    onStepChange(snapIdx);
-  }
+    onSelectIndex(snapIdx);
+  });
+
+  return {
+    sync(idx) {
+      const steps = getStepsCount();
+      const r = steps > 1 ? idx / (steps - 1) : 0;
+      ratioSpring.x = r;
+      targetRatio = r;
+      ratioSpring.v = 0;
+    },
+    updateSpring,
+    renderOptics
+  };
 }
 
-sliderEl.addEventListener("pointerup", endSlide);
-sliderEl.addEventListener("pointercancel", () => {
-  isSliding = false;
-  pullTargetY = 0;
-  const steps = getStepsCount();
-  const snapIdx = Math.min(steps - 1, Math.round(clamp(ratioSpring.x, 0, 1) * (steps - 1)));
-  targetRatio = steps > 1 ? snapIdx / (steps - 1) : 0;
-  onStepChange(snapIdx);
+// 1. Device Segmented Toggle (iPhone / Android)
+const deviceToggleCtrl = createUnifiedLiquidControl({
+  containerEl: deviceToggle,
+  canvasEl: deviceToggleCanvas,
+  thumbEl: deviceToggleThumb,
+  padXCss: 14,
+  padYCss: 22,
+  insetCss: 3,
+  fixedThumbWidth: null,
+  fontSizeCss: 10.8,
+  getStepsCount: () => 2,
+  getCurrentIndex: () => (currentMockupDevice === "iphone" ? 0 : 1),
+  onSelectIndex: (idx) => {
+    const nextDev = idx === 0 ? "iphone" : "android";
+    if (currentMockupDevice !== nextDev) {
+      currentMockupDevice = nextDev;
+      renderDeviceMockup();
+    }
+  },
+  drawContent: (c, w, h, ix, iy, iw, ih) => {
+    c.fillText("iPhone", ix + iw * 0.25, h * 0.5);
+    c.fillText("Android", ix + iw * 0.75, h * 0.5);
+  }
 });
 
-return {
-  sync(idx) {
-    const steps = getStepsCount();
-    const r = steps > 1 ? idx / (steps - 1) : 0;
-    ratioSpring.x = r;
-    targetRatio = r;
-    ratioSpring.v = 0;
+// 2. Nav Toggle (Nav On / Nav Off)
+const navToggleCtrl = createUnifiedLiquidControl({
+  containerEl: navToggle,
+  canvasEl: navToggleCanvas,
+  thumbEl: navToggleThumb,
+  padXCss: 14,
+  padYCss: 22,
+  insetCss: 3,
+  fixedThumbWidth: null,
+  fontSizeCss: 10.8,
+  getStepsCount: () => 2,
+  getCurrentIndex: () => (includeNavInSS ? 0 : 1),
+  onSelectIndex: (idx) => {
+    const nextNav = idx === 0;
+    if (includeNavInSS !== nextNav) {
+      includeNavInSS = nextNav;
+      renderDeviceMockup();
+    }
   },
-  updateSpring,
-  renderOptics
-};
-}
+  drawContent: (c, w, h, ix, iy, iw, ih) => {
+    c.fillText("Nav On", ix + iw * 0.25, h * 0.5);
+    c.fillText("Nav Off", ix + iw * 0.75, h * 0.5);
+  }
+});
 
-const bgSliderCtrl = createOpticalSlider(
-bgSlider,
-bgSliderCanvas,
-bgSliderThumb,
-() => currentBgLabel,
-() => 5,
-(idx) => {
-if (bgPresetIndex !== idx) {
-bgPresetIndex = idx;
-updateMockupBackgroundDOM();
-renderDeviceMockup();
-}
-}
-);
+// 3. Background Theme Slider
+const bgSliderCtrl = createUnifiedLiquidControl({
+  containerEl: bgSlider,
+  canvasEl: bgSliderCanvas,
+  thumbEl: bgSliderThumb,
+  padXCss: 16,
+  padYCss: 26,
+  insetCss: 3,
+  fixedThumbWidth: 84,
+  fontSizeCss: 11.2,
+  getStepsCount: () => 5,
+  getCurrentIndex: () => bgPresetIndex,
+  onSelectIndex: (idx) => {
+    if (bgPresetIndex !== idx) {
+      bgPresetIndex = idx;
+      updateMockupBackgroundDOM();
+      renderDeviceMockup();
+    }
+  },
+  drawContent: (c, w, h) => {
+    c.fillText(currentBgLabel, w * 0.5, h * 0.5);
+  }
+});
 
-const frameSliderCtrl = createOpticalSlider(
-frameSlider,
-frameSliderCanvas,
-frameSliderThumb,
-() => currentFrameLabel,
-() => frameFinishes.length,
-(idx) => {
-if (frameFinishIndex !== idx) {
-frameFinishIndex = idx;
-renderDeviceMockup();
-}
-}
-);
+// 4. Frame Color Slider
+const frameSliderCtrl = createUnifiedLiquidControl({
+  containerEl: frameSlider,
+  canvasEl: frameSliderCanvas,
+  thumbEl: frameSliderThumb,
+  padXCss: 16,
+  padYCss: 26,
+  insetCss: 3,
+  fixedThumbWidth: 84,
+  fontSizeCss: 11.2,
+  getStepsCount: () => frameFinishes.length,
+  getCurrentIndex: () => frameFinishIndex,
+  onSelectIndex: (idx) => {
+    if (frameFinishIndex !== idx) {
+      frameFinishIndex = idx;
+      renderDeviceMockup();
+    }
+  },
+  drawContent: (c, w, h) => {
+    c.fillText(currentFrameLabel, w * 0.5, h * 0.5);
+  }
+});
 
 saveMockupBtn.addEventListener("click", () => {
 if (!mockupPreviewCanvas.width) return;
@@ -2326,6 +2283,8 @@ snapView.classList.remove("active");
 stage.classList.add("is-hidden");
 mockupView.classList.add("active");
 requestAnimationFrame(() => {
+deviceToggleCtrl.sync(currentMockupDevice === "iphone" ? 0 : 1);
+navToggleCtrl.sync(includeNavInSS ? 0 : 1);
 bgSliderCtrl.sync(bgPresetIndex);
 frameSliderCtrl.sync(frameFinishIndex);
 });
@@ -2338,10 +2297,9 @@ pillDragging = true;
 pillPressing = true;
 pillMoved = false;
 pillDragStartX = event.clientX;
-pillDragStartY = event.clientY;
 pillDragStartPos = pillSpring.x;
 pillSpring.v = 0;
-navPullTargetY = 0;
+navJellySpring.v += 4.5;
 try {
 liquidNav.setPointerCapture(event.pointerId);
 } catch (_) {}
@@ -2352,9 +2310,8 @@ if (!pillDragging) return;
 const baseW = liquidNav.offsetWidth || 344;
 const tabWidth = (baseW - 10) / 3;
 const dx = event.clientX - pillDragStartX;
-const dy = event.clientY - pillDragStartY;
 
-if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+if (Math.abs(dx) > 4) {
 pillMoved = true;
 }
 
@@ -2368,18 +2325,16 @@ pillSpring.x = 2 + (rawPos - 2) * 0.22;
 pillSpring.x = rawPos;
 }
 
-const instantVel = (pillSpring.x - prevPos) * 50;
-pillSpring.v = pillSpring.v * 0.4 + instantVel * 0.6;
-
-const clampedDy = Math.max(-42, Math.min(24, dy));
-navPullTargetY = clampedDy * 0.26;
+const instantVel = (pillSpring.x - prevPos) * 55;
+pillSpring.v = pillSpring.v * 0.35 + instantVel * 0.65;
 });
 
 function finishPillDrag(event) {
 if (!pillDragging) return;
 pillDragging = false;
 pillPressing = false;
-navPullTargetY = 0;
+
+navJellySpring.v += (pillSpring.v >= 0 ? 1 : -1) * (6.0 + Math.min(7.0, Math.abs(pillSpring.v) * 1.1));
 
 const navRect = liquidNav.getBoundingClientRect();
 const targetTab = (!pillMoved && event && typeof event.clientX === "number")
@@ -2387,7 +2342,7 @@ const targetTab = (!pillMoved && event && typeof event.clientX === "number")
 : Math.max(0, Math.min(2, Math.round(pillSpring.x)));
 
 if (!pillMoved && targetTab !== Math.round(pillSpring.x)) {
-pillSpring.v = (targetTab > pillSpring.x ? 1 : -1) * 5.2;
+pillSpring.v = (targetTab > pillSpring.x ? 1 : -1) * 5.8;
 }
 
 pillMoved = false;
@@ -2399,45 +2354,48 @@ liquidNav.addEventListener("pointercancel", () => {
 pillDragging = false;
 pillPressing = false;
 pillMoved = false;
-navPullTargetY = 0;
 switchTab(Math.max(0, Math.min(2, Math.round(pillSpring.x))));
 });
 
 function getLiquidPillShape() {
-const velStretch = Math.min(0.16, Math.abs(pillSpring.v) * 0.055);
+const velStretch = Math.min(0.24, Math.abs(pillSpring.v) * 0.068);
+const jellySquash = navJellySpring.x * 0.042;
 return {
-scaleX: 1 + TRAVEL_W * swellXSpring.x + velStretch,
-scaleY: 1 + TRAVEL_H * swellYSpring.x - velStretch * 0.35
+scaleX: 1 + TRAVEL_W * swellXSpring.x + velStretch + jellySquash,
+scaleY: 1 + TRAVEL_H * swellYSpring.x - velStretch * 0.42 - jellySquash * 1.15
 };
 }
 
 function updateLiquidPillPhysics(dt) {
 if (!pillDragging) {
-// Analytical damped spring with bouncy overshoot (SLIDE_SPRING)
 stepSpring(pillSpring, pillTarget, SLIDE_SPRING.omega, SLIDE_SPRING.zeta, dt);
 }
 
-// Keep lens open while traveling or bouncing (> 6% of tab width or still moving)
-const traveling = !pillDragging && (Math.abs(pillSpring.x - pillTarget) > 0.04 || Math.abs(pillSpring.v) > 0.08);
+const traveling = !pillDragging && (Math.abs(pillSpring.x - pillTarget) > 0.03 || Math.abs(pillSpring.v) > 0.06);
 const openTarget = (pillPressing || pillDragging || traveling) ? 1.0 : 0.0;
 
 stepSpring(pressSpring, openTarget, PRESS_SPRING.omega, PRESS_SPRING.zeta, dt);
 stepSpring(swellXSpring, openTarget, HOVER_X.omega, HOVER_X.zeta, dt);
 stepSpring(swellYSpring, openTarget, HOVER_Y.omega, HOVER_Y.zeta, dt);
-stepSpring(navZoomSpring, openTarget, 15.0, 0.52, dt);
-stepSpring(liftYSpring, navPullTargetY, pillDragging ? 18.0 : 14.0, pillDragging ? 0.78 : 0.42, dt);
+stepSpring(navZoomSpring, openTarget, 15.0, 0.44, dt);
+stepSpring(navJellySpring, 0, JELLY_WOBBLE.omega, JELLY_WOBBLE.zeta, dt);
+
+jellyPhase += dt * (11.0 + Math.abs(pillSpring.v) * 3.2 + Math.abs(navJellySpring.x) * 4.5);
 
 const pc = clamp(pressSpring.x, 0, 1);
 
-// Navbar container zooms in smoothly when lens is active
-const navScale = 1 + clamp(navZoomSpring.x, -0.05, 1.2) * 0.045;
-if (pc <= 0.002) {
-  liquidNav.style.transform = "translate3d(0px, 0px, 0) scale(1)";
+// Navbar stays anchored vertically (translateY = 0) with subtle jelly scaleX/scaleY wobble + zoom
+const z = clamp(navZoomSpring.x, -0.05, 1.25);
+const jellyOsc = navJellySpring.x * 0.018;
+if (pc <= 0.002 && Math.abs(navJellySpring.x) < 0.004) {
+liquidNav.style.transform = "translate3d(0px, 0px, 0) scale(1, 1)";
 } else {
-  liquidNav.style.transform = `translate3d(0px, 0px, 0) scale(${navScale.toFixed(4)})`;
+const navScaleX = 1 + z * 0.038 + jellyOsc;
+const navScaleY = 1 + z * 0.044 - jellyOsc * 1.15;
+liquidNav.style.transform = `translate3d(0px, 0px, 0) scale(${navScaleX.toFixed(4)}, ${navScaleY.toFixed(4)})`;
 }
 
-// Hide flat resting pill when clear glass lens is active (zero double-lens)
+// Hide flat resting pill when single clear glass lens is active
 activePill.style.opacity = pc > 0.04 ? "0" : "1";
 
 const unscaledW = liquidNav.offsetWidth || 344;
@@ -2510,7 +2468,7 @@ cardHeight = maxCardHeight;
 cardWidth = cardHeight * aspectRatio;
 }
 
-const cardGap = (isMobile ? 150 : 50) * dpr;
+const cardGap = (isMobile ? 250 : 50) * dpr;
 slot = cardHeight + cardGap;
 
 cardCenterY = pixelHeight * (isMobile ? 0.45 : 0.53);
@@ -2524,6 +2482,8 @@ gl.viewport(0, 0, pixelWidth, pixelHeight);
 resizeGlassCanvas();
 lastIdleDrawnKey = "";
 if (activeTab === 2) {
+deviceToggleCtrl.sync(currentMockupDevice === "iphone" ? 0 : 1);
+navToggleCtrl.sync(includeNavInSS ? 0 : 1);
 bgSliderCtrl.sync(bgPresetIndex);
 frameSliderCtrl.sync(frameFinishIndex);
 }
@@ -2630,7 +2590,7 @@ sourceHeight * scaleY,
 lensWidth,
 lensHeight
 );
-octx.fillStyle = "rgba(6, 12, 20, 0.35)";
+octx.fillStyle = "rgba(6, 12, 20, 0.30)";
 octx.fillRect(0, 0, lensWidth, lensHeight);
 return;
 }
@@ -2770,13 +2730,6 @@ lensWidth,
 lensHeight
 );
 
-navOpticsCtx.save();
-drawRoundedRect(navOpticsCtx, padX, padY, navW, navH, navH * 0.5);
-navOpticsCtx.lineWidth = 1.0 * dpr;
-navOpticsCtx.strokeStyle = "rgba(255, 255, 255, 0.24)";
-navOpticsCtx.stroke();
-navOpticsCtx.restore();
-
 const insetPx = 5 * dpr;
 const tabW = (navW - insetPx * 2) / 3;
 const labels = ["Explore", "Snap", "Mockup"];
@@ -2801,7 +2754,7 @@ navOpticsCtx.fillText(labels[i], cx, textY);
 }
 navOpticsCtx.restore();
 
-// Single unified lens interior (sharp backdrop + accent icons/text)
+// Single unified clean lens interior (no inner capsule stroke so left/right edges stay completely clean)
 navOpticsCtx.save();
 drawRoundedRect(
 navOpticsCtx,
@@ -2823,13 +2776,8 @@ lensWidth,
 lensHeight
 );
 
-navOpticsCtx.fillStyle = `rgba(255, 255, 255, ${0.06 * pc})`;
+navOpticsCtx.fillStyle = `rgba(255, 255, 255, ${0.055 * pc})`;
 navOpticsCtx.fillRect(0, 0, lensWidth, lensHeight);
-
-drawRoundedRect(navOpticsCtx, padX, padY, navW, navH, navH * 0.5);
-navOpticsCtx.lineWidth = 1.0 * dpr;
-navOpticsCtx.strokeStyle = "rgba(255, 255, 255, 0.28)";
-navOpticsCtx.stroke();
 
 const accentColor = `rgb(${currentAccentRgb.join(",")})`;
 navOpticsCtx.strokeStyle = accentColor;
@@ -2944,6 +2892,9 @@ const cornerR = Math.min(pillHalfW, pillHalfH);
 const boxHalfX = Math.max(0, pillHalfW - cornerR);
 const boxHalfY = Math.max(0, pillHalfH - cornerR);
 
+// Subtle jelly edge wave when sliding/bouncing
+const edgeRippleAmp = (Math.min(1.6, Math.abs(pillSpring.v) * 0.14 + Math.abs(navJellySpring.x) * 0.55)) * dpr * pc;
+
 for (let y = 0; y < lensHeight; y++) {
 const dyBar = y - lensHeight * 0.5;
 const oyBar = Math.abs(dyBar);
@@ -2965,17 +2916,18 @@ const sdfBar = Math.sqrt(oxBar * oxBar + oyBar2) + Math.min(Math.max(qxBar, oyBa
 
 const qxPill = Math.abs(dxPill) - boxHalfX;
 const oxPill = qxPill > 0 ? qxPill : 0;
-const sdfPill = Math.sqrt(oxPill * oxPill + oyPill2) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR;
+const ripple = edgeRippleAmp * Math.sin(dxPill * 0.07 + jellyPhase) * Math.cos(dyPill * 0.08 - jellyPhase * 0.8);
+const sdfPill = Math.sqrt(oxPill * oxPill + oyPill2) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR + ripple * 0.35;
 
 const unionSdf = Math.min(sdfBar, sdfPill);
-if (unionSdf > 1.5 * dpr) {
+if (unionSdf > 1.2 * dpr) {
 output[outIndex + 3] = 0;
 continue;
 }
 
-const alphaMask = 1.0 - smoothstep(-1.0 * dpr, 1.5 * dpr, unionSdf);
+const alphaMask = 1.0 - smoothstep(-0.9 * dpr, 1.2 * dpr, unionSdf);
 
-if (sdfPill <= 1.4 * dpr) {
+if (sdfPill <= 1.2 * dpr) {
 shadeSingleGlassLensPixel(
 source, lensWidth, lensHeight, x, y,
 dxPill, dyPill, pillHalfW, pillHalfH,
@@ -3023,11 +2975,11 @@ const activeBackdrop = backdropSnapshots[activeIndex];
 
 if (activeBackdrop) {
 ctx.save();
-ctx.globalAlpha = 0.85;
+ctx.globalAlpha = 0.90;
 ctx.drawImage(activeBackdrop, 0, 0, pixelWidth, pixelHeight);
 ctx.restore();
 
-ctx.fillStyle = "rgba(5, 14, 22, 0.22)";
+ctx.fillStyle = "rgba(5, 14, 22, 0.18)";
 ctx.fillRect(0, 0, pixelWidth, pixelHeight);
 }
 
@@ -3129,8 +3081,13 @@ updateLiquidPillPhysics(dt);
 if (activeTab === 0) {
 renderWebGLScene(now);
 } else if (activeTab === 2) {
+deviceToggleCtrl.updateSpring(dt);
+navToggleCtrl.updateSpring(dt);
 bgSliderCtrl.updateSpring(dt);
 frameSliderCtrl.updateSpring(dt);
+
+deviceToggleCtrl.renderOptics();
+navToggleCtrl.renderOptics();
 bgSliderCtrl.renderOptics();
 frameSliderCtrl.renderOptics();
 }
