@@ -2398,8 +2398,8 @@ function updateLiquidPillPhysics(dt) {
 
   const bShift = clamp(barShiftSpring.x, -7, 7);
   const bStretch = clamp(barStretchSpring.x, -0.042, 0.052);
-  // Tambahkan faktor zoom saat disentuh / didrag (0.032 = zoom ~3.2%)
-  const touchZoom = pressSpring.x * 0.032; 
+  // Tambahkan faktor zoom saat disentuh / didrag (0.05 = zoom 5%)
+  const touchZoom = pressSpring.x * 0.05; 
   const navScaleX = 1 + touchZoom + bStretch;
   const navScaleY = 1 + touchZoom - bStretch * 0.72;
   if (Math.abs(bShift) > 0.02 || Math.abs(bStretch) > 0.0005) {
