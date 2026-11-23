@@ -799,6 +799,7 @@ const lensJellySpring = { x: 0, v: 0 };
 const lensTiltSpring = { x: 0, v: 0 };
 const barShiftSpring = { x: 0, v: 0 };
 const barStretchSpring = { x: 0, v: 0 };
+const speedShrinkSpring = { x: 0, v: 0 };
 let jellyPhase = 0;
 
 let cameraStream = null;
@@ -1877,6 +1878,7 @@ function createUnifiedLiquidControl(options) {
   const tiltS = { x: 0, v: 0 };
   const barShiftS = { x: 0, v: 0 };
   const barStretchS = { x: 0, v: 0 };
+  const speedShrinkS = { x: 0, v: 0 };
   let phase = 0;
   let moved = false;
   let lastPtrX = 0;
@@ -1916,6 +1918,9 @@ function createUnifiedLiquidControl(options) {
     stepSpring(tiltS, 0, TILT_SPRING.omega, TILT_SPRING.zeta, dt);
     stepSpring(barShiftS, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
     stepSpring(barStretchS, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
+    const speed = Math.abs(ratioSpring.v);
+    const targetShrink = (isDragging || traveling) ? clamp((speed - 0.6) / 4.0, 0, 1) : 0;
+    stepSpring(speedShrinkS, targetShrink, 18.0, 0.65, dt);
 
     phase += dt * (15.0 + Math.abs(ratioSpring.v) * 4.5 + Math.abs(jellyS.x) * 5.0);
 
@@ -1967,17 +1972,12 @@ function createUnifiedLiquidControl(options) {
     const { inset, innerW, innerH, tW, tH, maxTravel } = getThumbMetrics(cardW, cardH);
 
     const pc = clamp(pressS.x, 0, 1);
-    const speed = Math.abs(ratioSpring.v);
-    const speedShrink = clamp((speed - 0.9) / 4.5, 0, 1);
+    const shrink = clamp(speedShrinkS.x, 0, 1);
+    const swellFactor = 1 - shrink;
+    const jellySquash = jellyS.x * 0.055;
 
-    const velStretch = Math.min(0.26, speed * 0.06);
-    const jellySquash = jellyS.x * 0.072;
-
-    const dynamicSwellX = TRAVEL_W * swellXS.x * (1 - speedShrink * 0.65);
-    const dynamicSwellY = TRAVEL_H * swellYS.x * (1 - speedShrink * 0.85);
-
-    const scaleX = 1 + dynamicSwellX + velStretch - speedShrink * 0.14 + jellySquash;
-    const scaleY = 1 + dynamicSwellY - speedShrink * 0.34 - velStretch * 0.35 - jellySquash * 1.25;
+    const scaleX = 1 + (TRAVEL_W * swellXS.x * swellFactor) - (shrink * 0.14) + jellySquash;
+    const scaleY = 1 + (TRAVEL_H * swellYS.x * swellFactor) - (shrink * 0.16) - jellySquash * 1.1;
 
     const displayRatio = asymptoticEdge(ratioSpring.x, 0, 1, 0.03);
     const pillHalfW = (tW * scaleX) * 0.5;
@@ -2414,21 +2414,14 @@ liquidNav.addEventListener("pointercancel", () => {
 });
 
 function getLiquidPillShape() {
-  const speed = Math.abs(pillSpring.v);
-  // 0.0 saat diam/pelan -> mendekati 1.0 saat didrag cepat
-  const speedShrink = clamp((speed - 1.2) / 6.5, 0, 1);
+  const shrink = clamp(speedShrinkSpring.x, 0, 1);
+  const swellFactor = 1 - shrink;
+  const jellySquash = lensJellySpring.x * 0.055;
 
-  const velStretch = Math.min(0.28, speed * 0.065);
-  const jellySquash = lensJellySpring.x * 0.072;
+  const scaleX = 1 + (TRAVEL_W * swellXSpring.x * swellFactor) - (shrink * 0.14) + jellySquash;
+  const scaleY = 1 + (TRAVEL_H * swellYSpring.x * swellFactor) - (shrink * 0.16) - jellySquash * 1.1;
 
-  // Saat didrag cepat, swell berkurang dan kapsul menyusut/meramping (pinching)
-  const dynamicSwellX = TRAVEL_W * swellXSpring.x * (1 - speedShrink * 0.65);
-  const dynamicSwellY = TRAVEL_H * swellYSpring.x * (1 - speedShrink * 0.85);
-
-  return {
-    scaleX: 1 + dynamicSwellX + velStretch - speedShrink * 0.14 + jellySquash,
-    scaleY: 1 + dynamicSwellY - speedShrink * 0.34 - velStretch * 0.35 - jellySquash * 1.25
-  };
+  return { scaleX, scaleY };
 }
 
 function updateLiquidPillPhysics(dt) {
@@ -2455,6 +2448,9 @@ function updateLiquidPillPhysics(dt) {
   stepSpring(lensTiltSpring, 0, TILT_SPRING.omega, TILT_SPRING.zeta, dt);
   stepSpring(barShiftSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
   stepSpring(barStretchSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
+  const speed = Math.abs(pillSpring.v);
+  const targetShrink = (pillDragging || traveling) ? clamp((speed - 0.8) / 5.5, 0, 1) : 0;
+  stepSpring(speedShrinkSpring, targetShrink, 18.0, 0.65, dt);
 
   jellyPhase += dt * (15.0 + Math.abs(pillSpring.v) * 4.5 + Math.abs(lensJellySpring.x) * 5.2);
 
