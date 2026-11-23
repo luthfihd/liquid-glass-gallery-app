@@ -770,11 +770,11 @@ function asymptoticEdge(val, minVal, maxVal, margin = 0.045) {
 
 const TRAVEL_W = 0.26;
 const TRAVEL_H = 0.54;
-const SLIDE_SPRING = { omega: 20.5, zeta: 0.30 };
-const PRESS_OPEN_SPRING = { omega: 24.0, zeta: 0.52 };
-const PRESS_CLOSE_SPRING = { omega: 26.0, zeta: 0.86 };
-const HOVER_X = { omega: 19.5, zeta: 0.26 };
-const HOVER_Y = { omega: 14.5, zeta: 0.22 };
+const SLIDE_SPRING = { omega: 24.0, zeta: 0.34 };       // sebelumnya 20.5 (geser lebih cepat)
+const PRESS_OPEN_SPRING = { omega: 28.0, zeta: 0.52 };  // sebelumnya 24.0 (membuka lebih instan)
+const PRESS_CLOSE_SPRING = { omega: 38.0, zeta: 0.84 }; // sebelumnya 26.0 (menutup jauh lebih cepat)
+const HOVER_X = { omega: 29.0, zeta: 0.34 };            // sebelumnya 19.5
+const HOVER_Y = { omega: 24.0, zeta: 0.30 };            // sebelumnya 14.5
 const JELLY_WOBBLE = { omega: 16.0, zeta: 0.20 };
 const TILT_SPRING = { omega: 18.0, zeta: 0.28 };
 const BAR_JELLY_SPRING = { omega: 17.5, zeta: 0.34 };
@@ -1904,7 +1904,8 @@ function createUnifiedLiquidControl(options) {
       }
     }
 
-    const traveling = !isDragging && (Math.abs(targetRatio - ratioSpring.x) > 0.015 || Math.abs(ratioSpring.v) > 0.08);
+     // Ubah batas jarak dari 0.015 -> 0.10 dan kecepatan dari 0.08 -> 0.30
+    const traveling = !isDragging && (Math.abs(targetRatio - ratioSpring.x) > 0.10 || Math.abs(ratioSpring.v) > 0.30);
     const openTarget = (isDragging || traveling) ? 1.0 : 0.0;
     const pSpr = openTarget > 0.5 ? PRESS_OPEN_SPRING : PRESS_CLOSE_SPRING;
 
@@ -2426,7 +2427,8 @@ function updateLiquidPillPhysics(dt) {
     }
   }
 
-  const traveling = !pillDragging && (Math.abs(pillSpring.x - pillTarget) > 0.025 || Math.abs(pillSpring.v) > 0.07);
+  // Ubah batas jarak dari 0.025 -> 0.14 dan kecepatan dari 0.07 -> 0.35
+  const traveling = !pillDragging && (Math.abs(pillSpring.x - pillTarget) > 0.14 || Math.abs(pillSpring.v) > 0.35);
   const openTarget = (pillPressing || pillDragging || traveling) ? 1.0 : 0.0;
   const pSpr = openTarget > 0.5 ? PRESS_OPEN_SPRING : PRESS_CLOSE_SPRING;
 
