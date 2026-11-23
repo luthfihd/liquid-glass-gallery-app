@@ -1413,9 +1413,10 @@ function captureCurrentExploreScreen() {
   };
   capturedImageUrl = items[activeIndex]?.image || "";
 
+  // Render scene WebGL BERSIH tanpa distorsi pill navbar di bagian bawah
   sceneDirty = true;
   if (gl && program) {
-    renderWebGLScene(performance.now());
+    renderWebGLScene(performance.now(), true);
   } else {
     drawScene();
   }
@@ -1442,6 +1443,7 @@ function captureCurrentExploreScreen() {
   updateMockupBackgroundDOM();
   renderDeviceMockup();
 }
+
 function getBackgroundPresets(pal) {
   const p = pal || {
     vibrant: [56, 118, 178],
@@ -1604,33 +1606,44 @@ function renderDeviceMockup() {
 
   if (includeNavInSS) {
     const navW = screenW * 0.82;
-    const navH = 110;
+    const navH = 128;
     const navX = screenX + (screenW - navW) / 2;
-    const navY = screenY + screenH - navH - 54;
+    const navY = screenY + screenH - navH - 52;
 
     mctx.save();
+    // Kapsul kaca latar navbar
     drawRoundedRect(mctx, navX, navY, navW, navH, navH / 2);
-    mctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+    mctx.fillStyle = "rgba(18, 28, 40, 0.42)";
     mctx.fill();
-    mctx.lineWidth = 1;
+    mctx.lineWidth = 1.5;
     mctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
     mctx.stroke();
 
-    const tabW = (navW - 16) / 3;
-    drawRoundedRect(mctx, navX + 8, navY + 6, tabW, navH - 12, (navH - 12) / 2);
-    mctx.lineWidth = 1;
-    mctx.strokeStyle = "rgba(255, 255, 255, 0.34)";
-    mctx.stroke();
+    // Render ulang glassCanvas dalam kondisi diam di tab 0 (Explore) agar lensa & ikon tajam
+    const prevPillX = pillSpring.x;
+    const prevPress = pressSpring.x;
+    pillSpring.x = 0;
+    pressSpring.x = 0;
+    lastNavRenderSig = "";
+    drawLiquidNavRefraction();
 
-    const acc = capturedPalette ? capturedPalette.accent : [45, 168, 255];
-    const labels = ["Explore", "Snap", "Mockup"];
-    mctx.font = "680 22px -apple-system, system-ui, sans-serif";
-    mctx.textAlign = "center";
-    mctx.textBaseline = "middle";
-    labels.forEach((label, idx) => {
-      mctx.fillStyle = idx === 0 ? `rgb(${acc.join(",")})` : "rgba(255, 255, 255, 0.92)";
-      mctx.fillText(label, navX + 8 + tabW * (idx + 0.5), navY + navH * 0.52);
-    });
+    // Potong area padding glassCanvas dan gambar proporsional ke dalam kapsul mockup
+    const padX = 32 * dpr;
+    const padY = 44 * dpr;
+    const srcW = glassCanvas.width - padX * 2;
+    const srcH = glassCanvas.height - padY * 2;
+    if (srcW > 0 && srcH > 0) {
+      mctx.drawImage(
+        glassCanvas,
+        padX, padY, srcW, srcH,
+        navX, navY, navW, navH
+      );
+    }
+
+    // Kembalikan state spring navbar utama
+    pillSpring.x = prevPillX;
+    pressSpring.x = prevPress;
+    lastNavRenderSig = "";
     mctx.restore();
   }
 
@@ -2887,7 +2900,7 @@ function uploadSceneTexture() {
   );
 }
 
-function renderWebGLScene(now) {
+function renderWebGLScene(now, hidePill = false) {
   const isGalleryMoving = dragging || Math.abs(velocity) > 0.0005 || Math.abs(target - scroll) > 0.0005;
   if (sceneDirty || isGalleryMoving) {
     drawScene();
@@ -2910,7 +2923,7 @@ function renderWebGLScene(now) {
   gl.uniform2f(uniforms.cardSize, cardWidth, cardHeight);
   gl.uniform1f(uniforms.time, now / 1000);
 
-  if (cachedNavBaseRect.width > 0 && width > 0 && height > 0) {
+  if (!hidePill && cachedNavBaseRect.width > 0 && width > 0 && height > 0) {
     const { scaleX, scaleY } = getLiquidPillShape();
     const displayX = asymptoticEdge(pillSpring.x, 0, 2, 0.045);
 
