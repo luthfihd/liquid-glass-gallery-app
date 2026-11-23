@@ -1789,41 +1789,11 @@ function sampleBilinearPremultiplied(source, w, h, fx, fy) {
    CONTINUOUS CONTENT-ONLY REFRACTION LENS SHADER
    ========================================================= */
 
-function sampleBilinearRGBA(data, w, h, fx, fy) {
-  const cx = clamp(fx, 0, w - 1);
-  const cy = clamp(fy, 0, h - 1);
-  const x0 = cx | 0;
-  const y0 = cy | 0;
-  const x1 = x0 < w - 1 ? x0 + 1 : x0;
-  const y1 = y0 < h - 1 ? y0 + 1 : y0;
-  const tx = cx - x0;
-  const ty = cy - y0;
-  const invTx = 1 - tx;
-  const invTy = 1 - ty;
-
-  const w00 = invTx * invTy;
-  const w10 = tx * invTy;
-  const w01 = invTx * ty;
-  const w11 = tx * ty;
-
-  const i00 = (y0 * w + x0) * 4;
-  const i10 = (y0 * w + x1) * 4;
-  const i01 = (y1 * w + x0) * 4;
-  const i11 = (y1 * w + x1) * 4;
-
-  return [
-    data[i00] * w00 + data[i10] * w10 + data[i01] * w01 + data[i11] * w11,
-    data[i00 + 1] * w00 + data[i10 + 1] * w10 + data[i01 + 1] * w01 + data[i11 + 1] * w11,
-    data[i00 + 2] * w00 + data[i10 + 2] * w10 + data[i01 + 2] * w01 + data[i11 + 2] * w11,
-    data[i00 + 3] * w00 + data[i10 + 3] * w10 + data[i01 + 3] * w01 + data[i11 + 3] * w11
-  ];
-}
-
 function shadeContentOnlyRefractionPixel(
   source, w, h, x, y,
   dxPill, dyPill, pillHalfW, pillHalfH,
   cornerR, sdfPill, pc, dprScale,
-  output, outIndex, velX = 0, tintRgb = null
+  output, outIndex, velX = 0
 ) {
   const mask = smoothstep(0.9 * dprScale, -0.75 * dprScale, sdfPill);
   if (mask <= 0.001) {
@@ -1850,16 +1820,11 @@ function shadeContentOnlyRefractionPixel(
   const shiftY = -dirY * pullMag;
 
   const disp = (1.0 + 0.55 * pc) * dprScale * meniscusProfile;
-  const [rr, , , ra] = sampleBilinearRGBA(source, w, h, x + shiftX + dirX * disp, y + shiftY + dirY * disp);
-  const [, gg, , ga] = sampleBilinearRGBA(source, w, h, x + shiftX, y + shiftY);
-  const [, , bb, ba] = sampleBilinearRGBA(source, w, h, x + shiftX - dirX * disp, y + shiftY - dirY * disp);
+  const [rr, , , ra] = sampleBilinearPremultiplied(source, w, h, x + shiftX + dirX * disp, y + shiftY + dirY * disp);
+  const [, gg, , ga] = sampleBilinearPremultiplied(source, w, h, x + shiftX, y + shiftY);
+  const [, , bb, ba] = sampleBilinearPremultiplied(source, w, h, x + shiftX - dirX * disp, y + shiftY - dirY * disp);
 
   const contentAlpha = Math.max(ra, ga, ba);
-
-  // Terapkan warna dinamis jika ada, jika tidak pakai warna asli sumber
-  const tr = tintRgb ? (rr / 255) * tintRgb[0] : rr;
-  const tg = tintRgb ? (gg / 255) * tintRgb[1] : gg;
-  const tb = tintRgb ? (bb / 255) * tintRgb[2] : bb;
 
   // 2. Specular Wet Rim Dinamis (bereaksi terhadap kecepatan & arah geser)
   const rimW = 1.15 * dprScale;
@@ -1887,9 +1852,9 @@ function shadeContentOnlyRefractionPixel(
   const contentShare = contentAlpha / outA;
   const specShare = (rimAlpha * (1.0 - contentAlpha * 0.7)) / outA;
 
-  const finalR = tr * contentShare + 255 * specShare;
-  const finalG = tg * contentShare + 255 * specShare;
-  const finalB = tb * contentShare + 255 * specShare;
+  const finalR = rr * contentShare + 255 * specShare;
+  const finalG = gg * contentShare + 255 * specShare;
+  const finalB = bb * contentShare + 255 * specShare;
 
   output[outIndex] = Math.min(255, (finalR + 0.5) | 0);
   output[outIndex + 1] = Math.min(255, (finalG + 0.5) | 0);
@@ -2733,8 +2698,6 @@ function drawLiquidNavRefraction() {
   const edgeRippleAmp = (Math.min(2.6, Math.abs(pillSpring.v) * 0.22 + Math.abs(lensJellySpring.x) * 0.85)) * dpr * pc;
   const velSkew = clamp(pillSpring.v * 0.08, -0.35, 0.35);
 
-  const activeTint = (typeof currentAccentRgb !== 'undefined') ? currentAccentRgb : null;
-
   for (let y = 0; y < lensHeight; y++) {
     const dyPill = y - pillCenterY;
     const qyPill = Math.abs(dyPill) - boxHalfY;
@@ -2760,7 +2723,7 @@ function drawLiquidNavRefraction() {
           source, lensWidth, lensHeight, x, y,
           dxPill, dyPill, pillHalfW, pillHalfH,
           cornerR, sdfPill, pc, dpr,
-          output, outIndex, pillSpring.v, activeTint
+          output, outIndex, pillSpring.v
         );
       } else {
         output[outIndex + 3] = 0;
