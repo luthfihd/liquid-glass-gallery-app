@@ -1006,10 +1006,24 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
   float pillRadius = pillHalf.y;
 
   float pillDist = roundedBoxDistance(pillP, pillHalf, pillRadius);
-  if (pillDist >= 0.0) return baseColor;
+  
+  // Perluas batas deteksi sejauh 0.009 UV (~4-5px) ke luar garis tepi pil
+  float outerReach = 0.009 * (0.4 + 0.6 * uPillPress);
+  if (pillDist >= outerReach) return baseColor;
 
-  float edgeBand = smoothstep(-pillRadius * 0.78, 0.0, pillDist);
   vec2 pDir = normalize(pillP + vec2(0.00001));
+
+  if (pillDist >= 0.0) {
+    // 1. Area Luar (Outer Meniscus): menarik latar belakang ke arah pinggir pil
+    float pull = pow(1.0 - (pillDist / max(0.0001, outerReach)), 2.2);
+    vec2 outerShift = pDir * (0.0045 * pull * uPillPress);
+    vec3 outerBg = sampleScene(uv + outerShift).rgb;
+    baseColor.rgb = mix(baseColor.rgb, outerBg, pull * 0.85);
+    return baseColor;
+  }
+
+  // 2. Area Dalam Kapsul: refraksi cairan datar di tengah & melengkung tajam di bibir
+  float edgeBand = smoothstep(-pillRadius * 0.78, 0.0, pillDist);
   float strength = (0.012 + 0.022 * uPillPress) * pow(edgeBand, 1.8);
   vec2 bgShift = -pDir * strength;
 
@@ -1018,7 +1032,7 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
   bgLiquid.g = sampleScene(uv + bgShift).g;
   bgLiquid.b = sampleScene(uv + bgShift * 0.82).b;
 
-  float innerMask = smoothstep(0.0, -0.004, pillDist);
+  float innerMask = smoothstep(0.0, -0.003, pillDist);
   baseColor.rgb = mix(baseColor.rgb, bgLiquid * 0.94, innerMask);
   return baseColor;
 }
@@ -1778,7 +1792,7 @@ function shadeContentOnlyRefractionPixel(
   source, w, h, x, y,
   dxPill, dyPill, pillHalfW, pillHalfH,
   cornerR, sdfPill, pc, dprScale,
-  output, outIndex
+  output, outIndex, velX = 0
 ) {
   const mask = 1.0 - smoothstep(-0.85 * dprScale, 0.95 * dprScale, sdfPill);
   if (mask <= 0.001) {
@@ -1812,11 +1826,18 @@ function shadeContentOnlyRefractionPixel(
 
   const contentAlpha = Math.max(ra, ga, ba);
 
-  const rimW = 0.75 * dprScale;
-  const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.5));
+  const rimW = 1.15 * dprScale;
+  const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
   const up = clamp(-dirY, 0, 1);
   const down = clamp(dirY, 0, 1);
-  const rimAlpha = rimBand * (0.28 + (0.12 + up * 0.24 + down * 0.14) * pc);
+
+  // Hitung sorotan arah gerakan (dirX searah dengan velX = bibir depan menyala)
+  const motionPush = clamp(dirX * velX * 0.22, -0.25, 0.55);
+  const causticGlow = Math.abs(velX) * 0.045 * Math.abs(dirX);
+  const specularHighlight = rimBand * (
+    0.30 +
+    (0.14 + up * 0.38 + down * 0.20 + motionPush + causticGlow) * pc
+  );
 
   const glassBodyAlpha = (0.09 * (1 - pc) + 0.04 * pc) * (0.65 + 0.35 * (1 - dome));
 
@@ -2023,7 +2044,7 @@ function createUnifiedLiquidControl(options) {
             source, w, h, x, y,
             dx, dy, pillHalfW, pillHalfH,
             cornerR, sdf, pc, dpr,
-            output, idx
+            output, idx, ratioSpring.v
           );
         } else {
           output[idx + 3] = 0;
@@ -2673,6 +2694,7 @@ function drawLiquidNavRefraction() {
   const boxHalfY = Math.max(0, pillHalfH - cornerR);
 
   const edgeRippleAmp = (Math.min(2.6, Math.abs(pillSpring.v) * 0.22 + Math.abs(lensJellySpring.x) * 0.85)) * dpr * pc;
+  const velSkew = clamp(pillSpring.v * 0.08, -0.35, 0.35);
 
   for (let y = 0; y < lensHeight; y++) {
     const dyPill = y - pillCenterY;
@@ -2683,7 +2705,11 @@ function drawLiquidNavRefraction() {
 
     for (let x = 0; x < lensWidth; x++) {
       const outIndex = (y * lensWidth + x) * 4;
-      const dxPill = (x - pillCenterX) - shearOffset;
+      let dxPill = (x - pillCenterX) - shearOffset;
+
+      // Asimetri tetesan air: memadatkan sisi depan gerakan dan memanjangkan ekor
+      const normX = dxPill / Math.max(1, pillHalfW);
+      dxPill *= 1.0 - (velSkew * normX * 0.45);
 
       const qxPill = Math.abs(dxPill) - boxHalfX;
       const oxPill = qxPill > 0 ? qxPill : 0;
@@ -2695,7 +2721,7 @@ function drawLiquidNavRefraction() {
           source, lensWidth, lensHeight, x, y,
           dxPill, dyPill, pillHalfW, pillHalfH,
           cornerR, sdfPill, pc, dpr,
-          output, outIndex
+          output, outIndex, pillSpring.v
         );
       } else {
         output[outIndex + 3] = 0;
