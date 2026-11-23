@@ -982,6 +982,9 @@ uniform vec2 uCardCenter;
 uniform vec2 uCardSize;
 uniform float uTime;
 
+uniform vec4 uPillRect;   // xy = center UV, zw = halfSize UV
+uniform float uPillPress; // 0.0 (diam) sampai 1.0 (disentuh/digeser)
+
 float roundedBoxDistance(vec2 point, vec2 halfSize, float radius) {
   vec2 q = abs(point) - halfSize + radius;
   return length(max(q, 0.0))
@@ -991,6 +994,32 @@ float roundedBoxDistance(vec2 point, vec2 halfSize, float radius) {
 
 vec4 sampleScene(vec2 uv) {
   return texture(uScene, clamp(uv, 0.002, 0.998));
+}
+
+vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
+  if (uPillRect.z <= 0.0) return baseColor;
+
+  vec2 pillOffset = uv - uPillRect.xy;
+  vec2 pillP = vec2(pillOffset.x * aspect, pillOffset.y);
+  vec2 pillHalf = vec2(uPillRect.z * aspect, uPillRect.w);
+  float pillRadius = pillHalf.y;
+
+  float pillDist = roundedBoxDistance(pillP, pillHalf, pillRadius);
+  if (pillDist >= 0.0) return baseColor;
+
+  float edgeBand = smoothstep(-pillRadius * 0.78, 0.0, pillDist);
+  vec2 pDir = normalize(pillP + vec2(0.00001));
+  float strength = (0.012 + 0.022 * uPillPress) * pow(edgeBand, 1.8);
+  vec2 bgShift = -pDir * strength;
+
+  vec3 bgLiquid;
+  bgLiquid.r = sampleScene(uv + bgShift * 1.18).r;
+  bgLiquid.g = sampleScene(uv + bgShift).g;
+  bgLiquid.b = sampleScene(uv + bgShift * 0.82).b;
+
+  float innerMask = smoothstep(0.0, -0.004, pillDist);
+  baseColor.rgb = mix(baseColor.rgb, bgLiquid * 0.94, innerMask);
+  return baseColor;
 }
 
 void main() {
@@ -1010,7 +1039,7 @@ void main() {
 
   vec4 original = sampleScene(uv);
   if (clearDistance <= 0.0) {
-    outColor = original;
+    outColor = applyPillLiquid(original, uv, aspect);
     return;
   }
 
@@ -1027,7 +1056,7 @@ void main() {
   field *= edgeGuard;
 
   if (field <= 0.0005) {
-    outColor = original;
+    outColor = applyPillLiquid(original, uv, aspect);
     return;
   }
 
@@ -1057,7 +1086,7 @@ void main() {
   float rim = exp(-abs(clearDistance * uResolution.y) / 3.0) * vertMask;
   refracted.rgb += vec3(0.08, 0.10, 0.13) * rim * field;
 
-  outColor = refracted;
+  outColor = applyPillLiquid(refracted, uv, aspect);
 }
 `;
 
@@ -2796,6 +2825,32 @@ function renderWebGLScene(now) {
   gl.uniform2f(uniforms.cardSize, cardWidth, cardHeight);
   gl.uniform1f(uniforms.time, now / 1000);
 
+  // Kirim posisi & ukuran pil navbar secara real-time ke WebGL Shader
+  const navRect = liquidNav.getBoundingClientRect();
+  if (navRect.width > 0 && width > 0 && height > 0) {
+    const { scaleX, scaleY } = getLiquidPillShape();
+    const displayX = asymptoticEdge(pillSpring.x, 0, 2, 0.045);
+    const insetCss = 5;
+    const tabWCss = (navRect.width - insetCss * 2) / 3;
+    const pillHalfWCss = (tabWCss * scaleX) * 0.5;
+    const pillHalfHCss = ((navRect.height - insetCss * 2) * scaleY) * 0.5;
+
+    const centerXCss = navRect.left + insetCss + (displayX + 0.5) * tabWCss;
+    const centerYCss = navRect.top + navRect.height * 0.5;
+
+    gl.uniform4f(
+      uniforms.pillRect,
+      centerXCss / width,
+      1.0 - (centerYCss / height),
+      pillHalfWCss / width,
+      pillHalfHCss / height
+    );
+    gl.uniform1f(uniforms.pillPress, clamp(pressSpring.x, 0, 1));
+  } else {
+    gl.uniform4f(uniforms.pillRect, 0, 0, 0, 0);
+    gl.uniform1f(uniforms.pillPress, 0);
+  }
+
   gl.clearColor(11 / 255, 24 / 255, 36 / 255, 1);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -2968,7 +3023,9 @@ async function init() {
       resolution: gl.getUniformLocation(program, "uResolution"),
       cardCenter: gl.getUniformLocation(program, "uCardCenter"),
       cardSize: gl.getUniformLocation(program, "uCardSize"),
-      time: gl.getUniformLocation(program, "uTime")
+      time: gl.getUniformLocation(program, "uTime"),
+      pillRect: gl.getUniformLocation(program, "uPillRect"),
+      pillPress: gl.getUniformLocation(program, "uPillPress")
     };
 
     resize();
