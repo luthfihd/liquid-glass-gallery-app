@@ -1834,12 +1834,13 @@ function shadeContentOnlyRefractionPixel(
   // Hitung sorotan arah gerakan (dirX searah dengan velX = bibir depan menyala)
   const motionPush = clamp(dirX * velX * 0.22, -0.25, 0.55);
   const causticGlow = Math.abs(velX) * 0.045 * Math.abs(dirX);
-  const specularHighlight = rimBand * (
+  const rimAlpha = rimBand * (
     0.30 +
     (0.14 + up * 0.38 + down * 0.20 + motionPush + causticGlow) * pc
   );
 
-  const glassBodyAlpha = (0.09 * (1 - pc) + 0.04 * pc) * (0.65 + 0.35 * (1 - dome));
+  // Tint kaca cair yang sangat jernih
+  const glassBodyAlpha = (0.065 * (1 - pc) + 0.035 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
 
   const outA = Math.min(1.0, contentAlpha + rimAlpha + glassBodyAlpha * (1.0 - contentAlpha));
   if (outA <= 0.002) {
