@@ -1967,10 +1967,17 @@ function createUnifiedLiquidControl(options) {
     const { inset, innerW, innerH, tW, tH, maxTravel } = getThumbMetrics(cardW, cardH);
 
     const pc = clamp(pressS.x, 0, 1);
-    const velStretch = Math.min(0.36, Math.abs(ratioSpring.v) * 0.10);
+    const speed = Math.abs(ratioSpring.v);
+    const speedShrink = clamp((speed - 0.9) / 4.5, 0, 1);
+
+    const velStretch = Math.min(0.26, speed * 0.06);
     const jellySquash = jellyS.x * 0.072;
-    const scaleX = 1 + TRAVEL_W * swellXS.x + velStretch + jellySquash;
-    const scaleY = 1 + TRAVEL_H * swellYS.x - velStretch * 0.45 - jellySquash * 1.25;
+
+    const dynamicSwellX = TRAVEL_W * swellXS.x * (1 - speedShrink * 0.65);
+    const dynamicSwellY = TRAVEL_H * swellYS.x * (1 - speedShrink * 0.85);
+
+    const scaleX = 1 + dynamicSwellX + velStretch - speedShrink * 0.14 + jellySquash;
+    const scaleY = 1 + dynamicSwellY - speedShrink * 0.34 - velStretch * 0.35 - jellySquash * 1.25;
 
     const displayRatio = asymptoticEdge(ratioSpring.x, 0, 1, 0.03);
     const pillHalfW = (tW * scaleX) * 0.5;
@@ -2407,11 +2414,20 @@ liquidNav.addEventListener("pointercancel", () => {
 });
 
 function getLiquidPillShape() {
-  const velStretch = Math.min(0.38, Math.abs(pillSpring.v) * 0.10);
+  const speed = Math.abs(pillSpring.v);
+  // 0.0 saat diam/pelan -> mendekati 1.0 saat didrag cepat
+  const speedShrink = clamp((speed - 1.2) / 6.5, 0, 1);
+
+  const velStretch = Math.min(0.28, speed * 0.065);
   const jellySquash = lensJellySpring.x * 0.072;
+
+  // Saat didrag cepat, swell berkurang dan kapsul menyusut/meramping (pinching)
+  const dynamicSwellX = TRAVEL_W * swellXSpring.x * (1 - speedShrink * 0.65);
+  const dynamicSwellY = TRAVEL_H * swellYSpring.x * (1 - speedShrink * 0.85);
+
   return {
-    scaleX: 1 + TRAVEL_W * swellXSpring.x + velStretch + jellySquash,
-    scaleY: 1 + TRAVEL_H * swellYSpring.x - velStretch * 0.45 - jellySquash * 1.25
+    scaleX: 1 + dynamicSwellX + velStretch - speedShrink * 0.14 + jellySquash,
+    scaleY: 1 + dynamicSwellY - speedShrink * 0.34 - velStretch * 0.35 - jellySquash * 1.25
   };
 }
 
