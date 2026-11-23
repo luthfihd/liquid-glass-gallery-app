@@ -1794,44 +1794,43 @@ function shadeContentOnlyRefractionPixel(
   cornerR, sdfPill, pc, dprScale,
   output, outIndex, velX = 0
 ) {
-  const mask = 1.0 - smoothstep(-0.85 * dprScale, 0.95 * dprScale, sdfPill);
+  const mask = smoothstep(0.9 * dprScale, -0.75 * dprScale, sdfPill);
   if (mask <= 0.001) {
     output[outIndex + 3] = 0;
     return;
   }
 
-  const bevel = Math.max(cornerR * 0.88, 12 * dprScale);
-  const t = Math.pow(clamp(-sdfPill / bevel, 0, 1), 1 / 1.45);
-  const dome = Math.sqrt(Math.max(0, 1 - (1 - t) * (1 - t)));
+  const invW = 1 / Math.max(1, pillHalfW);
+  const invH = 1 / Math.max(1, pillHalfH);
+  const nx = dxPill * invW;
+  const ny = dyPill * invH;
+  const nLen = Math.hypot(nx, ny);
+  const dirX = nLen > 0.0001 ? nx / nLen : 0;
+  const dirY = nLen > 0.0001 ? ny / nLen : 0;
 
-  const nx = dxPill / Math.max(1, pillHalfW);
-  const ny = dyPill / Math.max(1, pillHalfH);
-  const gLen = Math.max(0.0001, Math.hypot(nx, ny));
-  const dirX = nx / gLen;
-  const dirY = ny / gLen;
+  // Kurva meniscus cairan: datar di tengah, melengkung tajam di bibir kapsul
+  const rimZone = 16.0 * dprScale;
+  const edgeRatio = clamp((sdfPill + rimZone) / rimZone, 0, 1);
+  const meniscusProfile = Math.pow(edgeRatio, 3.2);
 
-  const magFactor = 1.0 / (0.185 * pc * dome + 1.0);
-  const magShiftX = dxPill * (magFactor - 1.0);
-  const magShiftY = dyPill * (magFactor - 1.0);
+  // 1. Pembiasan ikon & teks dengan dispersi kromatik di bibir kapsul
+  const pullMag = (1.2 + 8.5 * pc) * dprScale * meniscusProfile;
+  const shiftX = -dirX * pullMag;
+  const shiftY = -dirY * pullMag;
 
-  const edge = smoothstep(bevel * 0.54, 0, -sdfPill);
-  const refractMag = (21.0 * dprScale * pc) * Math.pow(edge, 1.55);
-  const shiftX = magShiftX - dirX * refractMag;
-  const shiftY = magShiftY - dirY * refractMag * 0.78;
-
-  const disp = 0.17 * pc;
-  const [rr, , , ra] = sampleBilinearPremultiplied(source, w, h, x + shiftX * (1 + disp), y + shiftY * (1 + disp));
-  const [, gg, , ga] = sampleBilinearPremultiplied(source, w, h, x + shiftX, y + shiftY);
-  const [, , bb, ba] = sampleBilinearPremultiplied(source, w, h, x + shiftX * (1 - disp), y + shiftY * (1 - disp));
+  const disp = (1.0 + 0.55 * pc) * dprScale * meniscusProfile;
+  const [rr, , , ra] = sampleBilinearRGBA(source, w, h, x + shiftX + dirX * disp, y + shiftY + dirY * disp);
+  const [, gg, , ga] = sampleBilinearRGBA(source, w, h, x + shiftX, y + shiftY);
+  const [, , bb, ba] = sampleBilinearRGBA(source, w, h, x + shiftX - dirX * disp, y + shiftY - dirY * disp);
 
   const contentAlpha = Math.max(ra, ga, ba);
 
+  // 2. Specular Wet Rim Dinamis (bereaksi terhadap kecepatan & arah geser)
   const rimW = 1.15 * dprScale;
   const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
   const up = clamp(-dirY, 0, 1);
   const down = clamp(dirY, 0, 1);
 
-  // Hitung sorotan arah gerakan (dirX searah dengan velX = bibir depan menyala)
   const motionPush = clamp(dirX * velX * 0.22, -0.25, 0.55);
   const causticGlow = Math.abs(velX) * 0.045 * Math.abs(dirX);
   const rimAlpha = rimBand * (
@@ -1839,7 +1838,7 @@ function shadeContentOnlyRefractionPixel(
     (0.14 + up * 0.38 + down * 0.20 + motionPush + causticGlow) * pc
   );
 
-  // Tint kaca cair yang sangat jernih
+  // 3. Tint kaca cair yang sangat jernih
   const glassBodyAlpha = (0.065 * (1 - pc) + 0.035 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
 
   const outA = Math.min(1.0, contentAlpha + rimAlpha + glassBodyAlpha * (1.0 - contentAlpha));
