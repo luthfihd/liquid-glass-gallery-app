@@ -2402,8 +2402,8 @@ function updateLiquidPillPhysics(dt) {
   const touchZoom = pressSpring.x * 0.05; 
   const navScaleX = 1 + touchZoom + bStretch;
   const navScaleY = 1 + touchZoom - bStretch * 0.72;
-  if (Math.abs(bShift) > 0.02 || Math.abs(bStretch) > 0.0005) {
-    liquidNav.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${(1 + bStretch).toFixed(4)}, ${(1 - bStretch * 0.72).toFixed(4)})`;
+  if (Math.abs(bShift) > 0.02 || Math.abs(navScaleX - 1) > 0.0005 || Math.abs(navScaleY - 1) > 0.0005) {
+    liquidNav.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${navScaleX.toFixed(4)}, ${navScaleY.toFixed(4)})`;
   } else {
     liquidNav.style.transform = "";
   }
