@@ -1869,8 +1869,8 @@ function shadeContentOnlyRefractionPixel(
     (0.14 + up * 0.38 + down * 0.20 + motionPush + causticGlow) * pc
   );
 
-  // 3. Tint kaca cair yang sangat jernih
-  const glassBodyAlpha = (0.065 * (1 - pc) + 0.035 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
+  // 3. Tint kaca cair transparan tanpa merusak warna dinamis teks & ikon
+  const glassBodyAlpha = (0.045 * (1 - pc) + 0.025 * pc) * (0.35 + 0.65 * (1.0 - meniscusProfile));
 
   const outA = Math.min(1.0, contentAlpha + rimAlpha + glassBodyAlpha * (1.0 - contentAlpha));
   if (outA <= 0.002) {
@@ -1878,12 +1878,13 @@ function shadeContentOnlyRefractionPixel(
     return;
   }
 
+  // Pertahankan warna asli teks/ikon (rr, gg, bb) secara utuh, tambahkan kilau hanya di area specular rim
   const cWeight = contentAlpha / outA;
-  const gWeight = 1.0 - cWeight;
+  const rimWeight = rimAlpha / outA;
 
-  const finalR = rr * cWeight + 255 * gWeight;
-  const finalG = gg * cWeight + 255 * gWeight;
-  const finalB = bb * cWeight + 255 * gWeight;
+  const finalR = rr * cWeight + 255 * rimWeight;
+  const finalG = gg * cWeight + 255 * rimWeight;
+  const finalB = bb * cWeight + 255 * rimWeight;
 
   output[outIndex] = Math.min(255, (finalR + 0.5) | 0);
   output[outIndex + 1] = Math.min(255, (finalG + 0.5) | 0);
