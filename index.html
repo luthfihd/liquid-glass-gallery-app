@@ -1888,8 +1888,13 @@ function createUnifiedLiquidControl(options) {
 
     const bShift = clamp(barShiftS.x, -6, 6);
     const bStretch = clamp(barStretchS.x, -0.04, 0.05);
-    if (Math.abs(bShift) > 0.02 || Math.abs(bStretch) > 0.0005) {
-      containerEl.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${(1 + bStretch).toFixed(4)}, ${(1 - bStretch * 0.72).toFixed(4)})`;
+    // Faktor zoom saat toggle/slider disentuh atau digeser (0.05 = 5%)
+    const touchZoom = pressS.x * 0.05;
+    const ctrlScaleX = 1 + touchZoom + bStretch;
+    const ctrlScaleY = 1 + touchZoom - bStretch * 0.72;
+
+    if (Math.abs(bShift) > 0.02 || Math.abs(ctrlScaleX - 1) > 0.0005 || Math.abs(ctrlScaleY - 1) > 0.0005) {
+      containerEl.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${ctrlScaleX.toFixed(4)}, ${ctrlScaleY.toFixed(4)})`;
     } else {
       containerEl.style.transform = "";
     }
