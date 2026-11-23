@@ -316,6 +316,7 @@ body {
 
 .lg-segmented:active {
   cursor: grabbing;
+  z-index: 1;
 }
 
 .lg-seg-canvas {
@@ -412,6 +413,7 @@ body {
   box-shadow:
     0 4px 14px rgba(0, 0, 0, 0.14),
     inset 0 0.5px 0 rgba(255, 255, 255, 0.38);
+  z-index: 1;
 }
 
 .lg-slider-card:active {
@@ -1894,6 +1896,13 @@ function createUnifiedLiquidControl(options) {
     const ctrlScaleX = 1 + touchZoom + bStretch;
     const ctrlScaleY = 1 + touchZoom - bStretch * 0.72;
 
+    // Naikkan layer ke paling atas selama disentuh atau lensa masih membesar
+    if (isDragging || pressS.x > 0.01) {
+      containerEl.style.zIndex = "20";
+    } else {
+      containerEl.style.zIndex = "";
+    }
+    
     if (Math.abs(bShift) > 0.02 || Math.abs(ctrlScaleX - 1) > 0.0005 || Math.abs(ctrlScaleY - 1) > 0.0005) {
       containerEl.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${ctrlScaleX.toFixed(4)}, ${ctrlScaleY.toFixed(4)})`;
     } else {
