@@ -1890,7 +1890,7 @@ function createUnifiedLiquidControl(options) {
     const bShift = clamp(barShiftS.x, -6, 6);
     const bStretch = clamp(barStretchS.x, -0.04, 0.05);
     // Faktor zoom saat toggle/slider disentuh atau digeser (0.05 = 5%)
-    const touchZoom = pressS.x * 0.05;
+    const touchZoom = pressS.x * touchZoomScale;
     const ctrlScaleX = 1 + touchZoom + bStretch;
     const ctrlScaleY = 1 + touchZoom - bStretch * 0.72;
 
