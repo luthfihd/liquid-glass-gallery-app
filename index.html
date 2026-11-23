@@ -1823,7 +1823,7 @@ function shadeContentOnlyRefractionPixel(
   source, w, h, x, y,
   dxPill, dyPill, pillHalfW, pillHalfH,
   cornerR, sdfPill, pc, dprScale,
-  output, outIndex, velX = 0
+  output, outIndex, velX = 0, tintRgb = null
 ) {
   const mask = smoothstep(0.9 * dprScale, -0.75 * dprScale, sdfPill);
   if (mask <= 0.001) {
@@ -1856,6 +1856,11 @@ function shadeContentOnlyRefractionPixel(
 
   const contentAlpha = Math.max(ra, ga, ba);
 
+  // Terapkan warna dinamis jika ada, jika tidak pakai warna asli sumber
+  const tr = tintRgb ? (rr / 255) * tintRgb[0] : rr;
+  const tg = tintRgb ? (gg / 255) * tintRgb[1] : gg;
+  const tb = tintRgb ? (bb / 255) * tintRgb[2] : bb;
+
   // 2. Specular Wet Rim Dinamis (bereaksi terhadap kecepatan & arah geser)
   const rimW = 1.15 * dprScale;
   const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
@@ -1878,13 +1883,13 @@ function shadeContentOnlyRefractionPixel(
     return;
   }
 
-  // Pertahankan warna asli teks/ikon (rr, gg, bb) secara utuh, tambahkan kilau hanya di area specular rim
-  const cWeight = contentAlpha / outA;
-  const rimWeight = rimAlpha / outA;
+  // Warna konten dinamis dominan di tengah, kilau putih hanya di bibir kaca
+  const contentShare = contentAlpha / outA;
+  const specShare = (rimAlpha * (1.0 - contentAlpha * 0.7)) / outA;
 
-  const finalR = rr * cWeight + 255 * rimWeight;
-  const finalG = gg * cWeight + 255 * rimWeight;
-  const finalB = bb * cWeight + 255 * rimWeight;
+  const finalR = tr * contentShare + 255 * specShare;
+  const finalG = tg * contentShare + 255 * specShare;
+  const finalB = tb * contentShare + 255 * specShare;
 
   output[outIndex] = Math.min(255, (finalR + 0.5) | 0);
   output[outIndex + 1] = Math.min(255, (finalG + 0.5) | 0);
@@ -2728,6 +2733,8 @@ function drawLiquidNavRefraction() {
   const edgeRippleAmp = (Math.min(2.6, Math.abs(pillSpring.v) * 0.22 + Math.abs(lensJellySpring.x) * 0.85)) * dpr * pc;
   const velSkew = clamp(pillSpring.v * 0.08, -0.35, 0.35);
 
+  const activeTint = (typeof currentAccentRgb !== 'undefined') ? currentAccentRgb : null;
+
   for (let y = 0; y < lensHeight; y++) {
     const dyPill = y - pillCenterY;
     const qyPill = Math.abs(dyPill) - boxHalfY;
@@ -2753,7 +2760,7 @@ function drawLiquidNavRefraction() {
           source, lensWidth, lensHeight, x, y,
           dxPill, dyPill, pillHalfW, pillHalfH,
           cornerR, sdfPill, pc, dpr,
-          output, outIndex, pillSpring.v
+          output, outIndex, pillSpring.v, activeTint
         );
       } else {
         output[outIndex + 3] = 0;
