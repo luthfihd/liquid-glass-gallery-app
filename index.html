@@ -1823,6 +1823,7 @@ function createUnifiedLiquidControl(options) {
     getCurrentIndex,
     onSelectIndex,
     drawContent
+    touchZoomScale = 0.05
   } = options;
 
   const sctx = canvasEl.getContext("2d", { willReadFrequently: true });
