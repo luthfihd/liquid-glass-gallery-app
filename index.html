@@ -719,6 +719,7 @@ let wheelTimer = 0;
 let glassImageData = null;
 let lastAppliedPaletteIndex = -1;
 let currentAccentRgb = [45, 168, 255];
+let currentBackdropLuma = 0.28; // Adaptasi kontras otomatis (0 = gelap, 1 = terang)
 
 /* Performance Caches & Dirty Flags */
 let sceneDirty = true;
@@ -726,7 +727,7 @@ let lastNavRenderSig = "";
 let cachedNavBaseRect = { left: 0, top: 0, width: 344, height: 64 };
 
 /* =========================================================
-   ANALYTICAL DAMPED SPRINGS
+   ANALYTICAL DAMPED SPRINGS (CALIBRATED FOR iOS 27)
    ========================================================= */
 function stepSpring(s, targetVal, omega, zeta, dt) {
   const d = s.x - targetVal;
@@ -773,16 +774,17 @@ function asymptoticEdge(val, minVal, maxVal, margin = 0.045) {
   return val;
 }
 
-const TRAVEL_W = 0.26;
-const TRAVEL_H = 0.54;
-const SLIDE_SPRING = { omega: 24.0, zeta: 0.34 };
-const PRESS_OPEN_SPRING = { omega: 28.0, zeta: 0.52 };
-const PRESS_CLOSE_SPRING = { omega: 38.0, zeta: 0.84 };
-const HOVER_X = { omega: 29.0, zeta: 0.34 };
-const HOVER_Y = { omega: 24.0, zeta: 0.30 };
-const JELLY_WOBBLE = { omega: 16.0, zeta: 0.48 };
-const TILT_SPRING = { omega: 18.0, zeta: 0.28 };
-const BAR_JELLY_SPRING = { omega: 17.5, zeta: 0.34 };
+// Kalibrasi iOS 27: Redaman lebih tegas (settle cepat), tinggi tetap mengembang, sumbu X adaptif kecepatan
+const TRAVEL_W = 0.22;
+const TRAVEL_H = 0.52;
+const SLIDE_SPRING = { omega: 29.0, zeta: 0.58 };       // Tegas & cepat settle (iOS 27)
+const PRESS_OPEN_SPRING = { omega: 32.0, zeta: 0.62 };
+const PRESS_CLOSE_SPRING = { omega: 42.0, zeta: 0.88 };
+const HOVER_X = { omega: 30.0, zeta: 0.56 };
+const HOVER_Y = { omega: 26.0, zeta: 0.54 };
+const JELLY_WOBBLE = { omega: 21.0, zeta: 0.66 };       // Wobble dikalibrasi ulang agar tidak liar
+const TILT_SPRING = { omega: 22.0, zeta: 0.48 };
+const BAR_JELLY_SPRING = { omega: 21.0, zeta: 0.52 };
 
 let activeTab = 0;
 const pillSpring = { x: 0, v: 0 };
@@ -797,6 +799,11 @@ let lastPillPointerTime = 0;
 let fingerVx = 0;
 let mockupSlideTriggeredInGesture = false;
 
+// Touch Illumination Coordinates (normalized -1..1 relatif terhadap pil)
+let touchGlowX = 0;
+let touchGlowY = 0;
+const touchGlowSpring = { x: 0, v: 0 };
+
 const pressSpring = { x: 0, v: 0 };
 const swellXSpring = { x: 0, v: 0 };
 const swellYSpring = { x: 0, v: 0 };
@@ -805,6 +812,7 @@ const lensTiltSpring = { x: 0, v: 0 };
 const barShiftSpring = { x: 0, v: 0 };
 const barStretchSpring = { x: 0, v: 0 };
 const speedShrinkSpring = { x: 0, v: 0 };
+const flickStretchSpring = { x: 0, v: 0 }; // Velocity-driven stretch saat flick cepat
 let jellyPhase = 0;
 
 let cameraStream = null;
@@ -948,13 +956,16 @@ function extractMaterialYouPalette(image) {
     vibrant: vibrantRgb,
     deepDark: deepDarkRgb,
     softPastel: softPastelRgb,
-    secondary: secondaryRgb
+    secondary: secondaryRgb,
+    luma: avgL
   };
 }
 
 function applyNavMaterialYouPalette(palette) {
   if (!palette) return;
   currentAccentRgb = palette.accent;
+  currentBackdropLuma = typeof palette.luma === "number" ? palette.luma : 0.35;
+  lastNavRenderSig = "";
   const root = document.documentElement;
   root.style.setProperty("--nav-primary-rgb", palette.primary.join(", "));
   root.style.setProperty("--nav-accent-rgb", palette.accent.join(", "));
@@ -1823,9 +1834,12 @@ function shadeContentOnlyRefractionPixel(
   source, w, h, x, y,
   dxPill, dyPill, pillHalfW, pillHalfH,
   cornerR, sdfPill, pc, dprScale,
-  output, outIndex, velX = 0
+  output, outIndex, velX = 0,
+  glowNormX = 0, glowNormY = 0, glowIntensity = 0,
+  backdropLuma = 0.35
 ) {
-  const mask = smoothstep(0.9 * dprScale, -0.75 * dprScale, sdfPill);
+  // Ekspansi mask sedikit ke luar (1.35 * dpr) untuk menampung Darkened Outer Rim iOS 27
+  const mask = smoothstep(1.35 * dprScale, -0.65 * dprScale, sdfPill);
   if (mask <= 0.001) {
     output[outIndex + 3] = 0;
     return;
@@ -1839,62 +1853,86 @@ function shadeContentOnlyRefractionPixel(
   const dirX = nLen > 0.0001 ? nx / nLen : 0;
   const dirY = nLen > 0.0001 ? ny / nLen : 0;
 
-  // Zona bevel pinggir & area inti cembung
+  // Dual-Mode Velocity Physics:
+  // Saat scrubbing lambat -> pembiasan optik 100% penuh.
+  // Saat flick cepat -> kurangi intensitas distorsi agar mata tidak pusing.
+  const speedRatio = clamp((Math.abs(velX) - 1.2) / 6.5, 0, 1);
+  const opticalStability = 1.0 - speedRatio * 0.52;
+
   const rimZone = Math.min(pillHalfH * 0.72, 18.0 * dprScale);
   const edgeRatio = clamp((sdfPill + rimZone) / rimZone, 0, 1);
   const meniscusProfile = Math.pow(edgeRatio, 3.0);
 
-  // Layer 1: Core Convex Magnification (ikon di tengah membesar halus saat ditekan)
-  const coreZoom = (0.015 + 0.042 * pc) * (1.0 - meniscusProfile * 0.75);
+  // Layer 1: Core Convex Magnification (pembesaran ikon di bawah pil)
+  const coreZoom = (0.018 + 0.048 * pc) * (1.0 - meniscusProfile * 0.75) * opticalStability;
   const coreShiftX = -dxPill * coreZoom;
   const coreShiftY = -dyPill * coreZoom;
 
   // Layer 2: Edge Bevel Refraction + Chromatic Dispersion
-  const pullMag = (1.4 + 9.2 * pc) * dprScale * meniscusProfile;
+  const pullMag = (1.4 + 9.2 * pc) * dprScale * meniscusProfile * opticalStability;
   const shiftX = coreShiftX - dirX * pullMag;
   const shiftY = coreShiftY - dirY * pullMag;
 
-  const disp = (1.05 + 0.65 * pc) * dprScale * meniscusProfile;
+  const disp = (1.05 + 0.65 * pc) * dprScale * meniscusProfile * opticalStability;
   const [rr, , , ra] = sampleBilinearPremultiplied(source, w, h, x + shiftX + dirX * disp, y + shiftY + dirY * disp);
   const [, gg, , ga] = sampleBilinearPremultiplied(source, w, h, x + shiftX, y + shiftY);
   const [, , bb, ba] = sampleBilinearPremultiplied(source, w, h, x + shiftX - dirX * disp, y + shiftY - dirY * disp);
 
   const contentAlpha = Math.max(ra, ga, ba);
 
-  // Layer 3: Inner Glass Thickness Shadow (memberi kesan tebal 3D di balik tepi kaca)
+  // Layer 3: Touch Illumination (pendar cahaya internal terpusat di koordinat jari)
+  let touchGlowAlpha = 0;
+  if (glowIntensity > 0.005 && sdfPill <= 0.2 * dprScale) {
+    const distToFinger = Math.hypot((nx - glowNormX) * 1.15, ny - glowNormY);
+    const radialFalloff = Math.exp(-distToFinger * distToFinger * 2.4);
+    touchGlowAlpha = radialFalloff * glowIntensity * (0.26 - backdropLuma * 0.08) * (1.0 - contentAlpha * 0.55);
+  }
+
+  // Layer 4: Inner Glass Thickness Shadow
   const innerShadowBand = smoothstep(5.5 * dprScale, 0.0, Math.abs(sdfPill + 2.6 * dprScale));
   const innerShadowAlpha = innerShadowBand * (0.14 + 0.18 * pc) * (1.0 - contentAlpha * 0.6);
 
-  // Layer 4: Dual Specular Rim (kilau tajam di pinggir atas + pantulan balik di bawah)
+  // Layer 5: Darkened Outer Rim (iOS 27 - garis tepi gelap tipis di sekeliling luar kapsul)
+  // Otomatis menebal jika foto di belakangnya terang (backdropLuma tinggi)
+  const darkRimBand = smoothstep(1.1 * dprScale, 0.0, Math.abs(sdfPill - 0.35 * dprScale));
+  const darkRimAlpha = darkRimBand * (0.16 + backdropLuma * 0.24 + 0.08 * pc) * (1.0 - contentAlpha * 0.7);
+
+  // Layer 6: Dual Specular Rim + Leading-Edge Velocity Highlight
   const rimW = 1.25 * dprScale;
   const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
   const up = clamp(-dirY, 0, 1);
   const down = clamp(dirY, 0, 1);
 
-  const motionPush = clamp(dirX * velX * 0.24, -0.25, 0.60);
-  const causticGlow = Math.abs(velX) * 0.05 * Math.abs(dirX);
-  const primarySpec = Math.pow(up, 1.35) * (0.42 + 0.26 * pc);
-  const bounceSpec = Math.pow(down, 1.6) * (0.18 + 0.16 * pc);
+  // Menggeser pantulan kilau ke sisi depan arah gerak (leading edge) saat flick cepat
+  const moveDir = velX === 0 ? 0 : Math.sign(velX);
+  const leadingEdgeBoost = clamp(dirX * moveDir, 0, 1) * speedRatio * 0.55;
+  const specContrastBoost = 1.0 + (0.5 - backdropLuma) * 0.35;
+
+  const primarySpec = Math.pow(up, 1.35) * (0.40 + 0.24 * pc) * specContrastBoost;
+  const bounceSpec = Math.pow(down, 1.6) * (0.16 + 0.14 * pc);
   const rimAlpha = rimBand * (
-    0.22 + primarySpec + bounceSpec + (0.10 + motionPush + causticGlow) * pc
+    0.20 + primarySpec + bounceSpec + leadingEdgeBoost + (0.08 * pc)
   );
 
-  // Layer 5: Top Grazing Glass Sheen & Frosted Body Fill
-  const topSheen = Math.pow(clamp(1.0 - (ny + 1.0) * 0.65, 0, 1), 2.4) * (0.045 + 0.055 * pc);
-  const baseBody = (0.04 + 0.025 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
+  // Layer 7: Top Grazing Glass Sheen & Adaptive Frosted Body
+  const topSheen = Math.pow(clamp(1.0 - (ny + 1.0) * 0.65, 0, 1), 2.4) * (0.045 + 0.05 * pc);
+  const baseBody = (0.045 + 0.025 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
   const glassBodyAlpha = (baseBody + topSheen) * (1.0 - contentAlpha);
 
-  const outA = Math.min(1.0, contentAlpha + rimAlpha + innerShadowAlpha + glassBodyAlpha);
+  const outA = Math.min(
+    1.0,
+    contentAlpha + rimAlpha + darkRimAlpha + innerShadowAlpha + glassBodyAlpha + touchGlowAlpha
+  );
   if (outA <= 0.002) {
     output[outIndex + 3] = 0;
     return;
   }
 
   const contentShare = contentAlpha / outA;
-  const specShare = (rimAlpha * (1.0 - contentAlpha * 0.65)) / outA;
+  const specShare = ((rimAlpha + touchGlowAlpha) * (1.0 - contentAlpha * 0.65)) / outA;
   const bodyShare = glassBodyAlpha / outA;
 
-  // Warna kaca sedikit sejuk (242, 248, 255), inner shadow menyerap cahaya (0, 0, 0)
+  // darkRimAlpha dan innerShadowAlpha berkontribusi sebagai komponen gelap (0, 0, 0)
   const finalR = rr * contentShare + 255 * specShare + 242 * bodyShare;
   const finalG = gg * contentShare + 255 * specShare + 248 * bodyShare;
   const finalB = bb * contentShare + 255 * specShare + 255 * bodyShare;
@@ -1946,6 +1984,10 @@ function createUnifiedLiquidControl(options) {
   const barShiftS = { x: 0, v: 0 };
   const barStretchS = { x: 0, v: 0 };
   const speedShrinkS = { x: 0, v: 0 };
+  const flickS = { x: 0, v: 0 };
+  const glowS = { x: 0, v: 0 };
+  let glowX = 0;
+  let glowY = 0;
   let phase = 0;
   let moved = false;
   let lastPtrX = 0;
@@ -1975,9 +2017,11 @@ function createUnifiedLiquidControl(options) {
 
     const traveling = !isDragging && (Math.abs(targetRatio - ratioSpring.x) > 0.10 || Math.abs(ratioSpring.v) > 0.30);
     const openTarget = (isDragging || traveling) ? 1.0 : 0.0;
+    const glowTarget = isDragging ? 1.0 : 0.0;
     const pSpr = openTarget > 0.5 ? PRESS_OPEN_SPRING : PRESS_CLOSE_SPRING;
 
     stepSpring(pressS, openTarget, pSpr.omega, pSpr.zeta, dt);
+    stepSpring(glowS, glowTarget, 30.0, 0.72, dt);
     stepSpring(swellXS, openTarget, HOVER_X.omega, HOVER_X.zeta, dt);
     stepSpring(swellYS, openTarget, HOVER_Y.omega, HOVER_Y.zeta, dt);
     stepSpring(jellyS, 0, JELLY_WOBBLE.omega, JELLY_WOBBLE.zeta, dt);
@@ -1988,11 +2032,14 @@ function createUnifiedLiquidControl(options) {
       stepSpring(barShiftS, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
       stepSpring(barStretchS, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
     }
-    const speed = Math.abs(ratioSpring.v);
-    const targetShrink = (isDragging || traveling) ? clamp((speed - 0.6) / 4.0, 0, 1) : 0;
-    stepSpring(speedShrinkS, targetShrink, 18.0, 0.65, dt);
 
-    phase += dt * (15.0 + Math.abs(ratioSpring.v) * 4.5 + Math.abs(jellyS.x) * 5.0);
+    const speed = Math.abs(ratioSpring.v);
+    const targetFlick = (isDragging || traveling) ? clamp((speed - 1.8) / 4.2, 0, 1) : 0;
+    const targetShrink = (isDragging || traveling) ? clamp((speed - 0.7) / 4.0, 0, 1) : 0;
+    stepSpring(flickS, targetFlick, 26.0, 0.62, dt);
+    stepSpring(speedShrinkS, targetShrink, 22.0, 0.70, dt);
+
+    phase += dt * (15.0 + Math.abs(ratioSpring.v) * 4.5 + Math.abs(jellyS.x) * 4.5);
 
     const bShift = clamp(barShiftS.x, -6, 6);
     const bStretch = clamp(barStretchS.x, -0.04, 0.05);
@@ -2041,12 +2088,14 @@ function createUnifiedLiquidControl(options) {
     const { inset, innerW, innerH, tW, tH, maxTravel } = getThumbMetrics(cardW, cardH);
 
     const pc = clamp(pressS.x, 0, 1);
+    const glowVal = clamp(glowS.x, 0, 1);
     const shrinkX = clamp(speedShrinkS.x, 0, 1);
-    const jellySquash = jellyS.x * 0.055;
+    const flickStretch = clamp(flickS.x, 0, 1);
+    const jellySquash = jellyS.x * 0.04;
 
-    // Menyusut hanya di sumbu X (gepeng horizontal), sumbu Y tetap tinggi mengembang
-    const scaleX = 1 + (TRAVEL_W * swellXS.x * (1 - shrinkX * 0.65)) - (shrinkX * 0.19) + jellySquash;
-    const scaleY = 1 + (TRAVEL_H * swellYS.x) + (shrinkX * 0.07) - jellySquash * 0.45;
+    // Dual-mode: Scrubbing lambat -> stabil proporsional, Flick cepat -> memanjang elastis
+    const scaleX = 1 + (TRAVEL_W * swellXS.x) + (flickStretch * 0.22) - (shrinkX * 0.08) + jellySquash;
+    const scaleY = 1 + (TRAVEL_H * swellYS.x) - (flickStretch * 0.08) - jellySquash * 0.45;
 
     const displayRatio = asymptoticEdge(ratioSpring.x, 0, 1, 0.03);
     const pillHalfW = (tW * scaleX) * 0.5;
@@ -2056,7 +2105,7 @@ function createUnifiedLiquidControl(options) {
     const tiltShear = clamp(tiltS.x, -0.22, 0.22);
 
     const labelText = containerEl === bgSlider ? currentBgLabel : (containerEl === frameSlider ? currentFrameLabel : "");
-    const ctrlSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${tiltShear.toFixed(3)}|${currentAccentRgb.join(",")}|${labelText}|${w}x${h}`;
+    const ctrlSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${glowVal.toFixed(2)}|${glowX.toFixed(2)}|${tiltShear.toFixed(3)}|${currentAccentRgb.join(",")}|${labelText}|${w}x${h}`;
     if (ctrlSig === lastCtrlSig) return;
     lastCtrlSig = ctrlSig;
 
@@ -2100,12 +2149,14 @@ function createUnifiedLiquidControl(options) {
         const ripple = edgeRippleAmp * Math.sin(dx * 0.075 + phase) * Math.cos(dy * 0.085 - phase * 0.8);
         const sdf = Math.sqrt(ox * ox + oy2) + Math.min(Math.max(qx, qy), 0) - cornerR + ripple * 0.35;
 
-        if (sdf <= 1.1 * dpr) {
+        if (sdf <= 1.45 * dpr) {
           shadeContentOnlyRefractionPixel(
             source, w, h, x, y,
             dx, dy, pillHalfW, pillHalfH,
             cornerR, sdf, pc, dpr,
-            output, idx, ratioSpring.v
+            output, idx, ratioSpring.v,
+            glowX, glowY, glowVal,
+            0.35
           );
         }
       }
@@ -2146,6 +2197,15 @@ function createUnifiedLiquidControl(options) {
     startRatio = clamp(ratioSpring.x, 0, 1);
     ratioSpring.v = 0;
     jellyS.v += 6.2;
+    
+    // Hitung titik awal sentuhan relatif terhadap pusat pil untuk Touch Illumination
+    const rect = containerEl.getBoundingClientRect();
+    const { inset, tW, maxTravel } = getThumbMetrics(rect.width * dpr, rect.height * dpr);
+    const pillCxCss = rect.left + (inset + startRatio * maxTravel + tW * 0.5) / dpr;
+    const pillCyCss = rect.top + rect.height * 0.5;
+    glowX = clamp((e.clientX - pillCxCss) / Math.max(12, (tW * 0.5) / dpr), -1, 1);
+    glowY = clamp((e.clientY - pillCyCss) / Math.max(10, rect.height * 0.45), -1, 1);
+
     try { containerEl.setPointerCapture(e.pointerId); } catch (_) {}
   });
 
@@ -2190,6 +2250,15 @@ function createUnifiedLiquidControl(options) {
     }
 
     targetRatio = clamp(ratioSpring.x, 0, 1);
+
+    // Perbarui titik cahaya mengikuti posisi jari selama digeser
+    const rect = containerEl.getBoundingClientRect();
+    const { inset, tW, maxTravel } = getThumbMetrics(rect.width * dpr, rect.height * dpr);
+    const curRatio = clamp(ratioSpring.x, 0, 1);
+    const pillCxCss = rect.left + (inset + curRatio * maxTravel + tW * 0.5) / dpr;
+    const pillCyCss = rect.top + rect.height * 0.5;
+    glowX = clamp((e.clientX - pillCxCss) / Math.max(12, (tW * 0.5) / dpr), -1, 1);
+    glowY = clamp((e.clientY - pillCyCss) / Math.max(10, rect.height * 0.45), -1, 1);
 
     const steps = getStepsCount();
     const idx = Math.min(steps - 1, Math.round(clamp(ratioSpring.x, 0, 1) * (steps - 1)));
@@ -2409,7 +2478,16 @@ liquidNav.addEventListener("pointerdown", (event) => {
   fingerVx = 0;
   pillDragStartPos = clamp(pillSpring.x, 0, 2);
   pillSpring.v = 0;
-  lensJellySpring.v += 6.5;
+  lensJellySpring.v += 4.2;
+
+  // Hitung koordinat sentuhan relatif untuk Touch Illumination
+  const navRect = liquidNav.getBoundingClientRect();
+  const tabW = (navRect.width - 10) / 3;
+  const currentPillCenterX = navRect.left + 5 + (pillDragStartPos + 0.5) * tabW;
+  const currentPillCenterY = navRect.top + navRect.height * 0.5;
+  touchGlowX = clamp((event.clientX - currentPillCenterX) / (tabW * 0.5), -1, 1);
+  touchGlowY = clamp((event.clientY - currentPillCenterY) / (navRect.height * 0.45), -1, 1);
+
   try {
     liquidNav.setPointerCapture(event.pointerId);
   } catch (_) {}
@@ -2424,8 +2502,14 @@ liquidNav.addEventListener("pointermove", (event) => {
   lastPillPointerTime = now;
 
   const baseW = cachedNavBaseRect.width || liquidNav.offsetWidth || 344;
+  const baseH = cachedNavBaseRect.height || liquidNav.offsetHeight || 64;
   const tabWidth = (baseW - 10) / 3;
   const dx = event.clientX - pillDragStartX;
+
+  const pillCenterScreenX = cachedNavBaseRect.left + 5 + (clamp(pillSpring.x, 0, 2) + 0.5) * tabWidth;
+  const pillCenterScreenY = cachedNavBaseRect.top + baseH * 0.5;
+  touchGlowX = clamp((event.clientX - pillCenterScreenX) / (tabWidth * 0.55), -1, 1);
+  touchGlowY = clamp((event.clientY - pillCenterScreenY) / (baseH * 0.45), -1, 1);
 
   if (Math.abs(dx) > 4) {
     pillMoved = true;
@@ -2497,11 +2581,14 @@ liquidNav.addEventListener("pointercancel", () => {
 
 function getLiquidPillShape() {
   const shrinkX = clamp(speedShrinkSpring.x, 0, 1);
-  const jellySquash = lensJellySpring.x * 0.055;
+  const flickStretch = clamp(flickStretchSpring.x, 0, 1);
+  const jellySquash = lensJellySpring.x * 0.04;
 
-  // Sumbu X menyusut/memadat saat meluncur cepat, sumbu Y tetap tinggi & proporsional
-  const scaleX = 1 + (TRAVEL_W * swellXSpring.x * (1 - shrinkX * 0.65)) - (shrinkX * 0.20) + jellySquash;
-  const scaleY = 1 + (TRAVEL_H * swellYSpring.x) + (shrinkX * 0.08) - jellySquash * 0.45;
+  // Dual-mode:
+  // - Scrubbing lambat: scaleX & scaleY mengembang stabil & proporsional
+  // - Flick cepat: memanjang elastis di sumbu X (velocity-driven stretch) & memadat
+  const scaleX = 1 + (TRAVEL_W * swellXSpring.x) + (flickStretch * 0.24) - (shrinkX * 0.08) + jellySquash;
+  const scaleY = 1 + (TRAVEL_H * swellYSpring.x) - (flickStretch * 0.08) - jellySquash * 0.45;
 
   return { scaleX, scaleY };
 }
@@ -2518,11 +2605,13 @@ function updateLiquidPillPhysics(dt) {
     }
   }
 
-  const traveling = !pillDragging && (Math.abs(pillSpring.x - pillTarget) > 0.14 || Math.abs(pillSpring.v) > 0.35);
+  const traveling = !pillDragging && (Math.abs(pillSpring.x - pillTarget) > 0.12 || Math.abs(pillSpring.v) > 0.35);
   const openTarget = (pillPressing || pillDragging || traveling) ? 1.0 : 0.0;
+  const glowTarget = (pillPressing || pillDragging) ? 1.0 : 0.0;
   const pSpr = openTarget > 0.5 ? PRESS_OPEN_SPRING : PRESS_CLOSE_SPRING;
 
   stepSpring(pressSpring, openTarget, pSpr.omega, pSpr.zeta, dt);
+  stepSpring(touchGlowSpring, glowTarget, 30.0, 0.72, dt);
   stepSpring(swellXSpring, openTarget, HOVER_X.omega, HOVER_X.zeta, dt);
   stepSpring(swellYSpring, openTarget, HOVER_Y.omega, HOVER_Y.zeta, dt);
   stepSpring(lensJellySpring, 0, JELLY_WOBBLE.omega, JELLY_WOBBLE.zeta, dt);
@@ -2535,10 +2624,13 @@ function updateLiquidPillPhysics(dt) {
   }
 
   const speed = Math.abs(pillSpring.v);
-  const targetShrink = (pillDragging || traveling) ? clamp((speed - 0.8) / 5.5, 0, 1) : 0;
-  stepSpring(speedShrinkSpring, targetShrink, 18.0, 0.65, dt);
+  // Ambang batas flick cepat (> 2.2 tab/detik)
+  const targetFlick = (pillDragging || traveling) ? clamp((speed - 2.2) / 5.5, 0, 1) : 0;
+  const targetShrink = (pillDragging || traveling) ? clamp((speed - 0.9) / 5.5, 0, 1) : 0;
+  stepSpring(flickStretchSpring, targetFlick, 26.0, 0.62, dt);
+  stepSpring(speedShrinkSpring, targetShrink, 22.0, 0.70, dt);
 
-  jellyPhase += dt * (15.0 + Math.abs(pillSpring.v) * 4.5 + Math.abs(lensJellySpring.x) * 5.2);
+  jellyPhase += dt * (15.0 + Math.abs(pillSpring.v) * 4.5 + Math.abs(lensJellySpring.x) * 4.5);
 
   const bShift = clamp(barShiftSpring.x, -7, 7);
   const bStretch = clamp(barStretchSpring.x, -0.042, 0.052);
@@ -2551,7 +2643,7 @@ function updateLiquidPillPhysics(dt) {
     liquidNav.style.transform = "";
   }
 }
-
+  
 window.addEventListener("beforeunload", () => {
   stopCamera();
   sessionObjectUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -2748,8 +2840,9 @@ function drawLiquidNavRefraction() {
   const tiltShear = clamp(lensTiltSpring.x, -0.22, 0.22);
 
   const pc = clamp(pressSpring.x, 0, 1);
+  const glowVal = clamp(touchGlowSpring.x, 0, 1);
 
-  const navSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${tiltShear.toFixed(3)}|${currentAccentRgb.join(",")}|${lensWidth}x${lensHeight}`;
+  const navSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${glowVal.toFixed(2)}|${touchGlowX.toFixed(2)}|${currentBackdropLuma.toFixed(2)}|${tiltShear.toFixed(3)}|${currentAccentRgb.join(",")}|${lensWidth}x${lensHeight}`;
   if (navSig === lastNavRenderSig) return;
   lastNavRenderSig = navSig;
 
@@ -2804,12 +2897,14 @@ function drawLiquidNavRefraction() {
       const ripple = edgeRippleAmp * Math.sin(dxPill * 0.075 + jellyPhase) * Math.cos(dyPill * 0.085 - jellyPhase * 0.8);
       const sdfPill = Math.sqrt(oxPill * oxPill + oyPill2) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR + ripple * 0.35;
 
-      if (sdfPill <= 1.1 * dpr) {
+      if (sdfPill <= 1.45 * dpr) {
         shadeContentOnlyRefractionPixel(
           source, lensWidth, lensHeight, x, y,
           dxPill, dyPill, pillHalfW, pillHalfH,
           cornerR, sdfPill, pc, dpr,
-          output, outIndex, pillSpring.v
+          output, outIndex, pillSpring.v,
+          touchGlowX, touchGlowY, glowVal,
+          currentBackdropLuma
         );
       }
     }
