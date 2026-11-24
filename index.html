@@ -813,6 +813,7 @@ const barShiftSpring = { x: 0, v: 0 };
 const barStretchSpring = { x: 0, v: 0 };
 const speedShrinkSpring = { x: 0, v: 0 };
 const flickStretchSpring = { x: 0, v: 0 };
+const edgeSquashSpring = { x: 0, v: 0 };
 let jellyPhase = 0;
 
 let cameraStream = null;
@@ -1896,31 +1897,16 @@ function shadeContentOnlyRefractionPixel(
   const darkRimBand = smoothstep(0.9 * dprScale, 0.0, Math.abs(sdfPill - 0.25 * dprScale));
   const darkRimAlpha = darkRimBand * (0.08 + backdropLuma * 0.14 + 0.04 * pc) * (1.0 - contentAlpha * 0.75);
 
-  // Layer 6: Dual Specular Rim + Leading-Edge Velocity Highlight
-  const rimW = 1.25 * dprScale;
-  const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
-  const up = clamp(-dirY, 0, 1);
-  const down = clamp(dirY, 0, 1);
+  // Layer 6: Specular Highlight dihilangkan (murni pembiasan kristal bening)
+  const rimAlpha = 0;
 
-  // Menggeser pantulan kilau ke sisi depan arah gerak (leading edge) saat flick cepat
-  const moveDir = velX === 0 ? 0 : Math.sign(velX);
-  const leadingEdgeBoost = clamp(dirX * moveDir, 0, 1) * speedRatio * 0.55;
-  const specContrastBoost = 1.0 + (0.5 - backdropLuma) * 0.35;
-
-  const primarySpec = Math.pow(up, 1.35) * (0.40 + 0.24 * pc) * specContrastBoost;
-  const bounceSpec = Math.pow(down, 1.6) * (0.16 + 0.14 * pc);
-  const rimAlpha = rimBand * (
-    0.20 + primarySpec + bounceSpec + leadingEdgeBoost + (0.08 * pc)
-  );
-
-  // Layer 7: Top Grazing Glass Sheen & Adaptive Frosted Body
-  const topSheen = Math.pow(clamp(1.0 - (ny + 1.0) * 0.65, 0, 1), 2.4) * (0.045 + 0.05 * pc);
-  const baseBody = (0.045 + 0.025 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
-  const glassBodyAlpha = (baseBody + topSheen) * (1.0 - contentAlpha);
+  // Layer 7: Adaptive Frosted Body (sangat tipis & transparan)
+  const baseBody = (0.035 + 0.02 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
+  const glassBodyAlpha = baseBody * (1.0 - contentAlpha);
 
   const outA = Math.min(
     1.0,
-    contentAlpha + rimAlpha + darkRimAlpha + innerShadowAlpha + glassBodyAlpha + touchGlowAlpha
+    contentAlpha + darkRimAlpha + innerShadowAlpha + glassBodyAlpha + touchGlowAlpha
   );
   if (outA <= 0.002) {
     output[outIndex + 3] = 0;
@@ -1928,13 +1914,13 @@ function shadeContentOnlyRefractionPixel(
   }
 
   const contentShare = contentAlpha / outA;
-  const specShare = ((rimAlpha + touchGlowAlpha) * (1.0 - contentAlpha * 0.65)) / outA;
+  const glowShare = (touchGlowAlpha * (1.0 - contentAlpha * 0.65)) / outA;
   const bodyShare = glassBodyAlpha / outA;
 
-  // darkRimAlpha dan innerShadowAlpha berkontribusi sebagai komponen gelap (0, 0, 0)
-  const finalR = rr * contentShare + 255 * specShare + 242 * bodyShare;
-  const finalG = gg * contentShare + 255 * specShare + 248 * bodyShare;
-  const finalB = bb * contentShare + 255 * specShare + 255 * bodyShare;
+  // darkRimAlpha dan innerShadowAlpha berkontribusi sebagai tepi pembatas gelap tipis (0, 0, 0)
+  const finalR = rr * contentShare + 255 * glowShare + 242 * bodyShare;
+  const finalG = gg * contentShare + 255 * glowShare + 248 * bodyShare;
+  const finalB = bb * contentShare + 255 * glowShare + 255 * bodyShare;
 
   output[outIndex] = Math.min(255, (finalR + 0.5) | 0);
   output[outIndex + 1] = Math.min(255, (finalG + 0.5) | 0);
@@ -1984,6 +1970,8 @@ function createUnifiedLiquidControl(options) {
   const barStretchS = { x: 0, v: 0 };
   const speedShrinkS = { x: 0, v: 0 };
   const flickS = { x: 0, v: 0 };
+  const edgeSquashS = { x: 0, v: 0 }; let ptrVx = 0;
+  let ptrVx = 0;
   const glowS = { x: 0, v: 0 };
   let glowX = 0;
   let glowY = 0;
@@ -2006,9 +1994,11 @@ function createUnifiedLiquidControl(options) {
     if (!isDragging) {
       stepSpring(ratioSpring, targetRatio, SLIDE_SPRING.omega, SLIDE_SPRING.zeta, dt);
       if (ratioSpring.x < 0) {
+        if (ratioSpring.v < -0.5) edgeSquashS.x = Math.max(edgeSquashS.x, clamp(Math.abs(ratioSpring.v) * 0.09, 0, 0.85));
         ratioSpring.x = 0;
         if (ratioSpring.v < 0) ratioSpring.v = 0;
       } else if (ratioSpring.x > 1) {
+        if (ratioSpring.v > 0.5) edgeSquashS.x = Math.max(edgeSquashS.x, clamp(Math.abs(ratioSpring.v) * 0.09, 0, 0.85));
         ratioSpring.x = 1;
         if (ratioSpring.v > 0) ratioSpring.v = 0;
       }
@@ -2030,14 +2020,20 @@ function createUnifiedLiquidControl(options) {
     if (!atEdge) {
       stepSpring(barShiftS, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
       stepSpring(barStretchS, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
+      stepSpring(edgeSquashS, 0, 26.0, 0.46, dt);
     }
 
-    const speed = Math.abs(ratioSpring.v);
-    const targetFast = (isDragging || traveling) ? clamp((speed - 0.6) / 3.2, 0, 1) : 0;
-    stepSpring(flickS, targetFast, 26.0, 0.68, dt);
+    const effectiveSpeed = isDragging
+      ? Math.max(Math.abs(ratioSpring.v), Math.abs(ptrVx) / 115)
+      : Math.abs(ratioSpring.v);
+    const targetFast = (isDragging || traveling) && !atEdge
+      ? clamp((effectiveSpeed - 0.85) / 3.4, 0, 1)
+      : 0;
+
+    stepSpring(flickS, targetFast, 28.0, 0.65, dt);
     stepSpring(speedShrinkS, targetFast, 22.0, 0.70, dt);
 
-    phase += dt * (15.0 + speed * 4.5 + Math.abs(jellyS.x) * 4.5);
+    phase += dt * (15.0 + effectiveSpeed * 4.5 + Math.abs(jellyS.x) * 4.5);
 
     const bShift = clamp(barShiftS.x, -6, 6);
     const bStretch = clamp(barStretchS.x, -0.04, 0.05);
@@ -2088,10 +2084,11 @@ function createUnifiedLiquidControl(options) {
     const pc = clamp(pressS.x, 0, 1);
     const glowVal = clamp(glowS.x, 0, 1);
     const fast = clamp(flickS.x, 0, 1);
-    const jellySquash = jellyS.x * 0.028;
+    const edgeSquash = clamp(edgeSquashS.x, -0.35, 1.0);
+    const jellySquash = jellyS.x * 0.025;
 
-    const scaleX = 1 + (0.06 * pc * (1.0 - fast)) + (0.38 * fast) + jellySquash;
-    const scaleY = 1 + (0.46 * pc * (1.0 - fast)) - (0.20 * fast) - jellySquash * 0.5;
+    const scaleX = 1 + (0.05 * pc * (1.0 - fast)) + (0.40 * fast) - (0.22 * edgeSquash) + jellySquash;
+    const scaleY = 1 + (0.46 * pc * (1.0 - fast)) - (0.20 * fast) + (0.20 * edgeSquash) - jellySquash * 0.5;
 
     const displayRatio = asymptoticEdge(ratioSpring.x, 0, 1, 0.03);
     const pillHalfW = (tW * scaleX) * 0.5;
@@ -2210,6 +2207,7 @@ function createUnifiedLiquidControl(options) {
     const now = performance.now();
     const dtPtr = Math.max(0.004, (now - lastPtrTime) / 1000);
     const vx = (e.clientX - lastPtrX) / dtPtr;
+    ptrVx = vx;
     lastPtrX = e.clientX;
     lastPtrTime = now;
 
@@ -2230,6 +2228,7 @@ function createUnifiedLiquidControl(options) {
       barShiftS.x = -5.5 * Math.tanh(over * 2.2);
       barStretchS.x = 0.038 * Math.tanh(over * 2.2);
       tiltS.x = -0.06 * Math.tanh(over * 2.0);
+      edgeSquashS.x = clamp(over * 1.35, 0, 1);
     } else if (rawRatio > 1) {
       ratioSpring.x = asymptoticEdge(rawRatio, 0, 1, 0.03);
       ratioSpring.v = 0;
@@ -2237,6 +2236,7 @@ function createUnifiedLiquidControl(options) {
       barShiftS.x = 5.5 * Math.tanh(over * 2.2);
       barStretchS.x = 0.038 * Math.tanh(over * 2.2);
       tiltS.x = 0.06 * Math.tanh(over * 2.0);
+      edgeSquashS.x = clamp(over * 1.35, 0, 1);
     } else {
       ratioSpring.x = rawRatio;
       const instVel = (ratioSpring.x - prevRatio) / dtPtr;
@@ -2521,6 +2521,7 @@ liquidNav.addEventListener("pointermove", (event) => {
     barShiftSpring.x = -7 * Math.tanh(over * 1.9);
     barStretchSpring.x = 0.042 * Math.tanh(over * 1.9);
     lensTiltSpring.x = -0.07 * Math.tanh(over * 1.8);
+    edgeSquashSpring.x = clamp(over * 1.35, 0, 1);
   } else if (rawPos > 2) {
     pillSpring.x = asymptoticEdge(rawPos, 0, 2, 0.045);
     pillSpring.v = 0;
@@ -2528,6 +2529,7 @@ liquidNav.addEventListener("pointermove", (event) => {
     barShiftSpring.x = 7 * Math.tanh(over * 1.9);
     barStretchSpring.x = 0.042 * Math.tanh(over * 1.9);
     lensTiltSpring.x = 0.07 * Math.tanh(over * 1.8);
+    edgeSquashSpring.x = clamp(over * 1.35, 0, 1);
   } else {
     pillSpring.x = rawPos;
     const instantVel = (pillSpring.x - prevPos) / dtPtr;
@@ -2576,24 +2578,29 @@ liquidNav.addEventListener("pointercancel", () => {
 });
 
 function getLiquidPillShape() {
-  const active = clamp(pressSpring.x, 0, 1);        // 1 saat jari nempel atau lensa sedang berpindah
-  const fast = clamp(flickStretchSpring.x, 0, 1);   // 0 saat pelan/berhenti, 1 saat meluncur cepat
-  const jellySquash = lensJellySpring.x * 0.028;
+  const active = clamp(pressSpring.x, 0, 1);
+  const fast = clamp(flickStretchSpring.x, 0, 1);
+  const edgeSquash = clamp(edgeSquashSpring.x, -0.35, 1.0); // Bisa negatif saat memantul balik
+  const jellySquash = lensJellySpring.x * 0.025;
 
   // 1. Lebar (Sumbu X):
-  //    - Saat pelan/berhenti (fast = 0): lebar normal 1 tab (+sedikit 6% saat disentuh)
-  //    - Saat meluncur cepat (fast = 1): melebar panjang ke samping (+42%)
+  //    - Geser cepat (fast -> 1): memanjang lebar (+44%)
+  //    - Mentok ujung bar (edgeSquash > 0): tertekan mipih ke dalam (-24%), lalu memantul melebar saat dilepas
+  //    - Geser pelan / diam (fast -> 0): kembali ke lebar stabil 1 tab
   const scaleX = 1
-    + (0.06 * active * (1.0 - fast))
-    + (0.42 * fast)
+    + (0.05 * active * (1.0 - fast))
+    + (0.44 * fast)
+    - (0.24 * edgeSquash)
     + jellySquash;
 
   // 2. Tinggi (Sumbu Y):
-  //    - Saat pelan/berhenti & disentuh (active = 1, fast = 0): mengembang tinggi keluar bar (+48%)
-  //    - Saat meluncur cepat (fast = 1): memipih vertikal (-22%)
+  //    - Geser pelan / diam (active = 1, fast = 0): mengembang tinggi keluar bar (+48%)
+  //    - Geser cepat (fast -> 1): memipih vertikal (-22%)
+  //    - Mentok ujung bar (edgeSquash > 0): terdorong naik (+22%) akibat volume fluida tertekan dari samping
   const scaleY = 1
     + (0.48 * active * (1.0 - fast))
     - (0.22 * fast)
+    + (0.22 * edgeSquash)
     - jellySquash * 0.5;
 
   return { scaleX, scaleY };
@@ -2603,14 +2610,67 @@ function updateLiquidPillPhysics(dt) {
   if (!pillDragging) {
     stepSpring(pillSpring, pillTarget, SLIDE_SPRING.omega, SLIDE_SPRING.zeta, dt);
     if (pillSpring.x < 0) {
+      // Pantulan saat menabrak dinding kiri di akhir flick cepat
+      if (pillSpring.v < -0.5) {
+        edgeSquashSpring.x = Math.max(edgeSquashSpring.x, clamp(Math.abs(pillSpring.v) * 0.09, 0, 0.85));
+      }
       pillSpring.x = 0;
       if (pillSpring.v < 0) pillSpring.v = 0;
     } else if (pillSpring.x > 2) {
+      // Pantulan saat menabrak dinding kanan di akhir flick cepat
+      if (pillSpring.v > 0.5) {
+        edgeSquashSpring.x = Math.max(edgeSquashSpring.x, clamp(Math.abs(pillSpring.v) * 0.09, 0, 0.85));
+      }
       pillSpring.x = 2;
       if (pillSpring.v > 0) pillSpring.v = 0;
     }
   }
 
+  const traveling = !pillDragging && (Math.abs(pillSpring.x - pillTarget) > 0.08 || Math.abs(pillSpring.v) > 0.25);
+  const openTarget = (pillPressing || pillDragging || traveling) ? 1.0 : 0.0;
+  const glowTarget = (pillPressing || pillDragging) ? 1.0 : 0.0;
+  const pSpr = openTarget > 0.5 ? PRESS_OPEN_SPRING : PRESS_CLOSE_SPRING;
+
+  stepSpring(pressSpring, openTarget, pSpr.omega, pSpr.zeta, dt);
+  stepSpring(touchGlowSpring, glowTarget, 30.0, 0.72, dt);
+  stepSpring(swellXSpring, openTarget, HOVER_X.omega, HOVER_X.zeta, dt);
+  stepSpring(swellYSpring, openTarget, HOVER_Y.omega, HOVER_Y.zeta, dt);
+  stepSpring(lensJellySpring, 0, JELLY_WOBBLE.omega, JELLY_WOBBLE.zeta, dt);
+  stepSpring(lensTiltSpring, 0, TILT_SPRING.omega, TILT_SPRING.zeta, dt);
+
+  const atEdge = pillDragging && (pillSpring.x < 0 || pillSpring.x > 2);
+  if (!atEdge) {
+    stepSpring(barShiftSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
+    stepSpring(barStretchSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
+    // Kembalikan kompresi tepi dengan pantulan elastis (zeta 0.46 -> memantul sekali lalu stabil)
+    stepSpring(edgeSquashSpring, 0, 26.0, 0.46, dt);
+  }
+
+  // Kecepatan gabungan jari (saat drag) & spring (saat meluncur bebas)
+  const effectiveSpeed = pillDragging
+    ? Math.max(Math.abs(pillSpring.v), Math.abs(fingerVx) / 115)
+    : Math.abs(pillSpring.v);
+
+  const targetFast = (pillDragging || traveling) && !atEdge
+    ? clamp((effectiveSpeed - 0.85) / 3.4, 0, 1)
+    : 0;
+
+  stepSpring(flickStretchSpring, targetFast, 28.0, 0.65, dt);
+  stepSpring(speedShrinkSpring, targetFast, 22.0, 0.70, dt);
+
+  jellyPhase += dt * (15.0 + effectiveSpeed * 4.5 + Math.abs(lensJellySpring.x) * 4.5);
+
+  const bShift = clamp(barShiftSpring.x, -7, 7);
+  const bStretch = clamp(barStretchSpring.x, -0.042, 0.052);
+  const touchZoom = pressSpring.x * 0.045;
+  const navScaleX = 1 + touchZoom + bStretch;
+  const navScaleY = 1 + touchZoom - bStretch * 0.72;
+  if (Math.abs(bShift) > 0.02 || Math.abs(navScaleX - 1) > 0.0005 || Math.abs(navScaleY - 1) > 0.0005) {
+    liquidNav.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${navScaleX.toFixed(4)}, ${navScaleY.toFixed(4)})`;
+  } else {
+    liquidNav.style.transform = "";
+  }
+}
   const traveling = !pillDragging && (Math.abs(pillSpring.x - pillTarget) > 0.08 || Math.abs(pillSpring.v) > 0.25);
   const openTarget = (pillPressing || pillDragging || traveling) ? 1.0 : 0.0;
   const glowTarget = (pillPressing || pillDragging) ? 1.0 : 0.0;
