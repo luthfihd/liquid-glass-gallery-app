@@ -2251,13 +2251,13 @@ function createUnifiedLiquidControl(options) {
 
     targetRatio = clamp(ratioSpring.x, 0, 1);
 
-    // Perbarui titik cahaya mengikuti posisi jari selama digeser
+    // Perbarui titik cahaya mengikuti posisi jari selama digeser (gunakan maxTravel yang sudah ada)
     const rect = containerEl.getBoundingClientRect();
-    const { inset, tW, maxTravel } = getThumbMetrics(rect.width * dpr, rect.height * dpr);
+    const metrics = getThumbMetrics(rect.width * dpr, rect.height * dpr);
     const curRatio = clamp(ratioSpring.x, 0, 1);
-    const pillCxCss = rect.left + (inset + curRatio * maxTravel + tW * 0.5) / dpr;
+    const pillCxCss = rect.left + (metrics.inset + curRatio * metrics.maxTravel + metrics.tW * 0.5) / dpr;
     const pillCyCss = rect.top + rect.height * 0.5;
-    glowX = clamp((e.clientX - pillCxCss) / Math.max(12, (tW * 0.5) / dpr), -1, 1);
+    glowX = clamp((e.clientX - pillCxCss) / Math.max(12, (metrics.tW * 0.5) / dpr), -1, 1);
     glowY = clamp((e.clientY - pillCyCss) / Math.max(10, rect.height * 0.45), -1, 1);
 
     const steps = getStepsCount();
