@@ -2206,7 +2206,6 @@ function createUnifiedLiquidControl(options) {
     const now = performance.now();
     const dtPtr = Math.max(0.004, (now - lastPtrTime) / 1000);
     const vx = (e.clientX - lastPtrX) / dtPtr;
-    ptrVx = vx;
     lastPtrX = e.clientX;
     lastPtrTime = now;
 
