@@ -2018,7 +2018,6 @@ function createUnifiedLiquidControl(options) {
     }
 
     const vx = ratioSpring.v;
-    const speed = Math.abs(vx);
     const accel = (vx - prevVx) / Math.max(0.004, dt);
     prevVx = vx;
     const isBraking = (vx * accel) < 0 && speed > 0.2;
