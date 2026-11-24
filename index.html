@@ -2670,44 +2670,6 @@ function updateLiquidPillPhysics(dt) {
     liquidNav.style.transform = "";
   }
 }
-  const traveling = !pillDragging && (Math.abs(pillSpring.x - pillTarget) > 0.08 || Math.abs(pillSpring.v) > 0.25);
-  const openTarget = (pillPressing || pillDragging || traveling) ? 1.0 : 0.0;
-  const glowTarget = (pillPressing || pillDragging) ? 1.0 : 0.0;
-  const pSpr = openTarget > 0.5 ? PRESS_OPEN_SPRING : PRESS_CLOSE_SPRING;
-
-  stepSpring(pressSpring, openTarget, pSpr.omega, pSpr.zeta, dt);
-  stepSpring(touchGlowSpring, glowTarget, 30.0, 0.72, dt);
-  stepSpring(swellXSpring, openTarget, HOVER_X.omega, HOVER_X.zeta, dt);
-  stepSpring(swellYSpring, openTarget, HOVER_Y.omega, HOVER_Y.zeta, dt);
-  stepSpring(lensJellySpring, 0, JELLY_WOBBLE.omega, JELLY_WOBBLE.zeta, dt);
-  stepSpring(lensTiltSpring, 0, TILT_SPRING.omega, TILT_SPRING.zeta, dt);
-
-  const atEdge = pillDragging && (pillSpring.x < 0 || pillSpring.x > 2);
-  if (!atEdge) {
-    stepSpring(barShiftSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
-    stepSpring(barStretchSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
-  }
-
-  // Kecepatan langsung mengontrol transisi Pipih-Lebar <-> Tinggi-Ramping
-  const speed = Math.abs(pillSpring.v);
-  const targetFast = (pillDragging || traveling) ? clamp((speed - 0.6) / 3.2, 0, 1) : 0;
-
-  stepSpring(flickStretchSpring, targetFast, 26.0, 0.68, dt);
-  stepSpring(speedShrinkSpring, targetFast, 22.0, 0.70, dt);
-
-  jellyPhase += dt * (15.0 + speed * 4.5 + Math.abs(lensJellySpring.x) * 4.5);
-
-  const bShift = clamp(barShiftSpring.x, -7, 7);
-  const bStretch = clamp(barStretchSpring.x, -0.042, 0.052);
-  const touchZoom = pressSpring.x * 0.045;
-  const navScaleX = 1 + touchZoom + bStretch;
-  const navScaleY = 1 + touchZoom - bStretch * 0.72;
-  if (Math.abs(bShift) > 0.02 || Math.abs(navScaleX - 1) > 0.0005 || Math.abs(navScaleY - 1) > 0.0005) {
-    liquidNav.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${navScaleX.toFixed(4)}, ${navScaleY.toFixed(4)})`;
-  } else {
-    liquidNav.style.transform = "";
-  }
-
 window.addEventListener("beforeunload", () => {
   stopCamera();
   sessionObjectUrls.forEach((url) => URL.revokeObjectURL(url));
