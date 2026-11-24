@@ -812,7 +812,9 @@ const lensTiltSpring = { x: 0, v: 0 };
 const barShiftSpring = { x: 0, v: 0 };
 const barStretchSpring = { x: 0, v: 0 };
 const speedShrinkSpring = { x: 0, v: 0 };
-const flickStretchSpring = { x: 0, v: 0 }; // Velocity-driven stretch saat flick cepat
+const flickStretchSpring = { x: 0, v: 0 };
+const brakeCompressSpring = { x: 0, v: 0 }; // Kompresi pengereman: X mipih masuk, Y terdorong naik
+let prevPillVx = 0;
 let jellyPhase = 0;
 
 let cameraStream = null;
@@ -1888,14 +1890,13 @@ function shadeContentOnlyRefractionPixel(
     touchGlowAlpha = radialFalloff * glowIntensity * (0.26 - backdropLuma * 0.08) * (1.0 - contentAlpha * 0.55);
   }
 
-  // Layer 4: Inner Glass Thickness Shadow
-  const innerShadowBand = smoothstep(5.5 * dprScale, 0.0, Math.abs(sdfPill + 2.6 * dprScale));
-  const innerShadowAlpha = innerShadowBand * (0.14 + 0.18 * pc) * (1.0 - contentAlpha * 0.6);
+  // Layer 4: Inner Glass Thickness Shadow (sangat tipis & jernih kristal)
+  const innerShadowBand = smoothstep(2.6 * dprScale, 0.0, Math.abs(sdfPill + 1.3 * dprScale));
+  const innerShadowAlpha = innerShadowBand * (0.03 + 0.04 * pc) * (1.0 - contentAlpha * 0.7);
 
-  // Layer 5: Darkened Outer Rim (iOS 27 - garis tepi gelap tipis di sekeliling luar kapsul)
-  // Otomatis menebal jika foto di belakangnya terang (backdropLuma tinggi)
-  const darkRimBand = smoothstep(1.1 * dprScale, 0.0, Math.abs(sdfPill - 0.35 * dprScale));
-  const darkRimAlpha = darkRimBand * (0.16 + backdropLuma * 0.24 + 0.08 * pc) * (1.0 - contentAlpha * 0.7);
+  // Layer 5: Darkened Outer Rim (hairline halus pemisah kontras di latar terang)
+  const darkRimBand = smoothstep(0.9 * dprScale, 0.0, Math.abs(sdfPill - 0.25 * dprScale));
+  const darkRimAlpha = darkRimBand * (0.08 + backdropLuma * 0.14 + 0.04 * pc) * (1.0 - contentAlpha * 0.75);
 
   // Layer 6: Dual Specular Rim + Leading-Edge Velocity Highlight
   const rimW = 1.25 * dprScale;
@@ -1985,6 +1986,7 @@ function createUnifiedLiquidControl(options) {
   const barStretchS = { x: 0, v: 0 };
   const speedShrinkS = { x: 0, v: 0 };
   const flickS = { x: 0, v: 0 };
+  const brakeS = { x: 0, v: 0 }; let prevVx = 0;
   const glowS = { x: 0, v: 0 };
   let glowX = 0;
   let glowY = 0;
@@ -2014,6 +2016,19 @@ function createUnifiedLiquidControl(options) {
         if (ratioSpring.v > 0) ratioSpring.v = 0;
       }
     }
+
+    const vx = ratioSpring.v;
+    const speed = Math.abs(vx);
+    const accel = (vx - prevVx) / Math.max(0.004, dt);
+    prevVx = vx;
+    const isBraking = (vx * accel) < 0 && speed > 0.2;
+    const rawBrake = isBraking ? clamp(Math.abs(accel) / 34.0, 0, 1) : 0;
+
+    const targetFlick = (isDragging || traveling) ? clamp((speed - 1.5) / 3.8, 0, 1) : 0;
+    const targetShrink = (isDragging || traveling) ? clamp((speed - 0.7) / 4.0, 0, 1) : 0;
+    stepSpring(flickS, targetFlick, 28.0, 0.62, dt);
+    stepSpring(brakeS, rawBrake, 32.0, 0.58, dt);
+    stepSpring(speedShrinkS, targetShrink, 22.0, 0.70, dt);
 
     const traveling = !isDragging && (Math.abs(targetRatio - ratioSpring.x) > 0.10 || Math.abs(ratioSpring.v) > 0.30);
     const openTarget = (isDragging || traveling) ? 1.0 : 0.0;
@@ -2089,13 +2104,14 @@ function createUnifiedLiquidControl(options) {
 
     const pc = clamp(pressS.x, 0, 1);
     const glowVal = clamp(glowS.x, 0, 1);
-    const shrinkX = clamp(speedShrinkS.x, 0, 1);
-    const flickStretch = clamp(flickS.x, 0, 1);
-    const jellySquash = jellyS.x * 0.04;
+    const shrink = clamp(speedShrinkS.x, 0, 1);
+    const flick = clamp(flickS.x, 0, 1);
+    const brake = clamp(brakeS.x, 0, 1);
+    const jellySquash = jellyS.x * 0.035;
 
-    // Dual-mode: Scrubbing lambat -> stabil proporsional, Flick cepat -> memanjang elastis
-    const scaleX = 1 + (TRAVEL_W * swellXS.x) + (flickStretch * 0.22) - (shrinkX * 0.08) + jellySquash;
-    const scaleY = 1 + (TRAVEL_H * swellYS.x) - (flickStretch * 0.08) - jellySquash * 0.45;
+    const swellFactor = 1.0 - Math.max(flick * 0.65, brake * 0.45);
+    const scaleX = 1 + (TRAVEL_W * swellXS.x * swellFactor) + (flick * 0.22) - (brake * 0.20) - (shrink * 0.05) + jellySquash;
+    const scaleY = 1 + (TRAVEL_H * swellYS.x * swellFactor) - (flick * 0.18) + (brake * 0.22) - (shrink * 0.04) - jellySquash * 0.5;
 
     const displayRatio = asymptoticEdge(ratioSpring.x, 0, 1, 0.03);
     const pillHalfW = (tW * scaleX) * 0.5;
@@ -2580,15 +2596,28 @@ liquidNav.addEventListener("pointercancel", () => {
 });
 
 function getLiquidPillShape() {
-  const shrinkX = clamp(speedShrinkSpring.x, 0, 1);
-  const flickStretch = clamp(flickStretchSpring.x, 0, 1);
-  const jellySquash = lensJellySpring.x * 0.04;
+  const shrink = clamp(speedShrinkSpring.x, 0, 1);
+  const flick = clamp(flickStretchSpring.x, 0, 1);
+  const brake = clamp(brakeCompressSpring.x, 0, 1);
+  const jellySquash = lensJellySpring.x * 0.035;
 
-  // Dual-mode:
-  // - Scrubbing lambat: scaleX & scaleY mengembang stabil & proporsional
-  // - Flick cepat: memanjang elastis di sumbu X (velocity-driven stretch) & memadat
-  const scaleX = 1 + (TRAVEL_W * swellXSpring.x) + (flickStretch * 0.24) - (shrinkX * 0.08) + jellySquash;
-  const scaleY = 1 + (TRAVEL_H * swellYSpring.x) - (flickStretch * 0.08) - jellySquash * 0.45;
+  // 1. Fase Drag/Flick Cepat (flick): X memanjang elastis (+), Y menyusut pipih (-)
+  // 2. Fase Mengerem / Impact (brake): X mipih menekan ke dalam (-), Y otomatis terdorong naik (+)
+  // 3. Fase Diam / Pelan: mengembang proporsional (+TRAVEL_W, +TRAVEL_H)
+  const swellFactor = 1.0 - Math.max(flick * 0.65, brake * 0.45);
+  const scaleX = 1
+    + (TRAVEL_W * swellXSpring.x * swellFactor)
+    + (flick * 0.24)
+    - (brake * 0.22)
+    - (shrink * 0.05)
+    + jellySquash;
+
+  const scaleY = 1
+    + (TRAVEL_H * swellYSpring.x * swellFactor)
+    - (flick * 0.20)
+    + (brake * 0.24)
+    - (shrink * 0.04)
+    - jellySquash * 0.5;
 
   return { scaleX, scaleY };
 }
@@ -2623,14 +2652,24 @@ function updateLiquidPillPhysics(dt) {
     stepSpring(barStretchSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
   }
 
-  const speed = Math.abs(pillSpring.v);
-  // Ambang batas flick cepat (> 2.2 tab/detik)
-  const targetFlick = (pillDragging || traveling) ? clamp((speed - 2.2) / 5.5, 0, 1) : 0;
-  const targetShrink = (pillDragging || traveling) ? clamp((speed - 0.9) / 5.5, 0, 1) : 0;
-  stepSpring(flickStretchSpring, targetFlick, 26.0, 0.62, dt);
+  // Hitung Kecepatan & Deselerasi (pengereman tetesan air)
+  const vx = pillSpring.v;
+  const speed = Math.abs(vx);
+  const accelX = (vx - prevPillVx) / Math.max(0.004, dt);
+  prevPillVx = vx;
+
+  // Deselerasi terjadi saat arah percepatan berlawanan dengan arah gerak (mengerem / menabrak titik henti)
+  const isBraking = (vx * accelX) < 0 && speed > 0.25;
+  const rawBrake = isBraking ? clamp(Math.abs(accelX) / 38.0, 0, 1) : 0;
+
+  const targetFlick = (pillDragging || traveling) ? clamp((speed - 1.8) / 4.5, 0, 1) : 0;
+  const targetShrink = (pillDragging || traveling) ? clamp((speed - 0.8) / 4.5, 0, 1) : 0;
+
+  stepSpring(flickStretchSpring, targetFlick, 28.0, 0.62, dt);
+  stepSpring(brakeCompressSpring, rawBrake, 32.0, 0.58, dt);
   stepSpring(speedShrinkSpring, targetShrink, 22.0, 0.70, dt);
 
-  jellyPhase += dt * (15.0 + Math.abs(pillSpring.v) * 4.5 + Math.abs(lensJellySpring.x) * 4.5);
+  jellyPhase += dt * (15.0 + speed * 4.5 + Math.abs(lensJellySpring.x) * 4.5);
 
   const bShift = clamp(barShiftSpring.x, -7, 7);
   const bStretch = clamp(barStretchSpring.x, -0.042, 0.052);
@@ -2868,7 +2907,7 @@ function drawLiquidNavRefraction() {
   const boxHalfY = Math.max(0, pillHalfH - cornerR);
 
   const edgeRippleAmp = Math.min(2.2, Math.abs(pillSpring.v) * 0.20) * dpr * pc;
-  const velSkew = clamp(pillSpring.v * 0.08, -0.35, 0.35);
+  const velSkew = clamp(pillSpring.v * 0.11, -0.45, 0.45);
 
   const padBound = Math.ceil(4 * dpr);
   const minX = Math.max(0, Math.floor(pillCenterX - pillHalfW - padBound));
@@ -2890,7 +2929,8 @@ function drawLiquidNavRefraction() {
       let dxPill = (x - pillCenterX) - shearOffset;
 
       const normX = dxPill / Math.max(1, pillHalfW);
-      dxPill *= 1.0 - (velSkew * normX * 0.45);
+      // Teardrop taper: sisi belakang (berlawanan arah gerak) menyempit meruncing
+      dxPill *= 1.0 - (velSkew * normX * 0.52);
 
       const qxPill = Math.abs(dxPill) - boxHalfX;
       const oxPill = qxPill > 0 ? qxPill : 0;
