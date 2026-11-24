@@ -1046,9 +1046,9 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
   bgLiquid.g = sampleScene(uv + bgShift).g;
   bgLiquid.b = sampleScene(uv + bgShift * 0.82).b;
 
-  // Layer 3: Subtle Frosted Glass Tint & Inner Rim AO
-  float innerAO = smoothstep(-pillRadius * 0.25, 0.0, pillDist) * (0.06 + 0.08 * uPillPress);
-  bgLiquid = bgLiquid * (0.96 - innerAO) + vec3(0.025, 0.032, 0.042) * uPillPress;
+  // Layer 3: Subtle Frosted Glass Tint & Inner Rim AO (jernih, minim shadow)
+  float innerAO = smoothstep(-pillRadius * 0.18, 0.0, pillDist) * (0.015 + 0.02 * uPillPress);
+  bgLiquid = bgLiquid * (0.99 - innerAO) + vec3(0.03, 0.038, 0.048) * uPillPress;
 
   float innerMask = smoothstep(0.0, -0.003, pillDist);
   baseColor.rgb = mix(baseColor.rgb, bgLiquid, innerMask);
@@ -1863,9 +1863,9 @@ function shadeContentOnlyRefractionPixel(
 
   const contentAlpha = Math.max(ra, ga, ba);
 
-  // Layer 3: Inner Glass Thickness Shadow (memberi kesan tebal 3D di balik tepi kaca)
-  const innerShadowBand = smoothstep(5.5 * dprScale, 0.0, Math.abs(sdfPill + 2.6 * dprScale));
-  const innerShadowAlpha = innerShadowBand * (0.14 + 0.18 * pc) * (1.0 - contentAlpha * 0.6);
+  // Layer 3: Inner Glass Thickness Shadow (lebih tipis dan terang)
+  const innerShadowBand = smoothstep(2.8 * dprScale, 0.0, Math.abs(sdfPill + 1.8 * dprScale));
+  const innerShadowAlpha = innerShadowBand * (0.04 + 0.05 * pc) * (1.0 - contentAlpha * 0.6);
 
   // Layer 4: Dual Specular Rim (kilau tajam di pinggir atas + pantulan balik di bawah)
   const rimW = 1.25 * dprScale;
