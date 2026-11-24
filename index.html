@@ -1012,30 +1012,44 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
 
   float pillDist = roundedBoxDistance(pillP, pillHalf, pillRadius);
   
-  float outerReach = 0.009 * (0.4 + 0.6 * uPillPress);
+  float outerReach = 0.014 * (0.35 + 0.65 * uPillPress);
   if (pillDist >= outerReach) return baseColor;
 
   vec2 pDir = normalize(pillP + vec2(0.00001));
 
+  // Layer 1: Elevation Contact Shadow & Outer Meniscus Pull
   if (pillDist >= 0.0) {
-    float pull = pow(1.0 - (pillDist / max(0.0001, outerReach)), 2.2);
+    float normDist = pillDist / max(0.0001, outerReach);
+    float pull = pow(1.0 - normDist, 2.2);
     vec2 outerShift = pDir * (0.0045 * pull * uPillPress);
     vec3 outerBg = sampleScene(uv + outerShift).rgb;
     baseColor.rgb = mix(baseColor.rgb, outerBg, pull * 0.85);
+
+    // Bayangan elevasi halus di bawah kapsul saat terangkat
+    float shadowFalloff = exp(-pillDist * 190.0) * (0.12 + 0.16 * uPillPress);
+    baseColor.rgb *= (1.0 - shadowFalloff);
     return baseColor;
   }
 
-  float edgeBand = smoothstep(-pillRadius * 0.78, 0.0, pillDist);
-  float strength = (0.012 + 0.022 * uPillPress) * pow(edgeBand, 1.8);
-  vec2 bgShift = -pDir * strength;
+  // Layer 2: Core Magnification + Bevel Edge Refraction
+  float edgeBand = smoothstep(-pillRadius * 0.82, 0.0, pillDist);
+  float coreMag = (1.0 - edgeBand) * (0.012 + 0.018 * uPillPress);
+  vec2 coreShift = -pillOffset * coreMag;
+
+  float bevelStrength = (0.014 + 0.026 * uPillPress) * pow(edgeBand, 1.85);
+  vec2 bgShift = coreShift - pDir * bevelStrength;
 
   vec3 bgLiquid;
   bgLiquid.r = sampleScene(uv + bgShift * 1.18).r;
   bgLiquid.g = sampleScene(uv + bgShift).g;
   bgLiquid.b = sampleScene(uv + bgShift * 0.82).b;
 
+  // Layer 3: Subtle Frosted Glass Tint & Inner Rim AO
+  float innerAO = smoothstep(-pillRadius * 0.25, 0.0, pillDist) * (0.06 + 0.08 * uPillPress);
+  bgLiquid = bgLiquid * (0.96 - innerAO) + vec3(0.025, 0.032, 0.042) * uPillPress;
+
   float innerMask = smoothstep(0.0, -0.003, pillDist);
-  baseColor.rgb = mix(baseColor.rgb, bgLiquid * 0.94, innerMask);
+  baseColor.rgb = mix(baseColor.rgb, bgLiquid, innerMask);
   return baseColor;
 }
 
@@ -1825,47 +1839,65 @@ function shadeContentOnlyRefractionPixel(
   const dirX = nLen > 0.0001 ? nx / nLen : 0;
   const dirY = nLen > 0.0001 ? ny / nLen : 0;
 
-  const rimZone = 16.0 * dprScale;
+  // Zona bevel pinggir & area inti cembung
+  const rimZone = Math.min(pillHalfH * 0.72, 18.0 * dprScale);
   const edgeRatio = clamp((sdfPill + rimZone) / rimZone, 0, 1);
-  const meniscusProfile = Math.pow(edgeRatio, 3.2);
+  const meniscusProfile = Math.pow(edgeRatio, 3.0);
 
-  const pullMag = (1.2 + 8.5 * pc) * dprScale * meniscusProfile;
-  const shiftX = -dirX * pullMag;
-  const shiftY = -dirY * pullMag;
+  // Layer 1: Core Convex Magnification (ikon di tengah membesar halus saat ditekan)
+  const coreZoom = (0.015 + 0.042 * pc) * (1.0 - meniscusProfile * 0.75);
+  const coreShiftX = -dxPill * coreZoom;
+  const coreShiftY = -dyPill * coreZoom;
 
-  const disp = (1.0 + 0.55 * pc) * dprScale * meniscusProfile;
+  // Layer 2: Edge Bevel Refraction + Chromatic Dispersion
+  const pullMag = (1.4 + 9.2 * pc) * dprScale * meniscusProfile;
+  const shiftX = coreShiftX - dirX * pullMag;
+  const shiftY = coreShiftY - dirY * pullMag;
+
+  const disp = (1.05 + 0.65 * pc) * dprScale * meniscusProfile;
   const [rr, , , ra] = sampleBilinearPremultiplied(source, w, h, x + shiftX + dirX * disp, y + shiftY + dirY * disp);
   const [, gg, , ga] = sampleBilinearPremultiplied(source, w, h, x + shiftX, y + shiftY);
   const [, , bb, ba] = sampleBilinearPremultiplied(source, w, h, x + shiftX - dirX * disp, y + shiftY - dirY * disp);
 
   const contentAlpha = Math.max(ra, ga, ba);
 
-  const rimW = 1.15 * dprScale;
+  // Layer 3: Inner Glass Thickness Shadow (memberi kesan tebal 3D di balik tepi kaca)
+  const innerShadowBand = smoothstep(5.5 * dprScale, 0.0, Math.abs(sdfPill + 2.6 * dprScale));
+  const innerShadowAlpha = innerShadowBand * (0.14 + 0.18 * pc) * (1.0 - contentAlpha * 0.6);
+
+  // Layer 4: Dual Specular Rim (kilau tajam di pinggir atas + pantulan balik di bawah)
+  const rimW = 1.25 * dprScale;
   const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
   const up = clamp(-dirY, 0, 1);
   const down = clamp(dirY, 0, 1);
 
-  const motionPush = clamp(dirX * velX * 0.22, -0.25, 0.55);
-  const causticGlow = Math.abs(velX) * 0.045 * Math.abs(dirX);
+  const motionPush = clamp(dirX * velX * 0.24, -0.25, 0.60);
+  const causticGlow = Math.abs(velX) * 0.05 * Math.abs(dirX);
+  const primarySpec = Math.pow(up, 1.35) * (0.42 + 0.26 * pc);
+  const bounceSpec = Math.pow(down, 1.6) * (0.18 + 0.16 * pc);
   const rimAlpha = rimBand * (
-    0.30 +
-    (0.14 + up * 0.38 + down * 0.20 + motionPush + causticGlow) * pc
+    0.22 + primarySpec + bounceSpec + (0.10 + motionPush + causticGlow) * pc
   );
 
-  const glassBodyAlpha = (0.045 * (1 - pc) + 0.025 * pc) * (0.35 + 0.65 * (1.0 - meniscusProfile));
+  // Layer 5: Top Grazing Glass Sheen & Frosted Body Fill
+  const topSheen = Math.pow(clamp(1.0 - (ny + 1.0) * 0.65, 0, 1), 2.4) * (0.045 + 0.055 * pc);
+  const baseBody = (0.04 + 0.025 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
+  const glassBodyAlpha = (baseBody + topSheen) * (1.0 - contentAlpha);
 
-  const outA = Math.min(1.0, contentAlpha + rimAlpha + glassBodyAlpha * (1.0 - contentAlpha));
+  const outA = Math.min(1.0, contentAlpha + rimAlpha + innerShadowAlpha + glassBodyAlpha);
   if (outA <= 0.002) {
     output[outIndex + 3] = 0;
     return;
   }
 
   const contentShare = contentAlpha / outA;
-  const specShare = (rimAlpha * (1.0 - contentAlpha * 0.7)) / outA;
+  const specShare = (rimAlpha * (1.0 - contentAlpha * 0.65)) / outA;
+  const bodyShare = glassBodyAlpha / outA;
 
-  const finalR = rr * contentShare + 255 * specShare;
-  const finalG = gg * contentShare + 255 * specShare;
-  const finalB = bb * contentShare + 255 * specShare;
+  // Warna kaca sedikit sejuk (242, 248, 255), inner shadow menyerap cahaya (0, 0, 0)
+  const finalR = rr * contentShare + 255 * specShare + 242 * bodyShare;
+  const finalG = gg * contentShare + 255 * specShare + 248 * bodyShare;
+  const finalB = bb * contentShare + 255 * specShare + 255 * bodyShare;
 
   output[outIndex] = Math.min(255, (finalR + 0.5) | 0);
   output[outIndex + 1] = Math.min(255, (finalG + 0.5) | 0);
@@ -2009,12 +2041,12 @@ function createUnifiedLiquidControl(options) {
     const { inset, innerW, innerH, tW, tH, maxTravel } = getThumbMetrics(cardW, cardH);
 
     const pc = clamp(pressS.x, 0, 1);
-    const shrink = clamp(speedShrinkS.x, 0, 1);
-    const swellFactor = 1 - shrink;
+    const shrinkX = clamp(speedShrinkS.x, 0, 1);
     const jellySquash = jellyS.x * 0.055;
 
-    const scaleX = 1 + (TRAVEL_W * swellXS.x * swellFactor) - (shrink * 0.14) + jellySquash;
-    const scaleY = 1 + (TRAVEL_H * swellYS.x * swellFactor) - (shrink * 0.16) - jellySquash * 1.1;
+    // Menyusut hanya di sumbu X (gepeng horizontal), sumbu Y tetap tinggi mengembang
+    const scaleX = 1 + (TRAVEL_W * swellXS.x * (1 - shrinkX * 0.65)) - (shrinkX * 0.19) + jellySquash;
+    const scaleY = 1 + (TRAVEL_H * swellYS.x) + (shrinkX * 0.07) - jellySquash * 0.45;
 
     const displayRatio = asymptoticEdge(ratioSpring.x, 0, 1, 0.03);
     const pillHalfW = (tW * scaleX) * 0.5;
@@ -2464,12 +2496,12 @@ liquidNav.addEventListener("pointercancel", () => {
 });
 
 function getLiquidPillShape() {
-  const shrink = clamp(speedShrinkSpring.x, 0, 1);
-  const swellFactor = 1 - shrink;
+  const shrinkX = clamp(speedShrinkSpring.x, 0, 1);
   const jellySquash = lensJellySpring.x * 0.055;
 
-  const scaleX = 1 + (TRAVEL_W * swellXSpring.x * swellFactor) - (shrink * 0.14) + jellySquash;
-  const scaleY = 1 + (TRAVEL_H * swellYSpring.x * swellFactor) - (shrink * 0.16) - jellySquash * 1.1;
+  // Sumbu X menyusut/memadat saat meluncur cepat, sumbu Y tetap tinggi & proporsional
+  const scaleX = 1 + (TRAVEL_W * swellXSpring.x * (1 - shrinkX * 0.65)) - (shrinkX * 0.20) + jellySquash;
+  const scaleY = 1 + (TRAVEL_H * swellYSpring.x) + (shrinkX * 0.08) - jellySquash * 0.45;
 
   return { scaleX, scaleY };
 }
