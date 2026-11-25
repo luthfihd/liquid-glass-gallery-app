@@ -316,9 +316,9 @@ body {
 
 .lg-seg-canvas {
   position: absolute;
-  inset: -26px -34px;
-  width: calc(100% + 68px);
-  height: calc(100% + 52px);
+  inset: -34px -36px;
+  width: calc(100% + 72px);
+  height: calc(100% + 68px);
   z-index: 3;
   pointer-events: none;
 }
@@ -413,9 +413,9 @@ body {
 
 .lg-slider-canvas {
   position: absolute;
-  inset: -28px -34px;
-  width: calc(100% + 68px);
-  height: calc(100% + 56px);
+  inset: -36px -36px;
+  width: calc(100% + 72px);
+  height: calc(100% + 72px);
   z-index: 3;
   pointer-events: none;
 }
@@ -482,9 +482,9 @@ body {
 #glassLens {
   position: absolute;
   z-index: 3;
-  inset: -42px -44px;
+  inset: -48px -44px;
   width: calc(100% + 88px);
-  height: calc(100% + 84px);
+  height: calc(100% + 96px);
   pointer-events: none;
 }
 
@@ -748,6 +748,13 @@ let navPx = 0;
 let navPxs = 0;
 let navPr = 0.5;
 let navHoldUntil = 0;
+
+// Variabel ritme tahan-slide-tahan-slide & rebound tepi
+let navFingerSpd = 0;
+let navPrevPxs = 0;
+let navHoldPulse = 0;
+let navEdgeBump = 0;
+let navEdgeWasHit = false;
 
 const navX = mkS(0);
 const navP = mkS(0);
@@ -1600,7 +1607,6 @@ function renderDeviceMockup() {
 
     const prevX = navX.x;
     const prevP = navP.x;
-    const baseW = liquidNav.clientWidth || 344;
     navX.x = navCtr(0);
     navP.x = 0;
     navLensGeom = {
@@ -1616,7 +1622,7 @@ function renderDeviceMockup() {
     drawLiquidNavRefraction();
 
     const padX = 44 * dpr;
-    const padY = 42 * dpr;
+    const padY = 48 * dpr;
     const srcW = glassCanvas.width - padX * 2;
     const srcH = glassCanvas.height - padY * 2;
     if (srcW > 0 && srcH > 0) {
@@ -1910,6 +1916,13 @@ function createCamelLiquidControl(options) {
   let holdUntil = 0;
   let moved = false;
 
+  // State ritme tahan-slide-tahan-slide & membal di ujung
+  let fingerSpd = 0;
+  let prevPxs = 0;
+  let holdPulse = 0;
+  let edgeBump = 0;
+  let edgeWasHit = false;
+
   const X = mkS(0);
   const P = mkS(0);
   const Wd = mkS(fixedThumbWidth || 56);
@@ -1969,36 +1982,46 @@ function createCamelLiquidControl(options) {
     const hBase = getH();
     const tW = getRestThumbWidth(w);
     const on_ = down || now < holdUntil;
-    const isTracking = down && (moved || (now - downTime) > 165);
+    const isTracking = down && (moved || (now - downTime) > 155);
 
     pxs += (px - pxs) * Math.min(1, dt * 36);
+    const instFingerSpd = Math.abs(pxs - prevPxs) / Math.max(0.001, dt);
+    prevPxs = pxs;
+    fingerSpd += (instFingerSpd - fingerSpd) * Math.min(1, dt * 16);
 
     const pp = Math.max(P.x, 0);
     const p1 = Math.min(pp, 1);
 
-    spd += (Math.abs(X.v) - spd) * Math.min(1, dt * 12);
-    svx += (X.v - svx) * Math.min(1, dt * 12);
-    const sn = cl(spd / 520, 0, 1);
+    spd += (Math.abs(X.v) - spd) * Math.min(1, dt * 14);
+    svx += (X.v - svx) * Math.min(1, dt * 14);
+    const sn = cl(Math.max(spd, fingerSpd) / 480, 0, 1);
 
     str += ((on_ ? Math.max(cl((pr - 0.15) / 0.85, 0, 1), sn) : 0) - str) * Math.min(1, dt * 12);
-    spdS += (spd - spdS) * Math.min(1, dt * 4);
+    spdS += (Math.max(spd, fingerSpd) - spdS) * Math.min(1, dt * 5);
     strS += (str - strS) * Math.min(1, dt * 5);
 
+    // Ritme tahan-slide-tahan-slide:
+    // Saat slide cepat -> meregang & memipih; saat ditahan diam -> mengempis jadi kapsul pendek & tinggi menonjol keluar outline
+    const isPausingHold = isTracking && sn < 0.16;
+    holdPulse += ((isPausingHold ? 1 : 0) - holdPulse) * Math.min(1, dt * 11);
+
     const st = sn * p1;
-    const ac = cl((spd - spdS) / 560, -1, 1) * p1;
+    const ac = cl((Math.max(spd, fingerSpd) - spdS) / 480, -1, 1) * p1;
     const ap = Math.max(ac, 0);
     const an = Math.max(-ac, 0);
 
     const restH = hBase - insetCss * 2;
-    const activeH = hBase + 9;
+    const activeH = hBase + 7;
 
     const minSlotC = insetCss + tW * 0.5;
     const maxSlotC = Math.max(minSlotC, w - minSlotC);
     const snapCenter = getStepCenterX(getCurrentIndex(), w);
     const rawTargetX = isTracking ? pxs : snapCenter;
 
-    // Lebar dinamis saat hold/melayang bergantung pada kecepatan & kekuatan jari (proporsional)
-    const freeW = lp(tW, tW * 1.05, pp) + st * 11 + ap * 4.5 + an * 3.5 + str * 2.5 * p1;
+    // Regang tidak terlalu panjang (max +15%), mengempis saat ditahan menjadi kapsul pendek
+    const stretchDelta = st * (tW * 0.14) + ap * (tW * 0.05);
+    const squishInDelta = (holdPulse * (tW * 0.15) + an * (tW * 0.08)) * p1;
+    const freeW = cl(tW + stretchDelta - squishInDelta, tW * 0.80, tW * 1.16);
 
     const rect = containerEl.getBoundingClientRect();
     const screenMargin = 8;
@@ -2007,36 +2030,56 @@ function createCamelLiquidControl(options) {
 
     let targetW = freeW;
     let targetCenter = rawTargetX;
+    let hittingEdge = false;
 
     if (isTracking) {
       const desiredLeft = rawTargetX - freeW * 0.5;
       const desiredRight = rawTargetX + freeW * 0.5;
 
       if (desiredRight > maxRightEdge) {
-        // Mentok kanan: sisi kanan lensa jadi penahan di maxRightEdge, anchor di sisi kiri lensa
-        const overRight = desiredRight - maxRightEdge;
-        const compress = Math.min(overRight * 0.55, tW * 0.22);
-        targetW = Math.max(tW * 0.78, freeW - compress);
+        hittingEdge = true;
+        if (!edgeWasHit) {
+          edgeWasHit = true;
+          edgeBump = Math.min(1, 0.55 + sn * 0.45);
+        }
+        edgeBump *= Math.exp(-dt * 7.5);
+        // Mengecil sementara lalu membal balik ke ukuran normal proporsional dengan anchor di sisi kiri
+        const impactCompress = edgeBump * (tW * 0.22);
+        targetW = Math.max(tW * 0.76, lp(tW, freeW, edgeBump) - impactCompress);
         targetCenter = maxRightEdge - targetW * 0.5;
       } else if (desiredLeft < minLeftEdge) {
-        // Mentok kiri: sisi kiri lensa jadi penahan di minLeftEdge, anchor di sisi kanan lensa
-        const overLeft = minLeftEdge - desiredLeft;
-        const compress = Math.min(overLeft * 0.55, tW * 0.22);
-        targetW = Math.max(tW * 0.78, freeW - compress);
+        hittingEdge = true;
+        if (!edgeWasHit) {
+          edgeWasHit = true;
+          edgeBump = Math.min(1, 0.55 + sn * 0.45);
+        }
+        edgeBump *= Math.exp(-dt * 7.5);
+        // Mengecil sementara lalu membal balik ke ukuran normal proporsional dengan anchor di sisi kanan
+        const impactCompress = edgeBump * (tW * 0.22);
+        targetW = Math.max(tW * 0.76, lp(tW, freeW, edgeBump) - impactCompress);
         targetCenter = minLeftEdge + targetW * 0.5;
       }
     } else {
       targetCenter = cl(snapCenter, minSlotC, maxSlotC);
     }
 
-    const edgePinch = Math.max(0, freeW - targetW) / Math.max(1, tW * 0.22);
-    const targetH = lp(restH, activeH, pp) - st * 6 - ap * 4 + an * 6 + str * 3 * p1 + edgePinch * 3.5;
+    if (!hittingEdge) {
+      edgeWasHit = false;
+      edgeBump *= Math.exp(-dt * 12);
+    }
 
-    // Pegas underdamped halus agar ada pantulan inersia sebelum ke posisi idle
-    sp(Wd, targetW, 240, 17, dt);
-    sp(Ht, targetH, 175, 13, dt);
-    sp(Z, on_ ? RM * (0.016 + 0.018 * str) : 0, 250, 15, dt);
-    sp(SX, RM * (st * 0.045 - edgePinch * 0.03), 230, 15, dt);
+    // Tinggi dinamis: memipih saat slide cepat, meninggi melewati outline saat mengempis/ditahan atau terkompresi tepi
+    const edgePinch = Math.max(0, tW - targetW) / Math.max(1, tW * 0.22);
+    const targetH = lp(restH, activeH, pp)
+      - st * 7.5
+      - ap * 3.5
+      + (holdPulse * 8.5 + an * 5.5) * p1
+      + edgePinch * 6.0;
+
+    sp(Wd, targetW, 255, 16, dt);
+    sp(Ht, targetH, 185, 13, dt);
+    sp(Z, on_ ? RM * (0.015 + 0.016 * str) : 0, 250, 15, dt);
+    sp(SX, RM * (st * 0.04 - holdPulse * 0.03 * p1 - edgePinch * 0.035), 230, 15, dt);
     sp(SH, RM * cl(svx * 0.002 + (isTracking ? cl(rawTargetX - cl(rawTargetX, minSlotC, maxSlotC), -14, 14) * 0.16 : 0), -3, 3) * p1, 195, 15, dt);
     sp(IZ, on_ ? RM * (0.03 + 0.03 * strS) : 0, 75, 14, dt);
 
@@ -2114,7 +2157,6 @@ function createCamelLiquidControl(options) {
     if (ctrlSig === lastCtrlSig) return;
     lastCtrlSig = ctrlSig;
 
-    // 1. Buffer teks aktif tepat di tengah lensa
     bctx.clearRect(0, 0, w, h);
     bctx.save();
     const magScale = 1 + 0.11 * pc + (geom.iconZoom - 1) * 0.35;
@@ -2128,7 +2170,6 @@ function createCamelLiquidControl(options) {
     drawContent(bctx, w, h, padX + inset, padY + inset, innerW, innerH);
     bctx.restore();
 
-    // 2. Refraksi bilineer real-time hanya pada kapsul lensa
     const source = bctx.getImageData(0, 0, w, h).data;
     const output = imgData.data;
     const cornerR = Math.min(pillHalfW, pillHalfH);
@@ -2169,7 +2210,6 @@ function createCamelLiquidControl(options) {
 
     lctx.putImageData(imgData, 0, 0);
 
-    // 3. Render teks non-aktif + knockout area lensa + komposit lensa kaca real-time
     sctx.clearRect(0, 0, w, h);
     sctx.save();
     sctx.translate(w * 0.5, h * 0.5);
@@ -2204,9 +2244,12 @@ function createCamelLiquidControl(options) {
     down = true;
     downTime = performance.now();
     moved = false;
+    edgeWasHit = false;
+    edgeBump = 0;
     const rect = containerEl.getBoundingClientRect();
     downX = e.clientX - rect.left;
-    px = pxs = downX;
+    px = pxs = prevPxs = downX;
+    fingerSpd = 0;
     pr = prs(e);
     holdUntil = downTime + 210;
     Z.v += RM * (0.65 + 0.85 * pr);
@@ -2225,13 +2268,13 @@ function createCamelLiquidControl(options) {
   function endPointer() {
     if (!down) return;
     down = false;
+    edgeWasHit = false;
     Z.v -= RM * 0.45;
 
     const w = getW();
     const curIdx = getCurrentIndex();
 
     if (!moved) {
-      // One quick tap: biarin stay di posisi aktif saat ini
       holdUntil = performance.now() + 120;
       onSelectIndex(curIdx);
     } else {
@@ -2243,6 +2286,7 @@ function createCamelLiquidControl(options) {
   containerEl.addEventListener("pointerup", endPointer);
   containerEl.addEventListener("pointercancel", () => {
     down = false;
+    edgeWasHit = false;
     Z.v -= RM * 0.45;
   });
 
@@ -2252,7 +2296,7 @@ function createCamelLiquidControl(options) {
       const c = getStepCenterX(idx, w);
       X.x = c;
       X.v = 0;
-      px = pxs = c;
+      px = pxs = prevPxs = c;
       P.x = 0;
       P.v = 0;
       lastCtrlSig = "";
@@ -2266,8 +2310,8 @@ function createCamelLiquidControl(options) {
 const deviceToggleCtrl = createCamelLiquidControl({
   containerEl: deviceToggle,
   canvasEl: deviceToggleCanvas,
-  padXCss: 34,
-  padYCss: 26,
+  padXCss: 36,
+  padYCss: 34,
   insetCss: 3,
   fixedThumbWidth: null,
   fontSizeCss: 10.8,
@@ -2290,8 +2334,8 @@ const deviceToggleCtrl = createCamelLiquidControl({
 const navToggleCtrl = createCamelLiquidControl({
   containerEl: navToggle,
   canvasEl: navToggleCanvas,
-  padXCss: 34,
-  padYCss: 26,
+  padXCss: 36,
+  padYCss: 34,
   insetCss: 3,
   fixedThumbWidth: null,
   fontSizeCss: 10.8,
@@ -2314,8 +2358,8 @@ const navToggleCtrl = createCamelLiquidControl({
 const bgSliderCtrl = createCamelLiquidControl({
   containerEl: bgSlider,
   canvasEl: bgSliderCanvas,
-  padXCss: 34,
-  padYCss: 28,
+  padXCss: 36,
+  padYCss: 36,
   insetCss: 3,
   fixedThumbWidth: 76,
   fontSizeCss: 11.2,
@@ -2337,8 +2381,8 @@ const bgSliderCtrl = createCamelLiquidControl({
 const frameSliderCtrl = createCamelLiquidControl({
   containerEl: frameSlider,
   canvasEl: frameSliderCanvas,
-  padXCss: 34,
-  padYCss: 28,
+  padXCss: 36,
+  padYCss: 36,
   insetCss: 3,
   fixedThumbWidth: 76,
   fontSizeCss: 11.2,
@@ -2421,8 +2465,11 @@ liquidNav.addEventListener("pointerdown", (e) => {
   navDown = true;
   navDownTime = performance.now();
   navMoved = false;
+  navEdgeWasHit = false;
+  navEdgeBump = 0;
   liquidNav.setPointerCapture(e.pointerId);
-  navDownX = navPx = navPxs = navLx(e);
+  navDownX = navPx = navPxs = navPrevPxs = navLx(e);
+  navFingerSpd = 0;
   navPr = prs(e);
   navHoldUntil = navDownTime + 210;
   navZ.v += RM * (0.65 + 0.85 * navPr);
@@ -2439,10 +2486,10 @@ liquidNav.addEventListener("pointermove", (e) => {
 function releaseNav() {
   if (!navDown) return;
   navDown = false;
+  navEdgeWasHit = false;
   navZ.v -= RM * 0.45;
 
   if (!navMoved) {
-    // One quick tap: biarin stay di posisi saat ini
     navHoldUntil = performance.now() + 120;
     return;
   }
@@ -2466,27 +2513,35 @@ function updateLiquidPillPhysics(now, dt) {
   const w = navW();
   const t = navTw();
   const on_ = navDown || now < navHoldUntil;
-  const isTracking = navDown && (navMoved || (now - navDownTime) > 165);
+  const isTracking = navDown && (navMoved || (now - navDownTime) > 155);
 
   navPxs += (navPx - navPxs) * Math.min(1, dt * 36);
+  const instFingerSpd = Math.abs(navPxs - navPrevPxs) / Math.max(0.001, dt);
+  navPrevPxs = navPxs;
+  navFingerSpd += (instFingerSpd - navFingerSpd) * Math.min(1, dt * 16);
 
   const pp = Math.max(navP.x, 0);
   const p1 = Math.min(pp, 1);
 
-  navSpd += (Math.abs(navX.v) - navSpd) * Math.min(1, dt * 12);
-  navSvx += (navX.v - navSvx) * Math.min(1, dt * 12);
-  const sn = cl(navSpd / 600, 0, 1);
+  navSpd += (Math.abs(navX.v) - navSpd) * Math.min(1, dt * 14);
+  navSvx += (navX.v - navSvx) * Math.min(1, dt * 14);
+  const sn = cl(Math.max(navSpd, navFingerSpd) / 540, 0, 1);
 
   navStr += ((on_ ? Math.max(cl((navPr - 0.15) / 0.85, 0, 1), sn) : 0) - navStr) * Math.min(1, dt * 12);
-  navSpdS += (navSpd - navSpdS) * Math.min(1, dt * 4);
+  navSpdS += (Math.max(navSpd, navFingerSpd) - navSpdS) * Math.min(1, dt * 5);
   navStrS += (navStr - navStrS) * Math.min(1, dt * 5);
 
+  // Ritme tahan-slide-tahan-slide:
+  // Saat slide cepat -> meregang (tidak terlalu panjang) & memipih;
+  // Saat ditahan diam -> mengempis jadi kapsul pendek & tingginya menonjol melewati outline navbar
+  const isPausingHold = isTracking && sn < 0.16;
+  navHoldPulse += ((isPausingHold ? 1 : 0) - navHoldPulse) * Math.min(1, dt * 11);
+
   const st = sn * p1;
-  const ac = cl((navSpd - navSpdS) / 560, -1, 1) * p1;
+  const ac = cl((Math.max(navSpd, navFingerSpd) - navSpdS) / 500, -1, 1) * p1;
   const ap = Math.max(ac, 0);
   const an = Math.max(-ac, 0);
 
-  // Lebar proporsional dengan menu slot
   const restW = t - navInset * 2;
   const restH = (cachedNavBaseRect.height || 68) - navInset * 2;
 
@@ -2494,46 +2549,68 @@ function updateLiquidPillPhysics(now, dt) {
   const maxSlotC = Math.max(minSlotC, w - minSlotC);
   const rawTargetX = isTracking ? navPxs : navCtr(activeTab);
 
-  // Lebar dinamis saat hold/melayang bergantung pada kecepatan & kekuatan jari
-  const freeW = lp(restW, restW * 1.05, pp) + st * 14 + ap * 5 + an * 4 + navStr * 3 * p1;
+  // Lebar dinamis: regang tidak kepanjangan (max +15%), mengempis menjadi kapsul pendek saat tahan
+  const stretchDelta = st * (restW * 0.14) + ap * (restW * 0.05);
+  const squishInDelta = (navHoldPulse * (restW * 0.16) + an * (restW * 0.08)) * p1;
+  const freeW = cl(restW + stretchDelta - squishInDelta, restW * 0.78, restW * 1.15);
 
-  // Batas luar yang diperbolehkan melewati outline navbar tapi aman di dalam layar
+  // Batas tepi luar kontainer (aman dalam layar)
   const screenMargin = 10;
   const minLeftEdge = Math.max(navInset - 16, screenMargin - cachedNavBaseRect.left);
   const maxRightEdge = Math.min(w - navInset + 16, width - screenMargin - cachedNavBaseRect.left);
 
   let targetW = freeW;
   let targetCenter = rawTargetX;
+  let hittingEdge = false;
 
   if (isTracking) {
     const desiredLeft = rawTargetX - freeW * 0.5;
     const desiredRight = rawTargetX + freeW * 0.5;
 
     if (desiredRight > maxRightEdge) {
-      // Mentok kanan: sisi kanan lensa jadi penahan di maxRightEdge, anchor di sisi kiri lensa
-      const overRight = desiredRight - maxRightEdge;
-      const compress = Math.min(overRight * 0.55, restW * 0.22);
-      targetW = Math.max(restW * 0.78, freeW - compress);
+      hittingEdge = true;
+      if (!navEdgeWasHit) {
+        navEdgeWasHit = true;
+        navEdgeBump = Math.min(1, 0.60 + sn * 0.40);
+      }
+      navEdgeBump *= Math.exp(-dt * 7.5);
+      // Mengecil sementara saat mentok kanan, lalu membal balik ke ukuran normal proporsional dengan anchor di sisi kiri
+      const impactCompress = navEdgeBump * (restW * 0.24);
+      targetW = Math.max(restW * 0.74, lp(restW, freeW, navEdgeBump) - impactCompress);
       targetCenter = maxRightEdge - targetW * 0.5;
     } else if (desiredLeft < minLeftEdge) {
-      // Mentok kiri: sisi kiri lensa jadi penahan di minLeftEdge, anchor di sisi kanan lensa
-      const overLeft = minLeftEdge - desiredLeft;
-      const compress = Math.min(overLeft * 0.55, restW * 0.22);
-      targetW = Math.max(restW * 0.78, freeW - compress);
+      hittingEdge = true;
+      if (!navEdgeWasHit) {
+        navEdgeWasHit = true;
+        navEdgeBump = Math.min(1, 0.60 + sn * 0.40);
+      }
+      navEdgeBump *= Math.exp(-dt * 7.5);
+      // Mengecil sementara saat mentok kiri, lalu membal balik ke ukuran normal proporsional dengan anchor di sisi kanan
+      const impactCompress = navEdgeBump * (restW * 0.24);
+      targetW = Math.max(restW * 0.74, lp(restW, freeW, navEdgeBump) - impactCompress);
       targetCenter = minLeftEdge + targetW * 0.5;
     }
   } else {
     targetCenter = cl(navCtr(activeTab), minSlotC, maxSlotC);
   }
 
-  const edgePinch = Math.max(0, freeW - targetW) / Math.max(1, restW * 0.22);
-  const targetH = lp(restH, 76, pp) - st * 8 - ap * 5 + an * 8 + navStr * 3.5 * p1 + edgePinch * 4.5;
+  if (!hittingEdge) {
+    navEdgeWasHit = false;
+    navEdgeBump *= Math.exp(-dt * 12);
+  }
 
-  // Pegas underdamped halus agar ada pantulan inersia sebelum ke posisi idle
-  sp(navWd, targetW, 240, 17, dt);
-  sp(navHt, targetH, 175, 13, dt);
-  sp(navZ, on_ ? RM * (0.016 + 0.018 * navStr) : 0, 250, 15, dt);
-  sp(navSX, RM * (st * 0.05 - edgePinch * 0.035), 230, 15, dt);
+  // Tinggi dinamis: memipih saat slide cepat, meninggi melewati outline navbar saat mengempis/ditahan atau terkompresi tepi
+  const edgePinch = Math.max(0, restW - targetW) / Math.max(1, restW * 0.24);
+  const targetH = lp(restH, 74, pp)
+    - st * 10
+    - ap * 4.5
+    + (navHoldPulse * 13 + an * 7.5) * p1
+    + edgePinch * 8.5;
+
+  sp(navWd, targetW, 255, 16, dt);
+  sp(navHt, targetH, 185, 13, dt);
+  sp(navZ, on_ ? RM * (0.015 + 0.016 * navStr) : 0, 250, 15, dt);
+  sp(navSX, RM * (st * 0.045 - navHoldPulse * 0.035 * p1 - edgePinch * 0.035), 230, 15, dt);
   sp(navSH, RM * cl(navSvx * 0.002 + (isTracking ? cl(rawTargetX - cl(rawTargetX, minSlotC, maxSlotC), -18, 18) * 0.18 : 0), -3.5, 3.5) * p1, 195, 15, dt);
   sp(navIZ, on_ ? RM * (0.035 + 0.03 * navStrS) : 0, 75, 14, dt);
 
@@ -2652,7 +2729,7 @@ function resize() {
 
   updateCachedNavRect();
   navX.x = navCtr(activeTab);
-  navPx = navPxs = navX.x;
+  navPx = navPxs = navPrevPxs = navX.x;
   resizeGlassCanvas();
   lastNavRenderSig = "";
   sceneDirty = true;
@@ -2669,7 +2746,7 @@ function resizeGlassCanvas() {
   const baseW = cachedNavBaseRect.width || liquidNav.offsetWidth || Math.min(344, width - 32);
   const baseH = cachedNavBaseRect.height || liquidNav.offsetHeight || 68;
   const newWidth = Math.max(1, Math.round((baseW + 88) * dpr));
-  const newHeight = Math.max(1, Math.round((baseH + 84) * dpr));
+  const newHeight = Math.max(1, Math.round((baseH + 96) * dpr));
 
   if (glassCanvas.width !== newWidth || glassCanvas.height !== newHeight) {
     glassCanvas.width = newWidth;
@@ -2777,7 +2854,7 @@ function drawLiquidNavRefraction() {
   if (!lensWidth || !lensHeight || !glassImageData) return;
 
   const padX = 44 * dpr;
-  const padY = 42 * dpr;
+  const padY = 48 * dpr;
   const navW = lensWidth - padX * 2;
   const navH = lensHeight - padY * 2;
   const insetPx = 5 * dpr;
