@@ -289,7 +289,7 @@ body {
   flex-shrink: 0;
 }
 
-/* Segmented Toggle */
+/* CAMEL: Segmented Toggle */
 .lg-segmented {
   position: relative;
   flex: 1 1 0;
@@ -302,7 +302,7 @@ body {
   overflow: visible;
   isolation: isolate;
   touch-action: none;
-  cursor: grab;
+  cursor: pointer;
   transform-origin: center center;
   will-change: transform;
   background: rgba(255, 255, 255, 0.05);
@@ -312,10 +312,6 @@ body {
   box-shadow:
     0 4px 14px rgba(0, 0, 0, 0.14),
     inset 0 0.5px 0 rgba(255, 255, 255, 0.38);
-}
-
-.lg-segmented:active {
-  cursor: grabbing;
 }
 
 .lg-seg-canvas {
@@ -379,7 +375,7 @@ body {
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
 }
 
-/* Sliders */
+/* CAMEL: Sliders */
 .mockup-sliders {
   position: relative;
   z-index: 3;
@@ -402,7 +398,7 @@ body {
   overflow: visible;
   isolation: isolate;
   touch-action: none;
-  cursor: grab;
+  cursor: pointer;
   transform-origin: center center;
   will-change: transform;
   background: rgba(255, 255, 255, 0.05);
@@ -413,10 +409,6 @@ body {
     0 4px 14px rgba(0, 0, 0, 0.14),
     inset 0 0.5px 0 rgba(255, 255, 255, 0.38);
   z-index: 1;
-}
-
-.lg-slider-card:active {
-  cursor: grabbing;
 }
 
 .lg-slider-canvas {
@@ -449,7 +441,7 @@ body {
 }
 
 /* =========================================================
-   FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR
+   CAMEL: FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR
    ========================================================= */
 .nav-dock-wrap {
   position: fixed;
@@ -458,7 +450,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: min(344px, calc(100vw - 32px));
-  height: 64px;
+  height: 68px;
   pointer-events: auto;
 }
 
@@ -474,6 +466,7 @@ body {
   overflow: visible;
   isolation: isolate;
   touch-action: none;
+  cursor: pointer;
   transform-origin: center center;
   will-change: transform;
   background: rgba(255, 255, 255, 0.05);
@@ -505,6 +498,10 @@ body {
   padding: 0;
   color: transparent;
   cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-nav, .lg-segmented, .lg-slider-card { will-change: auto; }
 }
 
 #photoInput,
@@ -721,117 +718,60 @@ let currentAccentRgb = [45, 168, 255];
 
 let sceneDirty = true;
 let lastNavRenderSig = "";
-let cachedNavBaseRect = { left: 0, top: 0, width: 344, height: 64 };
+let cachedNavBaseRect = { left: 0, top: 0, width: 344, height: 68 };
 
 /* =========================================================
-   ANALYTICAL DAMPED SPRINGS
+   MESIN FISIKA PEGAS IDENTIK ACUAN.html UNTUK SELURUH CAMEL
    ========================================================= */
-function stepSpring(s, targetVal, omega, zeta, dt) {
-  const d = s.x - targetVal;
-  if (zeta > 0.9995) {
-    const b = s.v + omega * d;
-    const e = Math.exp(-omega * dt);
-    s.x = targetVal + (d + b * dt) * e;
-    s.v = (s.v - omega * b * dt) * e;
-  } else {
-    const wd = omega * Math.sqrt(Math.max(1e-4, 1 - zeta * zeta));
-    const b = (s.v + zeta * omega * d) / wd;
-    const e = Math.exp(-zeta * omega * dt);
-    const cos = Math.cos(wd * dt);
-    const sin = Math.sin(wd * dt);
-    const x = (d * cos + b * sin) * e;
-    s.x = targetVal + x;
-    s.v = e * wd * (b * cos - d * sin) - zeta * omega * x;
-  }
-  const settled =
-    Math.abs(s.x - targetVal) < 3e-4 * Math.max(1, Math.abs(targetVal)) &&
-    Math.abs(s.v) < 0.002;
-  if (settled) {
-    s.x = targetVal;
-    s.v = 0;
-  }
-  return !settled;
-}
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1;
+const cl = (v, a, b) => Math.max(a, Math.min(b, v));
+const lp = (a, b, t) => a + (b - a) * t;
+const sp = (s, t, k, c, dt) => {
+  s.v += (k * (t - s.x) - c * s.v) * dt;
+  s.x += s.v * dt;
+};
+const prs = (e) => (e.pointerType === "mouse" ? 0.5 : e.pressure > 0 ? e.pressure : 0.5);
+const mkS = (x) => ({ x, v: 0 });
 
-const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const smoothstep = (a, b, x) => {
-  const t = clamp((x - a) / (b - a), 0, 1);
+  const t = cl((x - a) / (b - a), 0, 1);
   return t * t * (3 - 2 * t);
 };
 
-function asymptoticEdge(val, minVal, maxVal, margin = 0.085) {
-  if (val < minVal) {
-    const over = minVal - val;
-    return minVal - margin * Math.tanh(over / margin);
-  }
-  if (val > maxVal) {
-    const over = val - maxVal;
-    return maxVal + margin * Math.tanh(over / margin);
-  }
-  return val;
-}
-
-/* =========================================================
-   PERBAIKAN 4 AKAR MASALAH FISIKA & PROPORSI LENSA:
-   1. Resting Lens vs Bar:
-      - Saat aktif ditekan, tinggi lensa keluar menyelimuti batas atas & bawah
-        bar secara simetris (RESTING_EXPAND_H = 0.48 -> ~1.25x tinggi bar),
-        dan lebarnya melebar simetris (RESTING_EXPAND_W = 0.22) sehingga di tab
-        ujung (0 atau 2) sisi terluarnya menjorok keluar batas luar navbar
-        (natural overhang) tanpa terkunci di dalam padding.
-   2. One Quick Tap Timer (tapHoldTimer > 0):
-      - Memberi durasi tahan puncak ~0.16s sebelum menyusut kembali, sehingga
-        tap cepat tetap sempat mekar penuh seperti di One Quick Tap.mp4.
-   3. Velocity Stretch & Edge Squash Impact:
-      - Kecepatan tinggi di lintasan tengah memanjang horizontal (+stretchX)
-        dan memipih vertikal (-stretchY).
-      - Tumbukan ujung (tab 0 / tab 2) me-reset velocityStretch & menembakkan
-        impuls impactSquishSpring (menyusutkan lebar drastis & memekarkan
-        tinggi ke atas-bawah) sebelum membal kembali ke resting lens.
-   4. Clamping Pointer Keluar Navbar:
-      - Koordinat jari dikunci pada rentang 0..2 sehingga saat pointer keluar
-        area bar tetap mengeksekusi tab terakhir tempat lensa tertahan.
-   ========================================================= */
-const RESTING_EXPAND_W = 0.22;
-const RESTING_EXPAND_H = 0.48;
-const CHASE_SPRING = { omega: 21.0, zeta: 0.48 };
-const SLIDE_SPRING = { omega: 18.0, zeta: 0.45 };
-const PRESS_OPEN_SPRING = { omega: 24.0, zeta: 0.72 };
-const PRESS_CLOSE_SPRING = { omega: 13.0, zeta: 0.88 };
-const SWELL_W_SPRING = { omega: 21.0, zeta: 0.56 };
-const SWELL_H_SPRING = { omega: 19.5, zeta: 0.52 };
-const VEL_STRETCH_SPRING = { omega: 18.0, zeta: 0.50 };
-const IMPACT_SQUISH_SPRING = { omega: 16.5, zeta: 0.34 };
-const JELLY_WOBBLE = { omega: 15.0, zeta: 0.34 };
-const BAR_JELLY_SPRING = { omega: 16.5, zeta: 0.40 };
-
+// State Fisika Navbar (CAMEL #1) - Persis ACUAN.html
 let activeTab = 0;
-const pillSpring = { x: 0, v: 0 };
-let pillTarget = 0;
-let pillDragging = false;
-let pillPressing = false;
-let pillDragStartX = 0;
-let pillDragStartPos = 0;
-let pillMoved = false;
-let lastPillPointerX = 0;
-let lastPillPointerTime = 0;
-let fingerVx = 0;
+let navDown = false;
+let navPx = 0;
+let navPxs = 0;
+let navPr = 0.5;
+let navHoldUntil = 0;
 let mockupSlideTriggeredInGesture = false;
 
-const pressSpring = { x: 0, v: 0 };
-let tapHoldTimer = 0; // Durasi menahan puncak ekspansi untuk One Quick Tap
-const swellXSpring = { x: 0, v: 0 };
-const swellYSpring = { x: 0, v: 0 };
-const velStretchSpring = { x: 0, v: 0 }; // Positif saat meluncur cepat: memanjang X, memipih Y
-const impactSquishSpring = { x: 0, v: 0 }; // Positif saat menabrak ujung: menyusut X, membal tinggi Y
-const lensJellySpring = { x: 0, v: 0 };
-const edgeOverhangSpring = { x: 0, v: 0 };
-const barShiftSpring = { x: 0, v: 0 };
-const barStretchSpring = { x: 0, v: 0 };
-let fingerTargetX = 0;
-let prevPillSpeed = 0;
-let prevPillPos = 0;
-let jellyPhase = 0;
+const navX = mkS(0);
+const navP = mkS(0);
+const navWd = mkS(102);
+const navHt = mkS(56);
+const navZ = mkS(0);
+const navSX = mkS(0);
+const navSH = mkS(0);
+const navIZ = mkS(0);
+
+let navSpd = 0;
+let navSpdS = 0;
+let navStrS = 0;
+let navSvx = 0;
+let navStr = 0;
+
+// Geometri lensa navbar ter-update tiap frame untuk Canvas & WebGL Shader
+let navLensGeom = {
+  centerXCss: 0,
+  centerYCss: 0,
+  halfWCss: 51,
+  halfHCss: 28,
+  press: 0,
+  velX: 0,
+  iconZoom: 1
+};
 
 let cameraStream = null;
 let facingMode = "environment";
@@ -989,26 +929,7 @@ function applyNavMaterialYouPalette(palette) {
 }
 
 /* =========================================================
-   SYMMETRIC EXPANSION + NATURAL EDGE OVERHANG GEOMETRY
-   Ketika kapsul mengembang simetris dari pusat slot tab (centerX)
-   dengan scaleX > 1 (misal 1.22x lebar tab), di tab ujung kiri (0)
-   dan kanan (2) sisi luarnya otomatis menembus keluar batas luar
-   navbar secara proporsional, ditambah dorongan tumbukan overhangPx.
-   ========================================================= */
-function computeSymmetricOverhangPillGeometry(pos, maxPos, innerLeft, innerRight, basePillW, scaleX, overhangPx) {
-  const innerSpan = Math.max(1, innerRight - innerLeft);
-  const maxTravel = Math.max(0, innerSpan - basePillW);
-  const normPos = maxPos > 0 ? clamp(pos / maxPos, 0, 1) : 0;
-
-  const pillW = basePillW * scaleX;
-  const baseCenterX = innerLeft + basePillW * 0.5 + normPos * maxTravel;
-  const centerX = baseCenterX + overhangPx * 0.65;
-
-  return { centerX, pillHalfW: pillW * 0.5 };
-}
-
-/* =========================================================
-   WEBGL SHADERS (CONCAVE LENS FRAME + SYNCHRONIZED PILL OPTICS)
+   WEBGL SHADERS (CONCAVE LENS FRAME + REALTIME PILL OPTICS)
    ========================================================= */
 const vertexSource = `#version 300 es
 precision highp float;
@@ -1034,8 +955,7 @@ uniform vec2 uCardSize;
 uniform float uTime;
 
 uniform vec4 uPillRect;   // xy = center UV, zw = halfSize UV
-uniform float uPillPress; // 0.0 (idle pill) sampai 1.0 (expanded lens)
-uniform float uPillSpeed; // 0.0 (diam) sampai 1.0 (gerak cepat -> dispersi & pembiasan kuat)
+uniform float uPillPress; // 0.0 (flat active pill) sampai 1.0 (lensa kaca aktif)
 
 float roundedBoxDistance(vec2 point, vec2 halfSize, float radius) {
   vec2 q = abs(point) - halfSize + radius;
@@ -1058,7 +978,7 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
 
   float pillDist = roundedBoxDistance(pillP, pillHalf, pillRadius);
   
-  float outerReach = 0.018 * uPillPress;
+  float outerReach = 0.015 * uPillPress;
   if (pillDist >= outerReach) return baseColor;
 
   vec2 pDir = normalize(pillP + vec2(0.00001));
@@ -1068,32 +988,31 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
     if (uPillPress <= 0.001) return baseColor;
     float normDist = pillDist / max(0.0001, outerReach);
     float pull = pow(1.0 - normDist, 2.2);
-    vec2 outerShift = pDir * (0.0065 * pull * uPillPress);
+    vec2 outerShift = pDir * (0.0048 * pull * uPillPress);
     vec3 outerBg = sampleScene(uv + outerShift).rgb;
-    baseColor.rgb = mix(baseColor.rgb, outerBg, pull * 0.88);
+    baseColor.rgb = mix(baseColor.rgb, outerBg, pull * 0.85);
 
-    float shadowFalloff = exp(-pillDist * 175.0) * (0.16 * uPillPress);
+    float shadowFalloff = exp(-pillDist * 185.0) * (0.14 * uPillPress);
     baseColor.rgb *= (1.0 - shadowFalloff);
     return baseColor;
   }
 
   // Layer 2: Core Magnification + Bevel Edge Refraction
-  float edgeBand = smoothstep(-pillRadius * 0.85, 0.0, pillDist);
-  float coreMag = (1.0 - edgeBand) * (0.042 * uPillPress);
+  float edgeBand = smoothstep(-pillRadius * 0.82, 0.0, pillDist);
+  float coreMag = (1.0 - edgeBand) * (0.024 * uPillPress);
   vec2 coreShift = -pillOffset * coreMag;
 
-  float bevelStrength = (0.048 + 0.022 * uPillSpeed) * uPillPress * pow(edgeBand, 1.75);
+  float bevelStrength = (0.034 * uPillPress) * pow(edgeBand, 1.85);
   vec2 bgShift = coreShift - pDir * bevelStrength;
 
-  float dispScale = 0.22 + 0.28 * uPillSpeed;
   vec3 bgLiquid;
-  bgLiquid.r = sampleScene(uv + bgShift * (1.0 + dispScale)).r;
+  bgLiquid.r = sampleScene(uv + bgShift * 1.18).r;
   bgLiquid.g = sampleScene(uv + bgShift).g;
-  bgLiquid.b = sampleScene(uv + bgShift * (1.0 - dispScale)).b;
+  bgLiquid.b = sampleScene(uv + bgShift * 0.82).b;
 
-  // Layer 3: Transisi halus antara Idle Pill & Frosted Liquid Glass
-  float innerAO = smoothstep(-pillRadius * 0.18, 0.0, pillDist) * (0.030 * uPillPress);
-  bgLiquid = bgLiquid * (1.0 - innerAO) + vec3(0.035, 0.045, 0.058) * uPillPress;
+  // Layer 3: Transisi halus antara Flat Pill Tint (diam) & Frosted Liquid Glass (aktif)
+  float innerAO = smoothstep(-pillRadius * 0.18, 0.0, pillDist) * (0.025 * uPillPress);
+  bgLiquid = bgLiquid * (1.0 - innerAO) + vec3(0.032, 0.040, 0.052) * uPillPress;
 
   float innerMask = smoothstep(0.0, -0.003, pillDist);
   baseColor.rgb = mix(baseColor.rgb, bgLiquid, innerMask);
@@ -1678,10 +1597,19 @@ function renderDeviceMockup() {
     mctx.strokeStyle = "rgba(255, 255, 255, 0.28)";
     mctx.stroke();
 
-    const prevPillX = pillSpring.x;
-    const prevPress = pressSpring.x;
-    pillSpring.x = 0;
-    pressSpring.x = 0;
+    const prevX = navX.x;
+    const prevP = navP.x;
+    navX.x = (liquidNav.clientWidth || 344) / 6;
+    navP.x = 0;
+    navLensGeom = {
+      centerXCss: cachedNavBaseRect.left + navX.x,
+      centerYCss: cachedNavBaseRect.top + 34,
+      halfWCss: ((liquidNav.clientWidth || 344) / 3 - 8) * 0.5,
+      halfHCss: 28,
+      press: 0,
+      velX: 0,
+      iconZoom: 1
+    };
     lastNavRenderSig = "";
     drawLiquidNavRefraction();
 
@@ -1697,8 +1625,8 @@ function renderDeviceMockup() {
       );
     }
 
-    pillSpring.x = prevPillX;
-    pressSpring.x = prevPress;
+    navX.x = prevX;
+    navP.x = prevP;
     lastNavRenderSig = "";
     mctx.restore();
   }
@@ -1817,7 +1745,7 @@ function renderDeviceMockup() {
 }
 
 /* =========================================================
-   PREMULTIPLIED RGBA BILINEAR SAMPLER (CONTENT ONLY)
+   MESIN OPTIK REALTIME BASE6.html (CONTENT-ONLY BILINEAR REFRACTION)
    ========================================================= */
 function sampleBilinearPremultiplied(source, w, h, fx, fy) {
   const x = fx < 0 ? 0 : (fx > w - 1 ? w - 1 : fx);
@@ -1858,11 +1786,6 @@ function sampleBilinearPremultiplied(source, w, h, fx, fy) {
   return [r, g, b, a];
 }
 
-/* =========================================================
-   OPTIK LENSA CAIR (PEMBESAR NYATA DI TENGAH + PEMBIASAN LENGKUNG DI TEPI)
-   - Bagian tengah: coreZoom 0.135 -> ikon & teks di dalam lensa tampak membesar nyata.
-   - Cincin tepi: pullMag 18.5px + dispersi RGB prismatik mengikuti lengkung kaca.
-   ========================================================= */
 function shadeContentOnlyRefractionPixel(
   source, w, h, x, y,
   dxPill, dyPill, pillHalfW, pillHalfH,
@@ -1883,23 +1806,21 @@ function shadeContentOnlyRefractionPixel(
   const dirX = nLen > 0.0001 ? nx / nLen : 0;
   const dirY = nLen > 0.0001 ? ny / nLen : 0;
 
-  const speedFactor = clamp(Math.abs(velX) * 0.18, 0, 1.0);
+  const rimZone = Math.min(pillHalfH * 0.72, 18.0 * dprScale);
+  const edgeRatio = cl((sdfPill + rimZone) / rimZone, 0, 1);
+  const meniscusProfile = Math.pow(edgeRatio, 3.0);
 
-  const rimZone = Math.min(pillHalfH * 0.76, 22.0 * dprScale);
-  const edgeRatio = clamp((sdfPill + rimZone) / rimZone, 0, 1);
-  const meniscusProfile = Math.pow(edgeRatio, 2.4);
-
-  // Layer 1: Core Convex Magnification (pembesaran nyata di bagian tengah)
-  const coreZoom = (0.135 * pc) * (1.0 - meniscusProfile * 0.72);
+  // Layer 1: Core Convex Magnification
+  const coreZoom = (0.054 * pc) * (1.0 - meniscusProfile * 0.75);
   const coreShiftX = -dxPill * coreZoom;
   const coreShiftY = -dyPill * coreZoom;
 
-  // Layer 2: Edge Bevel Refraction + Chromatic Dispersion (distorsi lengkung kuat di cincin tepi)
-  const pullMag = (18.5 + 8.5 * speedFactor) * pc * dprScale * meniscusProfile;
+  // Layer 2: Edge Bevel Refraction + Chromatic Dispersion Realtime
+  const pullMag = (10.8 * pc) * dprScale * meniscusProfile;
   const shiftX = coreShiftX - dirX * pullMag;
   const shiftY = coreShiftY - dirY * pullMag;
 
-  const disp = (2.10 + 2.40 * speedFactor) * pc * dprScale * meniscusProfile;
+  const disp = (1.80 * pc) * dprScale * meniscusProfile;
   const [rr, , , ra] = sampleBilinearPremultiplied(source, w, h, x + shiftX + dirX * disp, y + shiftY + dirY * disp);
   const [, gg, , ga] = sampleBilinearPremultiplied(source, w, h, x + shiftX, y + shiftY);
   const [, , bb, ba] = sampleBilinearPremultiplied(source, w, h, x + shiftX - dirX * disp, y + shiftY - dirY * disp);
@@ -1907,25 +1828,25 @@ function shadeContentOnlyRefractionPixel(
   const contentAlpha = Math.max(ra, ga, ba);
 
   // Layer 3: Inner Rim Shadow
-  const innerShadowBand = smoothstep(3.0 * dprScale, 0.0, Math.abs(sdfPill + 2.0 * dprScale));
-  const innerShadowAlpha = innerShadowBand * (0.095 * pc) * (1.0 - contentAlpha * 0.55);
+  const innerShadowBand = smoothstep(2.8 * dprScale, 0.0, Math.abs(sdfPill + 1.8 * dprScale));
+  const innerShadowAlpha = innerShadowBand * (0.075 * pc) * (1.0 - contentAlpha * 0.6);
 
-  // Layer 4: Dual Specular Rim (garis tepi putih tajam khas kaca)
-  const rimW = 1.45 * dprScale;
+  // Layer 4: Dual Specular Rim
+  const rimW = 1.25 * dprScale;
   const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
-  const up = clamp(-dirY, 0, 1);
-  const down = clamp(dirY, 0, 1);
+  const up = cl(-dirY, 0, 1);
+  const down = cl(dirY, 0, 1);
 
-  const motionPush = clamp(dirX * velX * 0.25, -0.25, 0.65);
-  const causticGlow = speedFactor * 0.16 * Math.abs(dirX);
-  const primarySpec = Math.pow(up, 1.3) * 0.78;
-  const bounceSpec = Math.pow(down, 1.55) * 0.44;
-  const rimAlpha = rimBand * pc * (0.36 + primarySpec + bounceSpec + motionPush + causticGlow);
+  const motionPush = cl(dirX * velX * 0.24, -0.25, 0.60);
+  const causticGlow = Math.abs(velX) * 0.05 * Math.abs(dirX);
+  const primarySpec = Math.pow(up, 1.35) * 0.68;
+  const bounceSpec = Math.pow(down, 1.6) * 0.34;
+  const rimAlpha = rimBand * pc * (0.28 + primarySpec + bounceSpec + motionPush + causticGlow);
 
-  // Layer 5: Idle Pill Fill (saat diam) <-> Frosted Glass Body (saat aktif)
+  // Layer 5: Flat Active Pill Fill (saat off/diam) <-> Frosted Glass Body (saat aktif)
   const flatPillAlpha = (1.0 - pc) * 0.14;
-  const topSheen = Math.pow(clamp(1.0 - (ny + 1.0) * 0.65, 0, 1), 2.3) * (0.115 * pc);
-  const activeBody = (0.062 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
+  const topSheen = Math.pow(cl(1.0 - (ny + 1.0) * 0.65, 0, 1), 2.4) * (0.095 * pc);
+  const activeBody = (0.055 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
   const glassBodyAlpha = (flatPillAlpha + activeBody + topSheen) * (1.0 - contentAlpha);
 
   const outA = Math.min(1.0, contentAlpha + rimAlpha + innerShadowAlpha + glassBodyAlpha);
@@ -1938,9 +1859,9 @@ function shadeContentOnlyRefractionPixel(
   const specShare = (rimAlpha * (1.0 - contentAlpha * 0.65)) / outA;
   const bodyShare = glassBodyAlpha / outA;
 
-  const bodyR = 230 + 16 * pc;
-  const bodyG = 236 + 15 * pc;
-  const bodyB = 244 + 11 * pc;
+  const bodyR = 228 + 14 * pc;
+  const bodyG = 234 + 14 * pc;
+  const bodyB = 242 + 13 * pc;
 
   const finalR = rr * contentShare + 255 * specShare + bodyR * bodyShare;
   const finalG = gg * contentShare + 255 * specShare + bodyG * bodyShare;
@@ -1953,9 +1874,9 @@ function shadeContentOnlyRefractionPixel(
 }
 
 /* =========================================================
-   UNIFIED SINGLE-PIPELINE CONTROL FOR SLIDERS & TOGGLES
+   CAMEL #2 & #3: TOGGLE & SLIDER (PERILAKU ACUAN.html + OPTIK BASE6.html)
    ========================================================= */
-function createUnifiedLiquidControl(options) {
+function createCamelLiquidControl(options) {
   const {
     containerEl,
     canvasEl,
@@ -1978,132 +1899,146 @@ function createUnifiedLiquidControl(options) {
   let imgData = null;
   let lastCtrlSig = "";
 
-  let isDragging = false;
-  let startX = 0;
-  let startRatio = 0;
-  let fingerRatio = 0;
-  const ratioSpring = { x: 0, v: 0 };
-  let targetRatio = 0;
-
-  const pressS = { x: 0, v: 0 };
-  let ctrlTapHoldTimer = 0;
-  const swellXS = { x: 0, v: 0 };
-  const swellYS = { x: 0, v: 0 };
-  const velStretchS = { x: 0, v: 0 };
-  const impactSquishS = { x: 0, v: 0 };
-  const jellyS = { x: 0, v: 0 };
-  const overhangS = { x: 0, v: 0 };
-  const barShiftS = { x: 0, v: 0 };
-  const barStretchS = { x: 0, v: 0 };
-  let prevSpeed = 0;
-  let prevRatio = 0;
-  let phase = 0;
+  // State Fisika Persis ACUAN.html
+  let down = false;
+  let px = 0;
+  let pxs = 0;
+  let pr = 0.5;
+  let holdUntil = 0;
   let moved = false;
-  let lastPtrX = 0;
-  let lastPtrTime = 0;
 
-  function getThumbMetrics(cardW, cardH) {
-    const inset = insetCss * dpr;
-    const innerW = Math.max(1, cardW - inset * 2);
-    const innerH = Math.max(1, cardH - inset * 2);
-    const tW = fixedThumbWidth ? fixedThumbWidth * dpr : innerW * 0.5;
-    const tH = innerH;
-    const maxTravel = Math.max(1, innerW - tW);
-    return { inset, innerW, innerH, tW, tH, maxTravel };
+  const X = mkS(0);
+  const P = mkS(0);
+  const Wd = mkS(fixedThumbWidth || 60);
+  const Ht = mkS(30);
+  const Z = mkS(0);
+  const SX = mkS(0);
+  const SH = mkS(0);
+  const IZ = mkS(0);
+
+  let spd = 0;
+  let spdS = 0;
+  let strS = 0;
+  let svx = 0;
+  let str = 0;
+
+  let geom = {
+    centerXCss: 0,
+    halfWCss: 30,
+    halfHCss: 15,
+    press: 0,
+    velX: 0,
+    iconZoom: 1
+  };
+
+  const getW = () => containerEl.offsetWidth || 140;
+  const getH = () => containerEl.offsetHeight || 36;
+
+  function getRestThumbWidth(w) {
+    const innerW = Math.max(1, w - insetCss * 2);
+    return fixedThumbWidth ? fixedThumbWidth : innerW * 0.5;
   }
 
-  function updateSpring(dt) {
-    if (ctrlTapHoldTimer > 0) {
-      ctrlTapHoldTimer = Math.max(0, ctrlTapHoldTimer - dt);
+  function getStepCenterX(idx, w) {
+    const steps = getStepsCount();
+    const innerW = Math.max(1, w - insetCss * 2);
+    const tW = getRestThumbWidth(w);
+    const maxTravel = Math.max(0, innerW - tW);
+    const ratio = steps > 1 ? cl(idx / (steps - 1), 0, 1) : 0;
+    return insetCss + tW * 0.5 + ratio * maxTravel;
+  }
+
+  function getIndexFromX(xPos, w) {
+    const steps = getStepsCount();
+    if (steps <= 1) return 0;
+    const innerW = Math.max(1, w - insetCss * 2);
+    const tW = getRestThumbWidth(w);
+    const maxTravel = Math.max(1, innerW - tW);
+    if (steps === 2 && !fixedThumbWidth) {
+      return xPos < w * 0.5 ? 0 : 1;
+    }
+    const ratio = cl((xPos - (insetCss + tW * 0.5)) / maxTravel, 0, 1);
+    return cl(Math.round(ratio * (steps - 1)), 0, steps - 1);
+  }
+
+  function updateSpring(now, dt) {
+    const w = getW();
+    const hBase = getH();
+    const tW = getRestThumbWidth(w);
+    const on_ = down || now < holdUntil;
+
+    pxs += (px - pxs) * Math.min(1, dt * 28);
+
+    const ALLOW = tW * 0.22;
+    const minC = lp(insetCss + tW * 0.5, insetCss + tW * 0.62 - ALLOW, cl(P.x, 0, 1));
+    const targetX = on_ ? pxs : getStepCenterX(getCurrentIndex(), w);
+    const tg = cl(targetX, minC, w - minC);
+
+    // Double sub-stepping identik ACUAN.html
+    for (let k = 0; k < 2; k++) {
+      sp(X, tg, 260, 24, dt / 2);
+      sp(P, on_ ? 1 : 0, 320, 21, dt / 2);
     }
 
-    const activeTarget = isDragging ? clamp(fingerRatio, 0, 1) : targetRatio;
-    const moveSpring = isDragging ? CHASE_SPRING : SLIDE_SPRING;
-
-    stepSpring(ratioSpring, activeTarget, moveSpring.omega, moveSpring.zeta, dt);
-
-    // Tumbukan batas ujung kiri/kanan -> membalikkan velocityStretch & memicu impactSquish
-    if (ratioSpring.x <= 0.01 && prevRatio > 0.01 && ratioSpring.v < -0.25) {
-      const impact = clamp(Math.abs(ratioSpring.v) * 0.22, 0.35, 1.0);
-      velStretchS.x = 0;
-      velStretchS.v = 0;
-      impactSquishS.v += impact * 11.5;
-      overhangS.v -= impact * 140 * dpr;
-      jellyS.v += impact * 8.5;
-      barShiftS.v -= impact * 22.0;
-      barStretchS.v += impact * 0.18;
-    } else if (ratioSpring.x >= 0.99 && prevRatio < 0.99 && ratioSpring.v > 0.25) {
-      const impact = clamp(Math.abs(ratioSpring.v) * 0.22, 0.35, 1.0);
-      velStretchS.x = 0;
-      velStretchS.v = 0;
-      impactSquishS.v += impact * 11.5;
-      overhangS.v += impact * 140 * dpr;
-      jellyS.v += impact * 8.5;
-      barShiftS.v += impact * 22.0;
-      barStretchS.v += impact * 0.18;
+    if (X.x < minC) {
+      X.x = minC;
+      if (X.v < 0) X.v = 0;
+    } else if (X.x > w - minC) {
+      X.x = w - minC;
+      if (X.v > 0) X.v = 0;
     }
 
-    if (ratioSpring.x < 0) {
-      ratioSpring.x = 0;
-      if (ratioSpring.v < 0) ratioSpring.v = -ratioSpring.v * 0.34;
-    } else if (ratioSpring.x > 1) {
-      ratioSpring.x = 1;
-      if (ratioSpring.v > 0) ratioSpring.v = -ratioSpring.v * 0.34;
-    }
-    prevRatio = ratioSpring.x;
+    const pp = Math.max(P.x, 0);
+    const p1 = Math.min(pp, 1);
 
-    const speed = Math.abs(ratioSpring.v);
-    const lagDist = Math.abs(activeTarget - ratioSpring.x);
+    spd += (Math.abs(X.v) - spd) * Math.min(1, dt * 10);
+    svx += (X.v - svx) * Math.min(1, dt * 10);
+    const sn = cl(spd / 700, 0, 1);
 
-    if (prevSpeed - speed > 1.0 && speed < 1.8) {
-      jellyS.v += Math.min(8.5, (prevSpeed - speed) * 2.0);
-    }
-    prevSpeed = speed;
+    str += ((on_ ? Math.max(cl((pr - 0.15) / 0.85, 0, 1), sn) : 0) - str) * Math.min(1, dt * 10);
+    spdS += (spd - spdS) * Math.min(1, dt * 3);
+    strS += (str - strS) * Math.min(1, dt * 4);
 
-    const velocityStretch = clamp((speed - 0.30) * 0.24, 0, 1.0);
-    stepSpring(velStretchS, velocityStretch, VEL_STRETCH_SPRING.omega, VEL_STRETCH_SPRING.zeta, dt);
-    stepSpring(impactSquishS, 0, IMPACT_SQUISH_SPRING.omega, IMPACT_SQUISH_SPRING.zeta, dt);
+    const st = sn * p1;
+    const ac = cl((spd - spdS) / 650, -1, 1) * p1;
+    const ap = Math.max(ac, 0);
+    const an = Math.max(-ac, 0);
 
-    const isAnimating = lagDist > 0.015 || speed > 0.06 || Math.abs(overhangS.x) > 0.4;
-    const openTarget = (isDragging || isAnimating || ctrlTapHoldTimer > 0) ? 1.0 : 0.0;
-    const pSpr = openTarget > 0.5 ? PRESS_OPEN_SPRING : PRESS_CLOSE_SPRING;
+    const restH = hBase - insetCss * 2;
+    const activeH = hBase + 14;
 
-    stepSpring(pressS, openTarget, pSpr.omega, pSpr.zeta, dt);
-    stepSpring(swellXS, openTarget, SWELL_W_SPRING.omega, SWELL_W_SPRING.zeta, dt);
-    stepSpring(swellYS, openTarget, SWELL_H_SPRING.omega, SWELL_H_SPRING.zeta, dt);
-    stepSpring(jellyS, 0, JELLY_WOBBLE.omega, JELLY_WOBBLE.zeta, dt);
-    stepSpring(overhangS, 0, 15.0, 0.44, dt);
+    sp(Wd, lp(tW, tW * 1.32, pp) + st * 56 + ap * 16 + an * 11 + str * 8 * p1, 190, 18, dt);
+    sp(Ht, lp(restH, activeH, pp) - st * 15 - ap * 11 + an * 16 + str * 10 * p1, 120, 12, dt);
+    sp(Z, on_ ? RM * (0.03 + 0.04 * str) : 0, 220, 15, dt);
+    sp(SX, RM * st * 0.1, 200, 16, dt);
+    sp(SH, RM * cl(svx * 0.004, -5, 5) * p1, 160, 16, dt);
+    sp(IZ, on_ ? RM * (0.06 + 0.06 * strS) : 0, 48, 12.5, dt);
 
-    const atEdge = isDragging && (fingerRatio <= 0 || fingerRatio >= 1);
-    if (!atEdge) {
-      stepSpring(barShiftS, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
-      stepSpring(barStretchS, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
-    }
+    const maxW = 2 * (Math.min(X.x, w - X.x) + ALLOW);
+    const wd = Math.max(Math.min(Wd.x, maxW), 28);
+    const h = Math.max(Ht.x, 24);
 
-    phase += dt * (15.0 + speed * 4.5 + Math.abs(jellyS.x) * 5.0);
-
-    const bShift = clamp(barShiftS.x, -5.5, 5.5);
-    const bStretch = clamp(barStretchS.x, -0.036, 0.045);
-    const touchZoom = pressS.x * 0.038;
-    const ctrlScaleX = 1 + touchZoom + bStretch;
-    const ctrlScaleY = 1 + touchZoom - bStretch * 0.72;
-
-    if (isDragging || pressS.x > 0.01) {
+    if (down || p1 > 0.01) {
       containerEl.style.zIndex = "20";
     } else {
       containerEl.style.zIndex = "";
     }
 
-    if (Math.abs(bShift) > 0.02 || Math.abs(ctrlScaleX - 1) > 0.0005 || Math.abs(ctrlScaleY - 1) > 0.0005) {
-      containerEl.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${ctrlScaleX.toFixed(4)}, ${ctrlScaleY.toFixed(4)})`;
-    } else {
-      containerEl.style.transform = "";
-    }
+    containerEl.style.transform = `translateX(${SH.x.toFixed(2)}px) scale(${(1 + Z.x + SX.x).toFixed(4)},${(1 + Z.x - SX.x * 0.45).toFixed(4)})`;
+
+    geom = {
+      centerXCss: X.x,
+      halfWCss: wd * 0.5,
+      halfHCss: h * 0.5,
+      press: p1,
+      velX: svx / 220,
+      iconZoom: 1 + IZ.x
+    };
   }
 
   function renderOptics() {
-    const baseW = containerEl.offsetWidth;
-    const baseH = containerEl.offsetHeight;
+    const baseW = getW();
+    const baseH = getH();
     if (!baseW || !baseH) return;
 
     const unscaledW = baseW + padXCss * 2;
@@ -2124,46 +2059,28 @@ function createUnifiedLiquidControl(options) {
 
     const padX = padXCss * dpr;
     const padY = padYCss * dpr;
-    const cardW = w - padX * 2;
-    const cardH = h - padY * 2;
-    const { inset, innerW, innerH, tW, tH } = getThumbMetrics(cardW, cardH);
+    const inset = insetCss * dpr;
+    const innerW = Math.max(1, w - padX * 2 - inset * 2);
+    const innerH = Math.max(1, h - padY * 2 - inset * 2);
 
-    const pc = clamp(pressS.x, 0, 1);
-    const vStretch = clamp(velStretchS.x, 0, 1.0);
-    const iSquish = clamp(impactSquishS.x, -0.35, 1.15);
-    const jellyWobble = jellyS.x * 0.055;
-
-    const scaleX = 1
-      + (RESTING_EXPAND_W * swellXS.x)
-      + (vStretch * 0.34)
-      - (iSquish * 0.38)
-      + jellyWobble;
-
-    const scaleY = 1
-      + (RESTING_EXPAND_H * swellYS.x)
-      - (vStretch * 0.24)
-      + (iSquish * 0.34)
-      - jellyWobble * 0.45;
-
-    const { centerX: pillCenterX, pillHalfW } = computeSymmetricOverhangPillGeometry(
-      ratioSpring.x,
-      1,
-      padX + inset,
-      padX + inset + innerW,
-      tW,
-      scaleX,
-      overhangS.x
-    );
-    const pillHalfH = (tH * scaleY) * 0.5;
+    const pillCenterX = padX + geom.centerXCss * dpr;
     const pillCenterY = h * 0.5;
+    const pillHalfW = geom.halfWCss * dpr;
+    const pillHalfH = geom.halfHCss * dpr;
+    const pc = geom.press;
 
     const labelText = containerEl === bgSlider ? currentBgLabel : (containerEl === frameSlider ? currentFrameLabel : "");
-    const ctrlSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${currentAccentRgb.join(",")}|${labelText}|${w}x${h}`;
+    const ctrlSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${geom.iconZoom.toFixed(3)}|${currentAccentRgb.join(",")}|${labelText}|${w}x${h}`;
     if (ctrlSig === lastCtrlSig) return;
     lastCtrlSig = ctrlSig;
 
+    // 1. Gambar buffer teks/ikon aktif dengan efek magnifikasi & zoom ACUAN
     bctx.clearRect(0, 0, w, h);
     bctx.save();
+    const magScale = 1 + 0.16 * pc + (geom.iconZoom - 1) * 0.45;
+    bctx.translate(pillCenterX, pillCenterY);
+    bctx.scale(magScale, magScale);
+    bctx.translate(-pillCenterX, -pillCenterY);
     bctx.font = `680 ${Math.round(fontSizeCss * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
     bctx.fillStyle = `rgb(${currentAccentRgb.join(",")})`;
     bctx.textAlign = "center";
@@ -2171,12 +2088,12 @@ function createUnifiedLiquidControl(options) {
     drawContent(bctx, w, h, padX + inset, padY + inset, innerW, innerH);
     bctx.restore();
 
+    // 2. Hitung refraksi bilineer real-time hanya pada kapsul lensa
     const source = bctx.getImageData(0, 0, w, h).data;
     const output = imgData.data;
     const cornerR = Math.min(pillHalfW, pillHalfH);
     const boxHalfX = Math.max(0, pillHalfW - cornerR);
     const boxHalfY = Math.max(0, pillHalfH - cornerR);
-    const edgeRippleAmp = Math.min(2.2, Math.abs(ratioSpring.v) * 0.20) * dpr * pc;
 
     const padBound = Math.ceil(4 * dpr);
     const minX = Math.max(0, Math.floor(pillCenterX - pillHalfW - padBound));
@@ -2197,16 +2114,14 @@ function createUnifiedLiquidControl(options) {
         const dx = x - pillCenterX;
         const qx = Math.abs(dx) - boxHalfX;
         const ox = qx > 0 ? qx : 0;
-
-        const ripple = edgeRippleAmp * Math.sin(dx * 0.075 + phase) * Math.cos(dy * 0.085 - phase * 0.8);
-        const sdf = Math.sqrt(ox * ox + oy2) + Math.min(Math.max(qx, qy), 0) - cornerR + ripple * 0.35;
+        const sdf = Math.sqrt(ox * ox + oy2) + Math.min(Math.max(qx, qy), 0) - cornerR;
 
         if (sdf <= 1.1 * dpr) {
           shadeContentOnlyRefractionPixel(
             source, w, h, x, y,
             dx, dy, pillHalfW, pillHalfH,
             cornerR, sdf, pc, dpr,
-            output, idx, ratioSpring.v
+            output, idx, geom.velX
           );
         }
       }
@@ -2214,14 +2129,20 @@ function createUnifiedLiquidControl(options) {
 
     lctx.putImageData(imgData, 0, 0);
 
+    // 3. Render teks non-aktif + knockout area lensa + komposit lensa kaca real-time
     sctx.clearRect(0, 0, w, h);
     sctx.save();
+    sctx.translate(w * 0.5, h * 0.5);
+    sctx.scale(geom.iconZoom, geom.iconZoom);
+    sctx.translate(-w * 0.5, -h * 0.5);
     sctx.font = `600 ${Math.round(fontSizeCss * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
     sctx.fillStyle = "rgba(255, 255, 255, 0.94)";
     sctx.textAlign = "center";
     sctx.textBaseline = "middle";
     drawContent(sctx, w, h, padX + inset, padY + inset, innerW, innerH);
+    sctx.restore();
 
+    sctx.save();
     sctx.globalCompositeOperation = "destination-out";
     drawRoundedRect(
       sctx,
@@ -2239,108 +2160,69 @@ function createUnifiedLiquidControl(options) {
   }
 
   containerEl.addEventListener("pointerdown", (e) => {
-    isDragging = true;
+    if (e.button !== undefined && e.button !== 0) return;
+    down = true;
     moved = false;
-    startX = e.clientX;
-    lastPtrX = e.clientX;
-    lastPtrTime = performance.now();
-    startRatio = clamp(ratioSpring.x, 0, 1);
-    fingerRatio = startRatio;
-    jellyS.v += 5.0;
+    const rect = containerEl.getBoundingClientRect();
+    px = pxs = e.clientX - rect.left;
+    pr = prs(e);
+    holdUntil = performance.now() + 300;
+    Z.v += RM * (0.9 + 1.2 * pr);
     try { containerEl.setPointerCapture(e.pointerId); } catch (_) {}
   });
 
   containerEl.addEventListener("pointermove", (e) => {
-    if (!isDragging) return;
-    const now = performance.now();
-    const dtPtr = Math.max(0.004, (now - lastPtrTime) / 1000);
-    const vx = (e.clientX - lastPtrX) / dtPtr;
-    lastPtrX = e.clientX;
-    lastPtrTime = now;
+    if (!down) return;
+    const rect = containerEl.getBoundingClientRect();
+    const nextPx = e.clientX - rect.left;
+    if (Math.abs(nextPx - px) > 3) moved = true;
+    px = nextPx;
+    pr = prs(e);
 
-    const cardW = containerEl.offsetWidth || 140;
-    const cardH = containerEl.offsetHeight || 36;
-    const { maxTravel } = getThumbMetrics(cardW * dpr, cardH * dpr);
-    const maxTravelCss = Math.max(1, maxTravel / dpr);
-    const dx = e.clientX - startX;
-    if (Math.abs(dx) > 4) moved = true;
-
-    const rawRatio = startRatio + dx / maxTravelCss;
-    if (rawRatio < 0) {
-      fingerRatio = 0;
-      const over = -rawRatio;
-      overhangS.x = -10 * dpr * Math.tanh(over * 2.0);
-      barShiftS.x = -5.0 * Math.tanh(over * 2.2);
-      barStretchS.x = 0.034 * Math.tanh(over * 2.2);
-    } else if (rawRatio > 1) {
-      fingerRatio = 1;
-      const over = rawRatio - 1;
-      overhangS.x = 10 * dpr * Math.tanh(over * 2.0);
-      barShiftS.x = 5.0 * Math.tanh(over * 2.2);
-      barStretchS.x = 0.034 * Math.tanh(over * 2.2);
-    } else {
-      fingerRatio = rawRatio;
-      phase += dtPtr * Math.min(28, Math.abs(vx) * 0.025);
-    }
-
-    targetRatio = clamp(fingerRatio, 0, 1);
-
-    const steps = getStepsCount();
-    const idx = Math.min(steps - 1, Math.round(clamp(fingerRatio, 0, 1) * (steps - 1)));
+    const idx = getIndexFromX(px, getW());
     onSelectIndex(idx);
   });
 
-  function endPointer(e) {
-    if (!isDragging) return;
-    isDragging = false;
-    jellyS.v += 5.2;
-    barShiftS.v += -barShiftS.x * 14;
-    barStretchS.v += -barStretchS.x * 15;
+  function endPointer() {
+    if (!down) return;
+    down = false;
+    Z.v -= RM * 0.6;
 
+    const w = getW();
     const steps = getStepsCount();
     const curIdx = getCurrentIndex();
     let nextIdx;
 
-    if (!moved && e && typeof e.clientX === "number") {
-      ctrlTapHoldTimer = 0.16;
-      const rect = containerEl.getBoundingClientRect();
-      if (steps === 2) {
-        const tappedIdx = (e.clientX - rect.left) < rect.width * 0.5 ? 0 : 1;
+    if (!moved) {
+      if (steps === 2 && !fixedThumbWidth) {
+        const tappedIdx = px < w * 0.5 ? 0 : 1;
         nextIdx = tappedIdx === curIdx ? (1 - curIdx) : tappedIdx;
       } else {
-        const tW = fixedThumbWidth || rect.width * 0.5;
-        const relRatio = clamp((e.clientX - rect.left - tW * 0.5) / Math.max(1, rect.width - tW), 0, 1);
-        const tappedIdx = Math.min(steps - 1, Math.round(relRatio * (steps - 1)));
+        const tappedIdx = getIndexFromX(px, w);
         nextIdx = tappedIdx === curIdx ? (curIdx + 1) % steps : tappedIdx;
       }
-      ratioSpring.v = (nextIdx > curIdx ? 1 : -1) * 6.5;
     } else {
-      nextIdx = Math.min(steps - 1, Math.round(clamp(fingerRatio, 0, 1) * (steps - 1)));
+      nextIdx = getIndexFromX(px, w);
     }
 
-    targetRatio = steps > 1 ? nextIdx / (steps - 1) : 0;
     onSelectIndex(nextIdx);
   }
 
   containerEl.addEventListener("pointerup", endPointer);
   containerEl.addEventListener("pointercancel", () => {
-    isDragging = false;
-    const steps = getStepsCount();
-    const snapIdx = Math.min(steps - 1, Math.round(clamp(fingerRatio, 0, 1) * (steps - 1)));
-    targetRatio = steps > 1 ? snapIdx / (steps - 1) : 0;
-    onSelectIndex(snapIdx);
+    down = false;
+    Z.v -= RM * 0.6;
   });
 
   return {
     sync(idx) {
-      const steps = getStepsCount();
-      const r = steps > 1 ? idx / (steps - 1) : 0;
-      ratioSpring.x = r;
-      fingerRatio = r;
-      targetRatio = r;
-      ratioSpring.v = 0;
-      overhangS.x = 0;
-      overhangS.v = 0;
+      const w = getW();
+      const c = getStepCenterX(idx, w);
+      X.x = c;
+      X.v = 0;
+      px = pxs = c;
+      P.x = 0;
+      P.v = 0;
       lastCtrlSig = "";
     },
     updateSpring,
@@ -2348,8 +2230,8 @@ function createUnifiedLiquidControl(options) {
   };
 }
 
-// 1. Device Segmented Toggle (iPhone / Android)
-const deviceToggleCtrl = createUnifiedLiquidControl({
+// CAMEL Toggle 1: Device Segmented Toggle (iPhone / Android)
+const deviceToggleCtrl = createCamelLiquidControl({
   containerEl: deviceToggle,
   canvasEl: deviceToggleCanvas,
   padXCss: 24,
@@ -2372,8 +2254,8 @@ const deviceToggleCtrl = createUnifiedLiquidControl({
   }
 });
 
-// 2. Nav Toggle (Nav On / Nav Off)
-const navToggleCtrl = createUnifiedLiquidControl({
+// CAMEL Toggle 2: Nav Toggle (Nav On / Nav Off)
+const navToggleCtrl = createCamelLiquidControl({
   containerEl: navToggle,
   canvasEl: navToggleCanvas,
   padXCss: 24,
@@ -2396,8 +2278,8 @@ const navToggleCtrl = createUnifiedLiquidControl({
   }
 });
 
-// 3. Background Theme Slider
-const bgSliderCtrl = createUnifiedLiquidControl({
+// CAMEL Slider 1: Background Theme Slider
+const bgSliderCtrl = createCamelLiquidControl({
   containerEl: bgSlider,
   canvasEl: bgSliderCanvas,
   padXCss: 26,
@@ -2419,8 +2301,8 @@ const bgSliderCtrl = createUnifiedLiquidControl({
   }
 });
 
-// 4. Frame Color Slider
-const frameSliderCtrl = createUnifiedLiquidControl({
+// CAMEL Slider 2: Frame Color Slider
+const frameSliderCtrl = createCamelLiquidControl({
   containerEl: frameSlider,
   canvasEl: frameSliderCanvas,
   padXCss: 26,
@@ -2454,10 +2336,18 @@ saveMockupBtn.addEventListener("click", () => {
 });
 
 /* =========================================================
-   TAB SWITCHING & DYNAMIC FINGER-TRACKING NAVBAR PHYSICS
+   CAMEL #1: NAVBAR 3-TAB (PERILAKU ACUAN.html + OPTIK BASE6.html)
    ========================================================= */
+const navW = () => cachedNavBaseRect.width || liquidNav.clientWidth || 344;
+const navTw = () => navW() / 3;
+const navCtr = (i) => (i + 0.5) * navTw();
+const navLx = (e) => {
+  const rect = liquidNav.getBoundingClientRect();
+  return e.clientX - rect.left;
+};
+
 function switchTab(tabIndex, options = {}) {
-  const clamped = Math.max(0, Math.min(2, tabIndex));
+  const clamped = cl(tabIndex, 0, 2);
   const prevTab = activeTab;
 
   if (clamped === 2 && !options.skipCapture && (prevTab === 0 || !capturedRawScene || !mockupSlideTriggeredInGesture)) {
@@ -2467,8 +2357,6 @@ function switchTab(tabIndex, options = {}) {
   }
 
   activeTab = clamped;
-  pillTarget = clamped;
-  fingerTargetX = clamped;
 
   if (clamped === 0) {
     stopCamera();
@@ -2495,210 +2383,111 @@ function switchTab(tabIndex, options = {}) {
   }
 }
 
-liquidNav.addEventListener("pointerdown", (event) => {
-  if (event.button !== undefined && event.button !== 0) return;
-  pillDragging = true;
-  pillPressing = true;
-  pillMoved = false;
+liquidNav.addEventListener("pointerdown", (e) => {
+  if (e.button !== undefined && e.button !== 0) return;
+  navDown = true;
   mockupSlideTriggeredInGesture = false;
-  pillDragStartX = event.clientX;
-  lastPillPointerX = event.clientX;
-  lastPillPointerTime = performance.now();
-  fingerVx = 0;
-  pillDragStartPos = clamp(pillSpring.x, 0, 2);
-  fingerTargetX = pillDragStartPos;
-  lensJellySpring.v += 5.2;
-  try {
-    liquidNav.setPointerCapture(event.pointerId);
-  } catch (_) {}
+  liquidNav.setPointerCapture(e.pointerId);
+  navPx = navPxs = navLx(e);
+  navPr = prs(e);
+  navHoldUntil = performance.now() + 300;
+  navZ.v += RM * (0.9 + 1.2 * navPr);
 });
 
-liquidNav.addEventListener("pointermove", (event) => {
-  if (!pillDragging) return;
-  const now = performance.now();
-  const dtPtr = Math.max(0.004, (now - lastPillPointerTime) / 1000);
-  fingerVx = (event.clientX - lastPillPointerX) / dtPtr;
-  lastPillPointerX = event.clientX;
-  lastPillPointerTime = now;
+liquidNav.addEventListener("pointermove", (e) => {
+  if (!navDown) return;
+  navPx = navLx(e);
+  navPr = prs(e);
 
-  const baseW = cachedNavBaseRect.width || liquidNav.offsetWidth || 344;
-  const tabWidth = (baseW - 10) / 3;
-  const dx = event.clientX - pillDragStartX;
-
-  if (Math.abs(dx) > 4) {
-    pillMoved = true;
-  }
-
-  const rawPos = pillDragStartPos + dx / tabWidth;
-
-  // Clamping pointer pada 0..2 agar saat jari keluar area navbar tetap terkunci di tab terakhir
-  if (rawPos < 0) {
-    fingerTargetX = 0;
-    const over = -rawPos;
-    edgeOverhangSpring.x = -14 * dpr * Math.tanh(over * 2.0);
-    barShiftSpring.x = -6.5 * Math.tanh(over * 1.9);
-    barStretchSpring.x = 0.042 * Math.tanh(over * 1.9);
-  } else if (rawPos > 2) {
-    fingerTargetX = 2;
-    const over = rawPos - 2;
-    edgeOverhangSpring.x = 14 * dpr * Math.tanh(over * 2.0);
-    barShiftSpring.x = 6.5 * Math.tanh(over * 1.9);
-    barStretchSpring.x = 0.042 * Math.tanh(over * 1.9);
-  } else {
-    fingerTargetX = rawPos;
-    jellyPhase += dtPtr * Math.min(28, Math.abs(fingerVx) * 0.025);
-  }
-
-  if (fingerTargetX >= 1.52 && !mockupSlideTriggeredInGesture && activeTab !== 2) {
+  const hoverTab = cl(Math.floor(navPx / navTw()), 0, 2);
+  if (hoverTab === 2 && !mockupSlideTriggeredInGesture && activeTab !== 2) {
     mockupSlideTriggeredInGesture = true;
     triggerCameraBlitz();
     captureCurrentExploreScreen();
   }
 });
 
-function finishPillDrag(event) {
-  if (!pillDragging) return;
-  pillDragging = false;
-  pillPressing = false;
-
-  lensJellySpring.v += 5.8;
-  barShiftSpring.v += -barShiftSpring.x * 14;
-  barStretchSpring.v += -barStretchSpring.x * 15;
-
-  const navRect = liquidNav.getBoundingClientRect();
-  const isQuickTap = !pillMoved && event && typeof event.clientX === "number";
-
-  if (isQuickTap) {
-    // Tahan puncak ekspansi ~0.16s agar One Quick Tap mekar penuh lalu menyusut
-    tapHoldTimer = 0.16;
-  }
-
-  const targetTab = isQuickTap
-    ? Math.max(0, Math.min(2, Math.floor(((event.clientX - navRect.left) / navRect.width) * 3)))
-    : Math.max(0, Math.min(2, Math.round(clamp(fingerTargetX, 0, 2))));
-
-  if (isQuickTap && targetTab !== Math.round(pillSpring.x)) {
-    pillSpring.v = (targetTab - pillSpring.x) * 7.8;
-  }
-
-  pillMoved = false;
+function releaseNav() {
+  if (!navDown) return;
+  navDown = false;
+  const targetTab = cl(Math.floor(navPx / navTw()), 0, 2);
+  navZ.v -= RM * 0.6;
   switchTab(targetTab);
 }
 
-liquidNav.addEventListener("pointerup", finishPillDrag);
-liquidNav.addEventListener("pointercancel", () => {
-  pillDragging = false;
-  pillPressing = false;
-  pillMoved = false;
-  switchTab(Math.max(0, Math.min(2, Math.round(clamp(fingerTargetX, 0, 2)))));
+liquidNav.addEventListener("pointerup", releaseNav);
+liquidNav.addEventListener("pointercancel", releaseNav);
+liquidNav.addEventListener("click", (e) => {
+  if (e.detail === 0) {
+    const btn = e.target.closest(".nav-btn");
+    if (btn) {
+      switchTab(+btn.dataset.tab);
+    }
+  }
 });
 
-function getLiquidPillShape() {
-  const vStretch = clamp(velStretchSpring.x, 0, 1.0);
-  const iSquish = clamp(impactSquishSpring.x, -0.35, 1.15);
-  const jellyWobble = lensJellySpring.x * 0.060;
+function updateLiquidPillPhysics(now, dt) {
+  const w = navW();
+  const t = navTw();
+  const on_ = navDown || now < navHoldUntil;
 
-  // 1. Resting Lens: +RESTING_EXPAND_W (0.22) & +RESTING_EXPAND_H (0.48)
-  // 2. Meluncur cepat (vStretch > 0): memanjang horizontal (+0.36) & memipih vertikal (-0.26)
-  // 3. Tumbukan ujung (iSquish > 0): menciut horizontal (-0.42) & membal vertikal (+0.36)
-  const scaleX = 1
-    + (RESTING_EXPAND_W * swellXSpring.x)
-    + (vStretch * 0.36)
-    - (iSquish * 0.42)
-    + jellyWobble;
+  navPxs += (navPx - navPxs) * Math.min(1, dt * 28);
+  const ALLOW = t * 0.25;
+  const minC = lp(t / 2, t * 0.7 - ALLOW, cl(navP.x, 0, 1));
+  const tg = cl(on_ ? navPxs : navCtr(activeTab), minC, w - minC);
 
-  const scaleY = 1
-    + (RESTING_EXPAND_H * swellYSpring.x)
-    - (vStretch * 0.26)
-    + (iSquish * 0.36)
-    - jellyWobble * 0.45;
-
-  return { scaleX, scaleY };
-}
-
-function updateLiquidPillPhysics(dt) {
-  if (tapHoldTimer > 0) {
-    tapHoldTimer = Math.max(0, tapHoldTimer - dt);
+  // Double sub-stepping identik ACUAN.html
+  for (let k = 0; k < 2; k++) {
+    sp(navX, tg, 260, 24, dt / 2);
+    sp(navP, on_ ? 1 : 0, 320, 21, dt / 2);
   }
 
-  const activeTarget = pillDragging ? clamp(fingerTargetX, 0, 2) : pillTarget;
-  const moveSpring = pillDragging ? CHASE_SPRING : SLIDE_SPRING;
-
-  stepSpring(pillSpring, activeTarget, moveSpring.omega, moveSpring.zeta, dt);
-
-  // Tumbukan Ujung (Edge Impact): saat meluncur cepat & menyentuh batas tab ujung (0 atau 2),
-  // momentum dibalikkan secara instan dari stretch horizontal menjadi squish vertikal!
-  if (pillSpring.x <= 0.02 && prevPillPos > 0.02 && pillSpring.v < -0.25) {
-    const impact = clamp(Math.abs(pillSpring.v) * 0.22, 0.35, 1.0);
-    velStretchSpring.x = 0;
-    velStretchSpring.v = 0;
-    impactSquishSpring.v += impact * 12.5;
-    edgeOverhangSpring.v -= impact * 165 * dpr;
-    lensJellySpring.v += impact * 9.0;
-    barShiftSpring.v -= impact * 24.0;
-    barStretchSpring.v += impact * 0.20;
-  } else if (pillSpring.x >= 1.98 && prevPillPos < 1.98 && pillSpring.v > 0.25) {
-    const impact = clamp(Math.abs(pillSpring.v) * 0.22, 0.35, 1.0);
-    velStretchSpring.x = 0;
-    velStretchSpring.v = 0;
-    impactSquishSpring.v += impact * 12.5;
-    edgeOverhangSpring.v += impact * 165 * dpr;
-    lensJellySpring.v += impact * 9.0;
-    barShiftSpring.v += impact * 24.0;
-    barStretchSpring.v += impact * 0.20;
+  if (navX.x < minC) {
+    navX.x = minC;
+    if (navX.v < 0) navX.v = 0;
+  } else if (navX.x > w - minC) {
+    navX.x = w - minC;
+    if (navX.v > 0) navX.v = 0;
   }
 
-  if (pillSpring.x < 0) {
-    pillSpring.x = 0;
-    if (pillSpring.v < 0) pillSpring.v = -pillSpring.v * 0.34;
-  } else if (pillSpring.x > 2) {
-    pillSpring.x = 2;
-    if (pillSpring.v > 0) pillSpring.v = -pillSpring.v * 0.34;
-  }
-  prevPillPos = pillSpring.x;
+  const pp = Math.max(navP.x, 0);
+  const p1 = Math.min(pp, 1);
 
-  const speed = Math.abs(pillSpring.v);
-  const lagDist = Math.abs(activeTarget - pillSpring.x);
+  navSpd += (Math.abs(navX.v) - navSpd) * Math.min(1, dt * 10);
+  navSvx += (navX.v - navSvx) * Math.min(1, dt * 10);
+  const sn = cl(navSpd / 800, 0, 1);
 
-  if (prevPillSpeed - speed > 1.2 && speed < 2.2) {
-    lensJellySpring.v += Math.min(9.5, (prevPillSpeed - speed) * 2.0);
-  }
-  prevPillSpeed = speed;
+  navStr += ((on_ ? Math.max(cl((navPr - 0.15) / 0.85, 0, 1), sn) : 0) - navStr) * Math.min(1, dt * 10);
+  navSpdS += (navSpd - navSpdS) * Math.min(1, dt * 3);
+  navStrS += (navStr - navStrS) * Math.min(1, dt * 4);
 
-  // Stretch horizontal hanya aktif saat meluncur di lintasan tengah (tidak saat menempel di dinding ujung)
-  const nearEdge = (pillSpring.x < 0.06 && pillSpring.v <= 0) || (pillSpring.x > 1.94 && pillSpring.v >= 0);
-  const targetVelStretch = nearEdge ? 0 : clamp((speed - 0.30) * 0.24, 0, 1.0);
-  stepSpring(velStretchSpring, targetVelStretch, VEL_STRETCH_SPRING.omega, VEL_STRETCH_SPRING.zeta, dt);
-  stepSpring(impactSquishSpring, 0, IMPACT_SQUISH_SPRING.omega, IMPACT_SQUISH_SPRING.zeta, dt);
+  const st = sn * p1;
+  const ac = cl((navSpd - navSpdS) / 700, -1, 1) * p1;
+  const ap = Math.max(ac, 0);
+  const an = Math.max(-ac, 0);
 
-  const isAnimating = lagDist > 0.015 || speed > 0.06 || Math.abs(edgeOverhangSpring.x) > 0.4;
-  const openTarget = (pillPressing || pillDragging || isAnimating || tapHoldTimer > 0) ? 1.0 : 0.0;
-  const pSpr = openTarget > 0.5 ? PRESS_OPEN_SPRING : PRESS_CLOSE_SPRING;
+  sp(navWd, lp(t - 8, t * 1.4, pp) + st * 95 + ap * 24 + an * 16 + navStr * 10 * p1, 190, 18, dt);
+  sp(navHt, lp(56, 80, pp) - st * 24 - ap * 16 + an * 26 + navStr * 14 * p1, 120, 12, dt);
+  sp(navZ, on_ ? RM * (0.03 + 0.04 * navStr) : 0, 220, 15, dt);
+  sp(navSX, RM * st * 0.1, 200, 16, dt);
+  sp(navSH, RM * cl(navSvx * 0.004, -5, 5) * p1, 160, 16, dt);
+  sp(navIZ, on_ ? RM * (0.06 + 0.06 * navStrS) : 0, 48, 12.5, dt);
 
-  stepSpring(pressSpring, openTarget, pSpr.omega, pSpr.zeta, dt);
-  stepSpring(swellXSpring, openTarget, SWELL_W_SPRING.omega, SWELL_W_SPRING.zeta, dt);
-  stepSpring(swellYSpring, openTarget, SWELL_H_SPRING.omega, SWELL_H_SPRING.zeta, dt);
-  stepSpring(lensJellySpring, 0, JELLY_WOBBLE.omega, JELLY_WOBBLE.zeta, dt);
-  stepSpring(edgeOverhangSpring, 0, 15.0, 0.44, dt);
+  const maxW = 2 * (Math.min(navX.x, w - navX.x) + ALLOW);
+  const wd = Math.max(Math.min(navWd.x, maxW), 30);
+  const h = Math.max(navHt.x, 30);
 
-  const atEdge = pillDragging && (fingerTargetX <= 0 || fingerTargetX >= 2);
-  if (!atEdge) {
-    stepSpring(barShiftSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
-    stepSpring(barStretchSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
-  }
+  liquidNav.style.transform = `translateX(${navSH.x.toFixed(2)}px) scale(${(1 + navZ.x + navSX.x).toFixed(4)},${(1 + navZ.x - navSX.x * 0.45).toFixed(4)})`;
 
-  jellyPhase += dt * (15.0 + speed * 4.5 + Math.abs(lensJellySpring.x) * 5.2);
-
-  const bShift = clamp(barShiftSpring.x, -6.5, 6.5);
-  const bStretch = clamp(barStretchSpring.x, -0.04, 0.05);
-  const touchZoom = pressSpring.x * 0.042;
-  const navScaleX = 1 + touchZoom + bStretch;
-  const navScaleY = 1 + touchZoom - bStretch * 0.72;
-  if (Math.abs(bShift) > 0.02 || Math.abs(navScaleX - 1) > 0.0005 || Math.abs(navScaleY - 1) > 0.0005) {
-    liquidNav.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${navScaleX.toFixed(4)}, ${navScaleY.toFixed(4)})`;
-  } else {
-    liquidNav.style.transform = "";
-  }
+  navLensGeom = {
+    centerXCss: cachedNavBaseRect.left + navSH.x + navX.x,
+    centerYCss: cachedNavBaseRect.top + 34,
+    halfWCss: wd * 0.5,
+    halfHCss: h * 0.5,
+    press: p1,
+    velX: navSvx / 320,
+    iconZoom: 1 + navIZ.x
+  };
 }
 
 window.addEventListener("beforeunload", () => {
@@ -2784,6 +2573,8 @@ function resize() {
   }
 
   updateCachedNavRect();
+  navX.x = navCtr(activeTab);
+  navPx = navPxs = navX.x;
   resizeGlassCanvas();
   lastNavRenderSig = "";
   sceneDirty = true;
@@ -2798,7 +2589,7 @@ function resize() {
 
 function resizeGlassCanvas() {
   const baseW = cachedNavBaseRect.width || liquidNav.offsetWidth || Math.min(344, width - 32);
-  const baseH = cachedNavBaseRect.height || liquidNav.offsetHeight || 64;
+  const baseH = cachedNavBaseRect.height || liquidNav.offsetHeight || 68;
   const newWidth = Math.max(1, Math.round((baseW + 72) * dpr));
   const newHeight = Math.max(1, Math.round((baseH + 104) * dpr));
 
@@ -2815,9 +2606,9 @@ function resizeGlassCanvas() {
 }
 
 /* =========================================================
-   DRAW SHARP TAB ICONS (OUTLINE DI LUAR LENSA, SOLID FILL DI DALAM LENSA)
+   DRAW SHARP TAB ICONS & LABELS (OPTIK REALTIME BASE6.html)
    ========================================================= */
-function drawTabVectorIcon(octx, tabIdx, cx, cy, s, filled = false) {
+function drawTabVectorIcon(octx, tabIdx, cx, cy, s) {
   octx.beginPath();
   if (tabIdx === 0) {
     const box = 7 * s;
@@ -2827,7 +2618,6 @@ function drawTabVectorIcon(octx, tabIdx, cx, cy, s, filled = false) {
     octx.roundRect(cx + gap * 0.5, cy - box - gap * 0.5, box, box, r);
     octx.roundRect(cx + gap * 0.5, cy + gap * 0.5, box, box, r);
     octx.roundRect(cx - box - gap * 0.5, cy + gap * 0.5, box, box, r);
-    if (filled) octx.fill();
     octx.stroke();
   } else if (tabIdx === 1) {
     const w = 18 * s;
@@ -2838,47 +2628,22 @@ function drawTabVectorIcon(octx, tabIdx, cx, cy, s, filled = false) {
     octx.lineTo(cx - 2.8 * s, topY - 2.6 * s);
     octx.lineTo(cx + 2.8 * s, topY - 2.6 * s);
     octx.lineTo(cx + 4.5 * s, topY);
-    if (filled) {
-      octx.fill();
-      octx.stroke();
-      octx.save();
-      octx.globalCompositeOperation = "destination-out";
-      octx.beginPath();
-      octx.arc(cx, topY + h * 0.52, 3.3 * s, 0, Math.PI * 2);
-      octx.fill();
-      octx.restore();
-      octx.beginPath();
-      octx.arc(cx, topY + h * 0.52, 3.3 * s, 0, Math.PI * 2);
-      octx.stroke();
-    } else {
-      octx.stroke();
-      octx.beginPath();
-      octx.arc(cx, topY + h * 0.52, 3.1 * s, 0, Math.PI * 2);
-      octx.stroke();
-    }
+    octx.stroke();
+
+    octx.beginPath();
+    octx.arc(cx, topY + h * 0.52, 3.1 * s, 0, Math.PI * 2);
+    octx.stroke();
   } else {
     const w = 13.5 * s;
     const h = 19 * s;
     octx.roundRect(cx - w * 0.5, cy - h * 0.5, w, h, 2.8 * s);
-    if (filled) {
-      octx.fill();
-      octx.stroke();
-      octx.save();
-      octx.globalCompositeOperation = "destination-out";
-      octx.beginPath();
-      octx.moveTo(cx - 1.8 * s, cy + h * 0.5 - 3.2 * s);
-      octx.lineTo(cx + 1.8 * s, cy + h * 0.5 - 3.2 * s);
-      octx.stroke();
-      octx.restore();
-    } else {
-      octx.moveTo(cx - 1.5 * s, cy + h * 0.5 - 3.2 * s);
-      octx.lineTo(cx + 1.5 * s, cy + h * 0.5 - 3.2 * s);
-      octx.stroke();
-    }
+    octx.moveTo(cx - 1.2 * s, cy + h * 0.5 - 3.2 * s);
+    octx.lineTo(cx + 1.2 * s, cy + h * 0.5 - 3.2 * s);
+    octx.stroke();
   }
 }
 
-function drawAllTabsGraphics(targetCtx, padX, padY, insetPx, tabW, navH, color, lineWidth, filledIcons = false) {
+function drawAllTabsGraphics(targetCtx, padX, padY, insetPx, tabW, navH, color, lineWidth) {
   const labels = ["Explore", "Snap", "Mockup"];
   const iconY = padY + navH * 0.38;
   const textY = padY + navH * 0.75;
@@ -2888,13 +2653,13 @@ function drawAllTabsGraphics(targetCtx, padX, padY, insetPx, tabW, navH, color, 
   targetCtx.lineWidth = lineWidth;
   targetCtx.lineCap = "round";
   targetCtx.lineJoin = "round";
-  targetCtx.font = `${filledIcons ? "700" : "600"} ${Math.round(10.6 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+  targetCtx.font = `660 ${Math.round(10.6 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
   targetCtx.textAlign = "center";
   targetCtx.textBaseline = "middle";
 
   for (let i = 0; i < 3; i++) {
     const cx = padX + insetPx + (i + 0.5) * tabW;
-    drawTabVectorIcon(targetCtx, i, cx, iconY, dpr, filledIcons);
+    drawTabVectorIcon(targetCtx, i, cx, iconY, dpr);
     targetCtx.fillText(labels[i], cx, textY);
   }
 }
@@ -2914,28 +2679,23 @@ function drawLiquidNavRefraction() {
   const innerW = navW - insetPx * 2;
   const tabW = innerW / 3;
 
-  const { scaleX, scaleY } = getLiquidPillShape();
-  const pc = clamp(pressSpring.x, 0, 1);
-
-  const { centerX: pillCenterX, pillHalfW } = computeSymmetricOverhangPillGeometry(
-    pillSpring.x,
-    2,
-    padX + insetPx,
-    padX + insetPx + innerW,
-    tabW,
-    scaleX,
-    edgeOverhangSpring.x
-  );
-  const pillHalfH = ((navH - insetPx * 2) * scaleY) * 0.5;
+  const pillCenterX = padX + navX.x * dpr;
   const pillCenterY = lensHeight * 0.5;
+  const pillHalfW = navLensGeom.halfWCss * dpr;
+  const pillHalfH = navLensGeom.halfHCss * dpr;
+  const pc = navLensGeom.press;
 
-  const navSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${Math.abs(pillSpring.v).toFixed(2)}|${currentAccentRgb.join(",")}|${lensWidth}x${lensHeight}`;
+  const navSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${navLensGeom.iconZoom.toFixed(3)}|${currentAccentRgb.join(",")}|${lensWidth}x${lensHeight}`;
   if (navSig === lastNavRenderSig) return;
   lastNavRenderSig = navSig;
 
-  // Buffer 1 (Di dalam kapsul lensa): Ikon SOLID FILL + warna aksen aktif
+  // 1. Buffer ikon & label aktif ter-magnifikasi di dalam lensa (gaya ACUAN.html)
   navAccentCtx.clearRect(0, 0, lensWidth, lensHeight);
   navAccentCtx.save();
+  const magScale = 1 + 0.22 * pc + (navLensGeom.iconZoom - 1) * 0.5;
+  navAccentCtx.translate(pillCenterX, pillCenterY);
+  navAccentCtx.scale(magScale, magScale);
+  navAccentCtx.translate(-pillCenterX, -pillCenterY);
   drawAllTabsGraphics(
     navAccentCtx,
     padX,
@@ -2944,8 +2704,7 @@ function drawLiquidNavRefraction() {
     tabW,
     navH,
     `rgb(${currentAccentRgb.join(",")})`,
-    1.85 * dpr,
-    true
+    2.0 * dpr
   );
   navAccentCtx.restore();
 
@@ -2955,8 +2714,6 @@ function drawLiquidNavRefraction() {
   const cornerR = Math.min(pillHalfW, pillHalfH);
   const boxHalfX = Math.max(0, pillHalfW - cornerR);
   const boxHalfY = Math.max(0, pillHalfH - cornerR);
-
-  const edgeRippleAmp = Math.min(2.2, Math.abs(pillSpring.v) * 0.20) * dpr * pc;
 
   const padBound = Math.ceil(4 * dpr);
   const minX = Math.max(0, Math.floor(pillCenterX - pillHalfW - padBound));
@@ -2978,15 +2735,14 @@ function drawLiquidNavRefraction() {
 
       const qxPill = Math.abs(dxPill) - boxHalfX;
       const oxPill = qxPill > 0 ? qxPill : 0;
-      const ripple = edgeRippleAmp * Math.sin(dxPill * 0.075 + jellyPhase) * Math.cos(dyPill * 0.085 - jellyPhase * 0.8);
-      const sdfPill = Math.sqrt(oxPill * oxPill + oyPill2) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR + ripple * 0.35;
+      const sdfPill = Math.sqrt(oxPill * oxPill + oyPill2) + Math.min(Math.max(qxPill, qyPill), 0) - cornerR;
 
       if (sdfPill <= 1.1 * dpr) {
         shadeContentOnlyRefractionPixel(
           source, lensWidth, lensHeight, x, y,
           dxPill, dyPill, pillHalfW, pillHalfH,
           cornerR, sdfPill, pc, dpr,
-          output, outIndex, pillSpring.v
+          output, outIndex, navLensGeom.velX
         );
       }
     }
@@ -2994,9 +2750,11 @@ function drawLiquidNavRefraction() {
 
   navLensCtx.putImageData(glassImageData, 0, 0);
 
-  // Buffer 2 (Di luar kapsul lensa): Ikon OUTLINE garis tipis putih
   glassCtx.clearRect(0, 0, lensWidth, lensHeight);
   glassCtx.save();
+  glassCtx.translate(lensWidth * 0.5, lensHeight * 0.5);
+  glassCtx.scale(navLensGeom.iconZoom, navLensGeom.iconZoom);
+  glassCtx.translate(-lensWidth * 0.5, -lensHeight * 0.5);
   drawAllTabsGraphics(
     glassCtx,
     padX,
@@ -3005,10 +2763,11 @@ function drawLiquidNavRefraction() {
     tabW,
     navH,
     "rgba(255, 255, 255, 0.94)",
-    1.75 * dpr,
-    false
+    1.85 * dpr
   );
+  glassCtx.restore();
 
+  glassCtx.save();
   glassCtx.globalCompositeOperation = "destination-out";
   drawRoundedRect(
     glassCtx,
@@ -3135,49 +2894,17 @@ function renderWebGLScene(now, hidePill = false) {
   gl.uniform1f(uniforms.time, now / 1000);
 
   if (!hidePill && cachedNavBaseRect.width > 0 && width > 0 && height > 0) {
-    const { scaleX, scaleY } = getLiquidPillShape();
-    const pc = clamp(pressSpring.x, 0, 1);
-
-    const bShift = clamp(barShiftSpring.x, -6.5, 6.5);
-    const bStretch = clamp(barStretchSpring.x, -0.04, 0.05);
-    const touchZoom = pc * 0.042;
-    const navScaleX = 1 + touchZoom + bStretch;
-    const navScaleY = 1 + touchZoom - bStretch * 0.72;
-
-    const navCenterX = cachedNavBaseRect.left + cachedNavBaseRect.width * 0.5 + bShift;
-    const navCenterY = cachedNavBaseRect.top + cachedNavBaseRect.height * 0.5;
-    const navW = cachedNavBaseRect.width * navScaleX;
-    const navH = cachedNavBaseRect.height * navScaleY;
-
-    const insetCss = 5 * navScaleX;
-    const innerWCss = navW - insetCss * 2;
-    const tabWCss = innerWCss / 3;
-
-    const { centerX: centerXCss, pillHalfW: pillHalfWCss } = computeSymmetricOverhangPillGeometry(
-      pillSpring.x,
-      2,
-      (navCenterX - navW * 0.5) + insetCss,
-      (navCenterX - navW * 0.5) + insetCss + innerWCss,
-      tabWCss,
-      scaleX,
-      edgeOverhangSpring.x / dpr
-    );
-    const pillHalfHCss = ((navH - 10 * navScaleY) * scaleY) * 0.5;
-    const centerYCss = navCenterY;
-
     gl.uniform4f(
       uniforms.pillRect,
-      centerXCss / width,
-      1.0 - (centerYCss / height),
-      pillHalfWCss / width,
-      pillHalfHCss / height
+      navLensGeom.centerXCss / width,
+      1.0 - (navLensGeom.centerYCss / height),
+      navLensGeom.halfWCss / width,
+      navLensGeom.halfHCss / height
     );
-    gl.uniform1f(uniforms.pillPress, pc);
-    gl.uniform1f(uniforms.pillSpeed, clamp(Math.abs(pillSpring.v) * 0.18, 0, 1.0));
+    gl.uniform1f(uniforms.pillPress, navLensGeom.press);
   } else {
     gl.uniform4f(uniforms.pillRect, 0, 0, 0, 0);
     gl.uniform1f(uniforms.pillPress, 0);
-    gl.uniform1f(uniforms.pillSpeed, 0);
   }
 
   gl.clearColor(11 / 255, 24 / 255, 36 / 255, 1);
@@ -3194,7 +2921,7 @@ function renderFrame(time) {
   const now = time || performance.now();
 
   if (!previousFrameTime) previousFrameTime = now;
-  const dt = Math.min((now - previousFrameTime) / 1000, 0.032);
+  const dt = Math.min((now - previousFrameTime) / 1000, 1 / 30) || 1 / 60;
   previousFrameTime = now;
 
   if (!dragging) {
@@ -3210,15 +2937,15 @@ function renderFrame(time) {
     }
   }
 
-  updateLiquidPillPhysics(dt);
+  updateLiquidPillPhysics(now, dt);
 
   if (activeTab === 0) {
     renderWebGLScene(now);
   } else if (activeTab === 2) {
-    deviceToggleCtrl.updateSpring(dt);
-    navToggleCtrl.updateSpring(dt);
-    bgSliderCtrl.updateSpring(dt);
-    frameSliderCtrl.updateSpring(dt);
+    deviceToggleCtrl.updateSpring(now, dt);
+    navToggleCtrl.updateSpring(now, dt);
+    bgSliderCtrl.updateSpring(now, dt);
+    frameSliderCtrl.updateSpring(now, dt);
 
     deviceToggleCtrl.renderOptics();
     navToggleCtrl.renderOptics();
@@ -3370,8 +3097,7 @@ async function init() {
       cardSize: gl.getUniformLocation(program, "uCardSize"),
       time: gl.getUniformLocation(program, "uTime"),
       pillRect: gl.getUniformLocation(program, "uPillRect"),
-      pillPress: gl.getUniformLocation(program, "uPillPress"),
-      pillSpeed: gl.getUniformLocation(program, "uPillSpeed")
+      pillPress: gl.getUniformLocation(program, "uPillPress")
     };
 
     resize();
