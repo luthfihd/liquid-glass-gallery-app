@@ -721,7 +721,7 @@ let lastNavRenderSig = "";
 let cachedNavBaseRect = { left: 0, top: 0, width: 344, height: 68 };
 
 /* =========================================================
-   MESIN FISIKA PEGAS iOS 26/27 NATIVE UNTUK SELURUH CAMEL
+   MESIN FISIKA PEGAS iOS 26 NATIVE UNTUK SELURUH CAMEL
    ========================================================= */
 const RM = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1;
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1601,12 +1601,12 @@ function renderDeviceMockup() {
     const prevX = navX.x;
     const prevP = navP.x;
     const baseW = liquidNav.clientWidth || 344;
-    navX.x = baseW / 6;
+    navX.x = navCtr(0);
     navP.x = 0;
     navLensGeom = {
       centerXCss: cachedNavBaseRect.left + navX.x,
       centerYCss: cachedNavBaseRect.top + 34,
-      halfWCss: (baseW / 3 - 10) * 0.5,
+      halfWCss: (navTw() - navInset * 2) * 0.5,
       halfHCss: 29,
       press: 0,
       velX: 0,
@@ -1817,7 +1817,7 @@ function shadeContentOnlyRefractionPixel(
   const coreShiftX = -dxPill * coreZoom;
   const coreShiftY = -dyPill * coreZoom;
 
-  // Layer 2: Edge Bevel Refraction + Chromatic Dispersion Realtime
+  // Layer 2: Edge Bevel Refraction + Chromatic Dispersion Realtime (khas iOS 26)
   const pullMag = (9.6 * pc) * dprScale * meniscusProfile;
   const shiftX = coreShiftX - dirX * pullMag;
   const shiftY = coreShiftY - dirY * pullMag;
@@ -1937,7 +1937,6 @@ function createCamelLiquidControl(options) {
   const getW = () => containerEl.offsetWidth || 140;
   const getH = () => containerEl.offsetHeight || 36;
 
-  // Proporsi ukuran lensa idle seragam di semua menu: slotWidth - inset*2
   function getRestThumbWidth(w) {
     const innerW = Math.max(1, w - insetCss * 2);
     return fixedThumbWidth ? fixedThumbWidth : innerW * 0.5;
@@ -1970,7 +1969,6 @@ function createCamelLiquidControl(options) {
     const hBase = getH();
     const tW = getRestThumbWidth(w);
     const on_ = down || now < holdUntil;
-    // Melayang bebas mengikuti jari saat slide atau slow-hold; tidak pindah menu sebelum jari dilepas
     const isTracking = down && (moved || (now - downTime) > 165);
 
     pxs += (px - pxs) * Math.min(1, dt * 36);
@@ -1999,48 +1997,64 @@ function createCamelLiquidControl(options) {
     const snapCenter = getStepCenterX(getCurrentIndex(), w);
     const rawTargetX = isTracking ? pxs : snapCenter;
 
-    // Boleh lewati outline kontainer saat mentok, namun dijaga tetap di dalam batas layar
+    // Lebar dinamis saat hold/melayang bergantung pada kecepatan & kekuatan jari (proporsional)
+    const freeW = lp(tW, tW * 1.05, pp) + st * 11 + ap * 4.5 + an * 3.5 + str * 2.5 * p1;
+
     const rect = containerEl.getBoundingClientRect();
     const screenMargin = 8;
-    const minScreenCenter = (screenMargin - rect.left) + tW * 0.5;
-    const maxScreenCenter = (window.innerWidth - screenMargin - rect.left) - tW * 0.5;
+    const minLeftEdge = Math.max(insetCss - 12, screenMargin - rect.left);
+    const maxRightEdge = Math.min(w - insetCss + 12, window.innerWidth - screenMargin - rect.left);
 
-    const maxEdgeOut = 14;
-    const minAllowedC = Math.max(minSlotC - maxEdgeOut, minScreenCenter);
-    const maxAllowedC = Math.min(maxSlotC + maxEdgeOut, maxScreenCenter);
+    let targetW = freeW;
+    let targetCenter = rawTargetX;
 
-    const edgeOver = isTracking
-      ? Math.max(0, minSlotC - rawTargetX, rawTargetX - maxSlotC)
-      : 0;
-    const edgeStopRatio = cl(edgeOver / (tW * 0.5), 0, 1) * p1;
+    if (isTracking) {
+      const desiredLeft = rawTargetX - freeW * 0.5;
+      const desiredRight = rawTargetX + freeW * 0.5;
 
-    // Regang dan menyusut proporsional secukupnya (tidak panjang-panjang)
-    const targetW = lp(tW, tW * 1.05, pp) + st * 10 + ap * 4 + an * 3 + str * 2 * p1 - edgeStopRatio * (tW * 0.12);
-    const targetH = lp(restH, activeH, pp) - st * 6 - ap * 4 + an * 6 + str * 3 * p1 + edgeStopRatio * 4;
+      if (desiredRight > maxRightEdge) {
+        // Mentok kanan: sisi kanan lensa jadi penahan di maxRightEdge, anchor di sisi kiri lensa
+        const overRight = desiredRight - maxRightEdge;
+        const compress = Math.min(overRight * 0.55, tW * 0.22);
+        targetW = Math.max(tW * 0.78, freeW - compress);
+        targetCenter = maxRightEdge - targetW * 0.5;
+      } else if (desiredLeft < minLeftEdge) {
+        // Mentok kiri: sisi kiri lensa jadi penahan di minLeftEdge, anchor di sisi kanan lensa
+        const overLeft = minLeftEdge - desiredLeft;
+        const compress = Math.min(overLeft * 0.55, tW * 0.22);
+        targetW = Math.max(tW * 0.78, freeW - compress);
+        targetCenter = minLeftEdge + targetW * 0.5;
+      }
+    } else {
+      targetCenter = cl(snapCenter, minSlotC, maxSlotC);
+    }
 
-    sp(Wd, targetW, 250, 20, dt);
-    sp(Ht, targetH, 175, 14, dt);
-    sp(Z, on_ ? RM * (0.016 + 0.018 * str) : 0, 260, 17, dt);
-    sp(SX, RM * (st * 0.045 - edgeStopRatio * 0.03), 240, 17, dt);
-    sp(SH, RM * cl(svx * 0.002 + (isTracking ? cl(rawTargetX - cl(rawTargetX, minSlotC, maxSlotC), -14, 14) * 0.16 : 0), -3, 3) * p1, 200, 17, dt);
+    const edgePinch = Math.max(0, freeW - targetW) / Math.max(1, tW * 0.22);
+    const targetH = lp(restH, activeH, pp) - st * 6 - ap * 4 + an * 6 + str * 3 * p1 + edgePinch * 3.5;
+
+    // Pegas underdamped halus agar ada pantulan inersia sebelum ke posisi idle
+    sp(Wd, targetW, 240, 17, dt);
+    sp(Ht, targetH, 175, 13, dt);
+    sp(Z, on_ ? RM * (0.016 + 0.018 * str) : 0, 250, 15, dt);
+    sp(SX, RM * (st * 0.045 - edgePinch * 0.03), 230, 15, dt);
+    sp(SH, RM * cl(svx * 0.002 + (isTracking ? cl(rawTargetX - cl(rawTargetX, minSlotC, maxSlotC), -14, 14) * 0.16 : 0), -3, 3) * p1, 195, 15, dt);
     sp(IZ, on_ ? RM * (0.03 + 0.03 * strS) : 0, 75, 14, dt);
 
     const wd = Math.max(Wd.x, 26);
     const h = Math.max(Ht.x, 22);
-    const tg = isTracking
-      ? cl(rawTargetX, minAllowedC, Math.max(minAllowedC, maxAllowedC))
-      : cl(snapCenter, minSlotC, maxSlotC);
 
     for (let k = 0; k < 2; k++) {
-      sp(X, tg, 370, 27, dt / 2);
-      sp(P, on_ ? 1 : 0, 420, 24, dt / 2);
+      sp(X, targetCenter, 340, 21, dt / 2);
+      sp(P, on_ ? 1 : 0, 390, 20, dt / 2);
     }
 
-    if (X.x < minAllowedC) {
-      X.x = minAllowedC;
+    const minFinalC = minLeftEdge + wd * 0.5;
+    const maxFinalC = Math.max(minFinalC, maxRightEdge - wd * 0.5);
+    if (X.x < minFinalC) {
+      X.x = minFinalC;
       if (X.v < 0) X.v = 0;
-    } else if (X.x > Math.max(minAllowedC, maxAllowedC)) {
-      X.x = Math.max(minAllowedC, maxAllowedC);
+    } else if (X.x > maxFinalC) {
+      X.x = maxFinalC;
       if (X.v > 0) X.v = 0;
     }
 
@@ -2214,25 +2228,16 @@ function createCamelLiquidControl(options) {
     Z.v -= RM * 0.45;
 
     const w = getW();
-    const steps = getStepsCount();
     const curIdx = getCurrentIndex();
-    let nextIdx;
 
     if (!moved) {
-      // One quick tap: stay di posisi aktif saat disentuh, baru bergeser ke tujuan saat dilepas
-      if (steps === 2 && !fixedThumbWidth) {
-        const tappedIdx = downX < w * 0.5 ? 0 : 1;
-        nextIdx = tappedIdx === curIdx ? (1 - curIdx) : tappedIdx;
-      } else {
-        const tappedIdx = getIndexFromX(downX, w);
-        nextIdx = tappedIdx === curIdx ? (curIdx + 1) % steps : tappedIdx;
-      }
-      holdUntil = performance.now() + 140;
+      // One quick tap: biarin stay di posisi aktif saat ini
+      holdUntil = performance.now() + 120;
+      onSelectIndex(curIdx);
     } else {
-      nextIdx = getIndexFromX(px, w);
+      const nextIdx = getIndexFromX(px, w);
+      onSelectIndex(nextIdx);
     }
-
-    onSelectIndex(nextIdx);
   }
 
   containerEl.addEventListener("pointerup", endPointer);
@@ -2434,10 +2439,15 @@ liquidNav.addEventListener("pointermove", (e) => {
 function releaseNav() {
   if (!navDown) return;
   navDown = false;
-  // Hanya berpindah ke menu tujuan ketika jari dilepas
-  const releasePos = navMoved ? navPx : navDownX;
-  const targetTab = cl(Math.floor((releasePos - navInset) / navTw()), 0, 2);
   navZ.v -= RM * 0.45;
+
+  if (!navMoved) {
+    // One quick tap: biarin stay di posisi saat ini
+    navHoldUntil = performance.now() + 120;
+    return;
+  }
+
+  const targetTab = cl(Math.floor((navPx - navInset) / navTw()), 0, 2);
   switchTab(targetTab);
 }
 
@@ -2456,7 +2466,6 @@ function updateLiquidPillPhysics(now, dt) {
   const w = navW();
   const t = navTw();
   const on_ = navDown || now < navHoldUntil;
-  // Melayang bebas mengikuti jari saat slide atau slow-hold; tidak pindah menu sebelum jari dilepas
   const isTracking = navDown && (navMoved || (now - navDownTime) > 165);
 
   navPxs += (navPx - navPxs) * Math.min(1, dt * 36);
@@ -2477,7 +2486,7 @@ function updateLiquidPillPhysics(now, dt) {
   const ap = Math.max(ac, 0);
   const an = Math.max(-ac, 0);
 
-  // Proporsi ukuran lensa idle seragam di semua menu: slotWidth - inset*2
+  // Lebar proporsional dengan menu slot
   const restW = t - navInset * 2;
   const restH = (cachedNavBaseRect.height || 68) - navInset * 2;
 
@@ -2485,47 +2494,64 @@ function updateLiquidPillPhysics(now, dt) {
   const maxSlotC = Math.max(minSlotC, w - minSlotC);
   const rawTargetX = isTracking ? navPxs : navCtr(activeTab);
 
-  // Boleh lewati outline sisi navbar saat mentok, namun dijaga tetap di dalam batas layar
+  // Lebar dinamis saat hold/melayang bergantung pada kecepatan & kekuatan jari
+  const freeW = lp(restW, restW * 1.05, pp) + st * 14 + ap * 5 + an * 4 + navStr * 3 * p1;
+
+  // Batas luar yang diperbolehkan melewati outline navbar tapi aman di dalam layar
   const screenMargin = 10;
-  const minScreenCenter = (screenMargin - cachedNavBaseRect.left) + restW * 0.5;
-  const maxScreenCenter = (width - screenMargin - cachedNavBaseRect.left) - restW * 0.5;
+  const minLeftEdge = Math.max(navInset - 16, screenMargin - cachedNavBaseRect.left);
+  const maxRightEdge = Math.min(w - navInset + 16, width - screenMargin - cachedNavBaseRect.left);
 
-  const maxEdgeOut = 18;
-  const minAllowedC = Math.max(minSlotC - maxEdgeOut, minScreenCenter);
-  const maxAllowedC = Math.min(maxSlotC + maxEdgeOut, maxScreenCenter);
+  let targetW = freeW;
+  let targetCenter = rawTargetX;
 
-  const edgeOver = isTracking
-    ? Math.max(0, minSlotC - rawTargetX, rawTargetX - maxSlotC)
-    : 0;
-  const edgeStopRatio = cl(edgeOver / (restW * 0.55), 0, 1) * p1;
+  if (isTracking) {
+    const desiredLeft = rawTargetX - freeW * 0.5;
+    const desiredRight = rawTargetX + freeW * 0.5;
 
-  // Regang dan menyusut proporsional secukupnya (tidak panjang-panjang)
-  const targetW = lp(restW, restW * 1.05, pp) + st * 14 + ap * 5 + an * 4 + navStr * 2.5 * p1 - edgeStopRatio * (restW * 0.12);
-  const targetH = lp(restH, 76, pp) - st * 8 - ap * 5 + an * 8 + navStr * 3.5 * p1 + edgeStopRatio * 4.5;
+    if (desiredRight > maxRightEdge) {
+      // Mentok kanan: sisi kanan lensa jadi penahan di maxRightEdge, anchor di sisi kiri lensa
+      const overRight = desiredRight - maxRightEdge;
+      const compress = Math.min(overRight * 0.55, restW * 0.22);
+      targetW = Math.max(restW * 0.78, freeW - compress);
+      targetCenter = maxRightEdge - targetW * 0.5;
+    } else if (desiredLeft < minLeftEdge) {
+      // Mentok kiri: sisi kiri lensa jadi penahan di minLeftEdge, anchor di sisi kanan lensa
+      const overLeft = minLeftEdge - desiredLeft;
+      const compress = Math.min(overLeft * 0.55, restW * 0.22);
+      targetW = Math.max(restW * 0.78, freeW - compress);
+      targetCenter = minLeftEdge + targetW * 0.5;
+    }
+  } else {
+    targetCenter = cl(navCtr(activeTab), minSlotC, maxSlotC);
+  }
 
-  sp(navWd, targetW, 250, 20, dt);
-  sp(navHt, targetH, 175, 14, dt);
-  sp(navZ, on_ ? RM * (0.016 + 0.018 * navStr) : 0, 260, 17, dt);
-  sp(navSX, RM * (st * 0.05 - edgeStopRatio * 0.035), 240, 17, dt);
-  sp(navSH, RM * cl(navSvx * 0.002 + (isTracking ? cl(rawTargetX - cl(rawTargetX, minSlotC, maxSlotC), -18, 18) * 0.18 : 0), -3.5, 3.5) * p1, 200, 17, dt);
+  const edgePinch = Math.max(0, freeW - targetW) / Math.max(1, restW * 0.22);
+  const targetH = lp(restH, 76, pp) - st * 8 - ap * 5 + an * 8 + navStr * 3.5 * p1 + edgePinch * 4.5;
+
+  // Pegas underdamped halus agar ada pantulan inersia sebelum ke posisi idle
+  sp(navWd, targetW, 240, 17, dt);
+  sp(navHt, targetH, 175, 13, dt);
+  sp(navZ, on_ ? RM * (0.016 + 0.018 * navStr) : 0, 250, 15, dt);
+  sp(navSX, RM * (st * 0.05 - edgePinch * 0.035), 230, 15, dt);
+  sp(navSH, RM * cl(navSvx * 0.002 + (isTracking ? cl(rawTargetX - cl(rawTargetX, minSlotC, maxSlotC), -18, 18) * 0.18 : 0), -3.5, 3.5) * p1, 195, 15, dt);
   sp(navIZ, on_ ? RM * (0.035 + 0.03 * navStrS) : 0, 75, 14, dt);
 
   const wd = Math.max(navWd.x, 30);
   const h = Math.max(navHt.x, 28);
-  const tg = isTracking
-    ? cl(rawTargetX, minAllowedC, Math.max(minAllowedC, maxAllowedC))
-    : cl(navCtr(activeTab), minSlotC, maxSlotC);
 
   for (let k = 0; k < 2; k++) {
-    sp(navX, tg, 370, 27, dt / 2);
-    sp(navP, on_ ? 1 : 0, 420, 24, dt / 2);
+    sp(navX, targetCenter, 340, 21, dt / 2);
+    sp(navP, on_ ? 1 : 0, 390, 20, dt / 2);
   }
 
-  if (navX.x < minAllowedC) {
-    navX.x = minAllowedC;
+  const minFinalC = minLeftEdge + wd * 0.5;
+  const maxFinalC = Math.max(minFinalC, maxRightEdge - wd * 0.5);
+  if (navX.x < minFinalC) {
+    navX.x = minFinalC;
     if (navX.v < 0) navX.v = 0;
-  } else if (navX.x > Math.max(minAllowedC, maxAllowedC)) {
-    navX.x = Math.max(minAllowedC, maxAllowedC);
+  } else if (navX.x > maxFinalC) {
+    navX.x = maxFinalC;
     if (navX.v > 0) navX.v = 0;
   }
 
@@ -2658,9 +2684,9 @@ function resizeGlassCanvas() {
 }
 
 /* =========================================================
-   DRAW SHARP TAB ICONS & LABELS (OPTIK REALTIME BASE6.html)
+   DRAW SHARP TAB ICONS (OUTLINE vs SOLID FILLED) & LABELS
    ========================================================= */
-function drawTabVectorIcon(octx, tabIdx, cx, cy, s) {
+function drawTabVectorIcon(octx, tabIdx, cx, cy, s, filled) {
   octx.beginPath();
   if (tabIdx === 0) {
     const box = 7 * s;
@@ -2670,6 +2696,7 @@ function drawTabVectorIcon(octx, tabIdx, cx, cy, s) {
     octx.roundRect(cx + gap * 0.5, cy - box - gap * 0.5, box, box, r);
     octx.roundRect(cx + gap * 0.5, cy + gap * 0.5, box, box, r);
     octx.roundRect(cx - box - gap * 0.5, cy + gap * 0.5, box, box, r);
+    if (filled) octx.fill();
     octx.stroke();
   } else if (tabIdx === 1) {
     const w = 18 * s;
@@ -2680,22 +2707,48 @@ function drawTabVectorIcon(octx, tabIdx, cx, cy, s) {
     octx.lineTo(cx - 2.8 * s, topY - 2.6 * s);
     octx.lineTo(cx + 2.8 * s, topY - 2.6 * s);
     octx.lineTo(cx + 4.5 * s, topY);
-    octx.stroke();
-
-    octx.beginPath();
-    octx.arc(cx, topY + h * 0.52, 3.1 * s, 0, Math.PI * 2);
-    octx.stroke();
+    if (filled) {
+      octx.fill();
+      octx.stroke();
+      octx.save();
+      octx.globalCompositeOperation = "destination-out";
+      octx.beginPath();
+      octx.arc(cx, topY + h * 0.52, 3.2 * s, 0, Math.PI * 2);
+      octx.fill();
+      octx.restore();
+      octx.beginPath();
+      octx.arc(cx, topY + h * 0.52, 1.35 * s, 0, Math.PI * 2);
+      octx.fill();
+    } else {
+      octx.stroke();
+      octx.beginPath();
+      octx.arc(cx, topY + h * 0.52, 3.1 * s, 0, Math.PI * 2);
+      octx.stroke();
+    }
   } else {
     const w = 13.5 * s;
     const h = 19 * s;
     octx.roundRect(cx - w * 0.5, cy - h * 0.5, w, h, 2.8 * s);
-    octx.moveTo(cx - 1.2 * s, cy + h * 0.5 - 3.2 * s);
-    octx.lineTo(cx + 1.2 * s, cy + h * 0.5 - 3.2 * s);
-    octx.stroke();
+    if (filled) {
+      octx.fill();
+      octx.stroke();
+      octx.save();
+      octx.globalCompositeOperation = "destination-out";
+      octx.lineWidth = 1.9 * s;
+      octx.beginPath();
+      octx.moveTo(cx - 1.6 * s, cy + h * 0.5 - 3.2 * s);
+      octx.lineTo(cx + 1.6 * s, cy + h * 0.5 - 3.2 * s);
+      octx.stroke();
+      octx.restore();
+    } else {
+      octx.moveTo(cx - 1.2 * s, cy + h * 0.5 - 3.2 * s);
+      octx.lineTo(cx + 1.2 * s, cy + h * 0.5 - 3.2 * s);
+      octx.stroke();
+    }
   }
 }
 
-function drawAllTabsGraphics(targetCtx, padX, padY, insetPx, tabW, navH, color, lineWidth) {
+function drawAllTabsGraphics(targetCtx, padX, padY, insetPx, tabW, navH, color, lineWidth, filled) {
   const labels = ["Explore", "Snap", "Mockup"];
   const iconY = padY + navH * 0.37;
   const textY = padY + navH * 0.74;
@@ -2705,13 +2758,13 @@ function drawAllTabsGraphics(targetCtx, padX, padY, insetPx, tabW, navH, color, 
   targetCtx.lineWidth = lineWidth;
   targetCtx.lineCap = "round";
   targetCtx.lineJoin = "round";
-  targetCtx.font = `660 ${Math.round(10.6 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+  targetCtx.font = `${filled ? "680" : "620"} ${Math.round(10.6 * dpr)}px -apple-system, BlinkMacSystemFont, sans-serif`;
   targetCtx.textAlign = "center";
   targetCtx.textBaseline = "middle";
 
   for (let i = 0; i < 3; i++) {
     const cx = padX + insetPx + (i + 0.5) * tabW;
-    drawTabVectorIcon(targetCtx, i, cx, iconY, dpr);
+    drawTabVectorIcon(targetCtx, i, cx, iconY, dpr, filled);
     targetCtx.fillText(labels[i], cx, textY);
   }
 }
@@ -2741,7 +2794,7 @@ function drawLiquidNavRefraction() {
   if (navSig === lastNavRenderSig) return;
   lastNavRenderSig = navSig;
 
-  // 1. Buffer ikon & label aktif ter-magnifikasi halus di dalam lensa
+  // 1. Buffer dalam lensa: ikon SOLID FILLED + dispersi kromatik bilineer iOS 26
   navAccentCtx.clearRect(0, 0, lensWidth, lensHeight);
   navAccentCtx.save();
   const magScale = 1 + 0.13 * pc + (navLensGeom.iconZoom - 1) * 0.4;
@@ -2756,7 +2809,8 @@ function drawLiquidNavRefraction() {
     tabW,
     navH,
     `rgb(${currentAccentRgb.join(",")})`,
-    2.0 * dpr
+    1.85 * dpr,
+    true
   );
   navAccentCtx.restore();
 
@@ -2802,6 +2856,7 @@ function drawLiquidNavRefraction() {
 
   navLensCtx.putImageData(glassImageData, 0, 0);
 
+  // 2. Lapisan luar lensa: ikon OUTLINE murni
   glassCtx.clearRect(0, 0, lensWidth, lensHeight);
   glassCtx.save();
   glassCtx.translate(lensWidth * 0.5, lensHeight * 0.5);
@@ -2815,7 +2870,8 @@ function drawLiquidNavRefraction() {
     tabW,
     navH,
     "rgba(255, 255, 255, 0.94)",
-    1.85 * dpr
+    1.85 * dpr,
+    false
   );
   glassCtx.restore();
 
