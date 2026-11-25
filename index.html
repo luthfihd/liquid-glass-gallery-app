@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href='data:application/manifest+json,{"name":"LiquidGlass%20Gallery","short_name":"Gallery","display":"fullscreen","background_color":"%230b1824","theme_color":"%230b1824"}'>
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-<title>LiquidGlass Gallery</title>
+<title>Jelly Gallery</title>
 
 <style>
 :root {
@@ -289,7 +289,7 @@ body {
   flex-shrink: 0;
 }
 
-/* Segmented Toggle (Rigid container) */
+/* Segmented Toggle */
 .lg-segmented {
   position: relative;
   flex: 1 1 0;
@@ -303,6 +303,8 @@ body {
   isolation: isolate;
   touch-action: none;
   cursor: grab;
+  transform-origin: center center;
+  will-change: transform;
   background: rgba(255, 255, 255, 0.05);
   -webkit-backdrop-filter: blur(8px) saturate(1.45);
   backdrop-filter: blur(8px) saturate(1.45);
@@ -318,9 +320,9 @@ body {
 
 .lg-seg-canvas {
   position: absolute;
-  inset: -28px -22px;
-  width: calc(100% + 44px);
-  height: calc(100% + 56px);
+  inset: -32px -24px;
+  width: calc(100% + 48px);
+  height: calc(100% + 64px);
   z-index: 3;
   pointer-events: none;
 }
@@ -377,7 +379,7 @@ body {
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
 }
 
-/* Sliders (Rigid container) */
+/* Sliders */
 .mockup-sliders {
   position: relative;
   z-index: 3;
@@ -401,6 +403,8 @@ body {
   isolation: isolate;
   touch-action: none;
   cursor: grab;
+  transform-origin: center center;
+  will-change: transform;
   background: rgba(255, 255, 255, 0.05);
   -webkit-backdrop-filter: blur(8px) saturate(1.45);
   backdrop-filter: blur(8px) saturate(1.45);
@@ -417,9 +421,9 @@ body {
 
 .lg-slider-canvas {
   position: absolute;
-  inset: -30px -24px;
-  width: calc(100% + 48px);
-  height: calc(100% + 60px);
+  inset: -34px -26px;
+  width: calc(100% + 52px);
+  height: calc(100% + 68px);
   z-index: 3;
   pointer-events: none;
 }
@@ -445,7 +449,7 @@ body {
 }
 
 /* =========================================================
-   FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR (RIGID CONTAINER)
+   FLOATING 3-TAB LIQUID GLASS NAVIGATION BAR
    ========================================================= */
 .nav-dock-wrap {
   position: fixed;
@@ -470,6 +474,8 @@ body {
   overflow: visible;
   isolation: isolate;
   touch-action: none;
+  transform-origin: center center;
+  will-change: transform;
   background: rgba(255, 255, 255, 0.05);
   -webkit-backdrop-filter: blur(8px) saturate(1.45);
   backdrop-filter: blur(8px) saturate(1.45);
@@ -483,9 +489,9 @@ body {
 #glassLens {
   position: absolute;
   z-index: 3;
-  inset: -44px -32px;
-  width: calc(100% + 64px);
-  height: calc(100% + 88px);
+  inset: -52px -36px;
+  width: calc(100% + 72px);
+  height: calc(100% + 104px);
   pointer-events: none;
 }
 
@@ -738,8 +744,8 @@ function stepSpring(s, targetVal, omega, zeta, dt) {
     s.v = e * wd * (b * cos - d * sin) - zeta * omega * x;
   }
   const settled =
-    Math.abs(s.x - targetVal) < 4e-4 * Math.max(1, Math.abs(targetVal)) &&
-    Math.abs(s.v) < 0.003;
+    Math.abs(s.x - targetVal) < 3e-4 * Math.max(1, Math.abs(targetVal)) &&
+    Math.abs(s.v) < 0.002;
   if (settled) {
     s.x = targetVal;
     s.v = 0;
@@ -753,7 +759,7 @@ const smoothstep = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
-function asymptoticEdge(val, minVal, maxVal, margin = 0.055) {
+function asymptoticEdge(val, minVal, maxVal, margin = 0.065) {
   if (val < minVal) {
     const over = minVal - val;
     return minVal - margin * Math.tanh(over / margin);
@@ -766,20 +772,28 @@ function asymptoticEdge(val, minVal, maxVal, margin = 0.055) {
 }
 
 /* =========================================================
-   PARAMETER FISIKA LENSA (BERDASARKAN VIDEO REFERENSI)
-   1. Melaju cepat -> memipih horizontal (scaleX mengecil) & sedikit meninggi (scaleY naik).
-   2. Berhenti / overshoot di ujung -> melebar horizontal & membal kenyal (jelly wobble).
-   3. Jari dilepas -> meluruh lembut menjadi kapsul datar (flat active pill).
+   PARAMETER FISIKA LENSA & NAVBAR (SESUAI 6 POIN KOREKSI)
+   1. Kontainer navbar ikut bergeser & melar dinamis (barShiftSpring, barStretchSpring).
+   2. Tinggi lensa saat aktif dinamis (TRAVEL_H = 0.44 + ekspansi vertikal saat drag).
+   3. Efek squish bebas & tidak terkunci proporsional: drag cepat memipih horizontal &
+      mengubah tinggi lensa secara independen (bisa lebih pendek saat disentuh lembut,
+      atau makin tinggi/memipih saat ditarik cepat).
+   4. Pantulan kenyal (zeta rendah = 0.34) saat menyusuri navbar, dan ketika mentok ujung,
+      sisi luar lensa menyatu/menjembatani dengan dinding dalam navbar (inner-wall docking).
+   5. Transisi buka & kembali ke posisi off berjalan smooth bertahap (tidak quick).
    ========================================================= */
-const TRAVEL_W = 0.14;
-const TRAVEL_H = 0.24;
-const CHASE_SPRING = { omega: 24.0, zeta: 0.44 };
-const SLIDE_SPRING = { omega: 20.0, zeta: 0.42 };
-const PRESS_OPEN_SPRING = { omega: 30.0, zeta: 0.62 };
-const PRESS_CLOSE_SPRING = { omega: 26.0, zeta: 0.85 };
-const SWELL_SPRING = { omega: 24.0, zeta: 0.48 };
-const COMPRESS_SPRING = { omega: 22.0, zeta: 0.42 };
-const JELLY_WOBBLE = { omega: 17.5, zeta: 0.36 };
+const TRAVEL_W = 0.22;
+const TRAVEL_H = 0.44;
+const CHASE_SPRING = { omega: 18.5, zeta: 0.36 };
+const SLIDE_SPRING = { omega: 16.5, zeta: 0.35 };
+const PRESS_OPEN_SPRING = { omega: 19.0, zeta: 0.65 };
+const PRESS_CLOSE_SPRING = { omega: 12.5, zeta: 0.88 }; // Smooth kembali ke posisi off (bukan quick)
+const SWELL_W_SPRING = { omega: 17.5, zeta: 0.44 };
+const SWELL_H_SPRING = { omega: 15.0, zeta: 0.38 };
+const SQUISH_X_SPRING = { omega: 19.0, zeta: 0.36 };
+const SQUISH_Y_SPRING = { omega: 16.0, zeta: 0.33 };
+const JELLY_WOBBLE = { omega: 14.5, zeta: 0.31 };
+const BAR_JELLY_SPRING = { omega: 16.0, zeta: 0.35 };
 
 let activeTab = 0;
 const pillSpring = { x: 0, v: 0 };
@@ -797,10 +811,14 @@ let mockupSlideTriggeredInGesture = false;
 const pressSpring = { x: 0, v: 0 };
 const swellXSpring = { x: 0, v: 0 };
 const swellYSpring = { x: 0, v: 0 };
-const compressSpring = { x: 0, v: 0 }; // Positif saat bergerak cepat -> menyempitkan scaleX, meninggikan scaleY
+const squishXSpring = { x: 0, v: 0 };
+const squishYSpring = { x: 0, v: 0 };
 const lensJellySpring = { x: 0, v: 0 };
+const barShiftSpring = { x: 0, v: 0 };
+const barStretchSpring = { x: 0, v: 0 };
 let fingerTargetX = 0;
 let prevPillSpeed = 0;
+let edgeImpactTriggered = false;
 let jellyPhase = 0;
 
 let cameraStream = null;
@@ -959,6 +977,49 @@ function applyNavMaterialYouPalette(palette) {
 }
 
 /* =========================================================
+   INNER-WALL DOCKING HELPER (POIN 4)
+   Menghitung pusat & setengah lebar kapsul agar sisi terluar lensa
+   menyatu / menempel elastis dengan dinding dalam kontainer navbar
+   saat menyentuh ujung kiri/kanan.
+   ========================================================= */
+function computeInnerDockedPillGeometry(displayPos, maxPos, innerLeft, innerRight, basePillW, scaleX) {
+  const innerSpan = Math.max(1, innerRight - innerLeft);
+  const maxTravel = Math.max(0, innerSpan - basePillW);
+  const normPos = maxPos > 0 ? displayPos / maxPos : 0;
+
+  let pillW = basePillW * scaleX;
+  let centerX = innerLeft + basePillW * 0.5 + normPos * maxTravel;
+
+  // Jarak pendekatan ke dinding dalam kiri & kanan navbar
+  const leftProximity = clamp(1 - normPos / 0.16, 0, 1);
+  const rightProximity = clamp((normPos - 0.84) / 0.16, 0, 1);
+
+  if (leftProximity > 0) {
+    // Sisi kiri lensa menyatu/menjembatani dengan dinding dalam kiri navbar
+    const dockBlend = smoothstep(0, 1, leftProximity);
+    const overscroll = Math.max(0, -normPos) * maxTravel;
+    const rawLeft = centerX - pillW * 0.5;
+    const anchoredLeft = innerLeft - overscroll * 0.22;
+    const finalLeft = rawLeft * (1 - dockBlend) + anchoredLeft * dockBlend;
+    const finalRight = Math.max(finalLeft + pillW * 0.65, centerX + pillW * 0.5);
+    centerX = (finalLeft + finalRight) * 0.5;
+    pillW = finalRight - finalLeft;
+  } else if (rightProximity > 0) {
+    // Sisi kanan lensa menyatu/menjembatani dengan dinding dalam kanan navbar
+    const dockBlend = smoothstep(0, 1, rightProximity);
+    const overscroll = Math.max(0, normPos - 1) * maxTravel;
+    const rawRight = centerX + pillW * 0.5;
+    const anchoredRight = innerRight + overscroll * 0.22;
+    const finalRight = rawRight * (1 - dockBlend) + anchoredRight * dockBlend;
+    const finalLeft = Math.min(finalRight - pillW * 0.65, centerX - pillW * 0.5);
+    centerX = (finalLeft + finalRight) * 0.5;
+    pillW = finalRight - finalLeft;
+  }
+
+  return { centerX, pillHalfW: pillW * 0.5 };
+}
+
+/* =========================================================
    WEBGL SHADERS (CONCAVE LENS FRAME)
    ========================================================= */
 const vertexSource = `#version 300 es
@@ -1008,31 +1069,31 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
 
   float pillDist = roundedBoxDistance(pillP, pillHalf, pillRadius);
   
-  float outerReach = 0.014 * uPillPress;
+  float outerReach = 0.015 * uPillPress;
   if (pillDist >= outerReach) return baseColor;
 
   vec2 pDir = normalize(pillP + vec2(0.00001));
 
-  // Layer 1: Elevation Contact Shadow & Outer Meniscus Pull (hanya muncul saat lensa aktif)
+  // Layer 1: Elevation Contact Shadow & Outer Meniscus Pull
   if (pillDist >= 0.0) {
     if (uPillPress <= 0.001) return baseColor;
     float normDist = pillDist / max(0.0001, outerReach);
     float pull = pow(1.0 - normDist, 2.2);
-    vec2 outerShift = pDir * (0.0045 * pull * uPillPress);
+    vec2 outerShift = pDir * (0.0048 * pull * uPillPress);
     vec3 outerBg = sampleScene(uv + outerShift).rgb;
     baseColor.rgb = mix(baseColor.rgb, outerBg, pull * 0.85);
 
-    float shadowFalloff = exp(-pillDist * 190.0) * (0.14 * uPillPress);
+    float shadowFalloff = exp(-pillDist * 185.0) * (0.14 * uPillPress);
     baseColor.rgb *= (1.0 - shadowFalloff);
     return baseColor;
   }
 
-  // Layer 2: Core Magnification + Bevel Edge Refraction (0 saat diam / flat pill)
+  // Layer 2: Core Magnification + Bevel Edge Refraction
   float edgeBand = smoothstep(-pillRadius * 0.82, 0.0, pillDist);
-  float coreMag = (1.0 - edgeBand) * (0.022 * uPillPress);
+  float coreMag = (1.0 - edgeBand) * (0.024 * uPillPress);
   vec2 coreShift = -pillOffset * coreMag;
 
-  float bevelStrength = (0.032 * uPillPress) * pow(edgeBand, 1.85);
+  float bevelStrength = (0.034 * uPillPress) * pow(edgeBand, 1.85);
   vec2 bgShift = coreShift - pDir * bevelStrength;
 
   vec3 bgLiquid;
@@ -1040,7 +1101,7 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
   bgLiquid.g = sampleScene(uv + bgShift).g;
   bgLiquid.b = sampleScene(uv + bgShift * 0.82).b;
 
-  // Layer 3: Transisi antara Flat Pill Tint (diam) & Frosted Liquid Glass (aktif)
+  // Layer 3: Transisi halus antara Flat Pill Tint (diam) & Frosted Liquid Glass (aktif)
   float innerAO = smoothstep(-pillRadius * 0.18, 0.0, pillDist) * (0.025 * uPillPress);
   bgLiquid = bgLiquid * (1.0 - innerAO) + vec3(0.032, 0.040, 0.052) * uPillPress;
 
@@ -1634,8 +1695,8 @@ function renderDeviceMockup() {
     lastNavRenderSig = "";
     drawLiquidNavRefraction();
 
-    const padX = 32 * dpr;
-    const padY = 44 * dpr;
+    const padX = 36 * dpr;
+    const padY = 52 * dpr;
     const srcW = glassCanvas.width - padX * 2;
     const srcH = glassCanvas.height - padY * 2;
     if (srcW > 0 && srcH > 0) {
@@ -1808,9 +1869,7 @@ function sampleBilinearPremultiplied(source, w, h, fx, fy) {
 }
 
 /* =========================================================
-   OPTIK LENSA CAIR & TRANSISI FLAT ACTIVE PILL (POIN 2)
-   Saat pc = 1.0 (disentuh/digeser): lensa pembesar dengan bevel & chromatic aberration.
-   Saat pc = 0.0 (dilepas/diam): melebur menjadi flat active pill tanpa pembiasan.
+   OPTIK LENSA CAIR & TRANSISI FLAT ACTIVE PILL
    ========================================================= */
 function shadeContentOnlyRefractionPixel(
   source, w, h, x, y,
@@ -1836,28 +1895,28 @@ function shadeContentOnlyRefractionPixel(
   const edgeRatio = clamp((sdfPill + rimZone) / rimZone, 0, 1);
   const meniscusProfile = Math.pow(edgeRatio, 3.0);
 
-  // Layer 1: Core Convex Magnification (0 saat flat pill, membesar saat aktif)
-  const coreZoom = (0.052 * pc) * (1.0 - meniscusProfile * 0.75);
+  // Layer 1: Core Convex Magnification (melebur halus ke 0 saat kembali ke off)
+  const coreZoom = (0.054 * pc) * (1.0 - meniscusProfile * 0.75);
   const coreShiftX = -dxPill * coreZoom;
   const coreShiftY = -dyPill * coreZoom;
 
-  // Layer 2: Edge Bevel Refraction + Chromatic Dispersion (0 saat flat pill)
-  const pullMag = (10.5 * pc) * dprScale * meniscusProfile;
+  // Layer 2: Edge Bevel Refraction + Chromatic Dispersion
+  const pullMag = (10.8 * pc) * dprScale * meniscusProfile;
   const shiftX = coreShiftX - dirX * pullMag;
   const shiftY = coreShiftY - dirY * pullMag;
 
-  const disp = (1.75 * pc) * dprScale * meniscusProfile;
+  const disp = (1.80 * pc) * dprScale * meniscusProfile;
   const [rr, , , ra] = sampleBilinearPremultiplied(source, w, h, x + shiftX + dirX * disp, y + shiftY + dirY * disp);
   const [, gg, , ga] = sampleBilinearPremultiplied(source, w, h, x + shiftX, y + shiftY);
   const [, , bb, ba] = sampleBilinearPremultiplied(source, w, h, x + shiftX - dirX * disp, y + shiftY - dirY * disp);
 
   const contentAlpha = Math.max(ra, ga, ba);
 
-  // Layer 3: Inner Rim Shadow (hanya muncul saat lensa kaca aktif)
+  // Layer 3: Inner Rim Shadow
   const innerShadowBand = smoothstep(2.8 * dprScale, 0.0, Math.abs(sdfPill + 1.8 * dprScale));
   const innerShadowAlpha = innerShadowBand * (0.075 * pc) * (1.0 - contentAlpha * 0.6);
 
-  // Layer 4: Dual Specular Rim (hanya muncul saat lensa kaca aktif, hilang saat flat pill)
+  // Layer 4: Dual Specular Rim
   const rimW = 1.25 * dprScale;
   const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
   const up = clamp(-dirY, 0, 1);
@@ -1869,7 +1928,7 @@ function shadeContentOnlyRefractionPixel(
   const bounceSpec = Math.pow(down, 1.6) * 0.34;
   const rimAlpha = rimBand * pc * (0.28 + primarySpec + bounceSpec + motionPush + causticGlow);
 
-  // Layer 5: Flat Active Pill Fill (saat diam) -> Frosted Glass Body (saat aktif)
+  // Layer 5: Flat Active Pill Fill (saat off/diam) <-> Frosted Glass Body (saat aktif)
   const flatPillAlpha = (1.0 - pc) * 0.14;
   const topSheen = Math.pow(clamp(1.0 - (ny + 1.0) * 0.65, 0, 1), 2.4) * (0.095 * pc);
   const activeBody = (0.055 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
@@ -1885,7 +1944,6 @@ function shadeContentOnlyRefractionPixel(
   const specShare = (rimAlpha * (1.0 - contentAlpha * 0.65)) / outA;
   const bodyShare = glassBodyAlpha / outA;
 
-  // Saat diam (pc=0) warnanya abu-abu perak netral; saat aktif (pc=1) kaca dingin jernih
   const bodyR = 228 + 14 * pc;
   const bodyG = 234 + 14 * pc;
   const bodyB = 242 + 13 * pc;
@@ -1936,9 +1994,13 @@ function createUnifiedLiquidControl(options) {
   const pressS = { x: 0, v: 0 };
   const swellXS = { x: 0, v: 0 };
   const swellYS = { x: 0, v: 0 };
-  const compressS = { x: 0, v: 0 };
+  const squishXS = { x: 0, v: 0 };
+  const squishYS = { x: 0, v: 0 };
   const jellyS = { x: 0, v: 0 };
+  const barShiftS = { x: 0, v: 0 };
+  const barStretchS = { x: 0, v: 0 };
   let prevSpeed = 0;
+  let edgeHit = false;
   let phase = 0;
   let moved = false;
   let lastPtrX = 0;
@@ -1960,27 +2022,83 @@ function createUnifiedLiquidControl(options) {
 
     stepSpring(ratioSpring, activeTarget, moveSpring.omega, moveSpring.zeta, dt);
 
+    // Pantulan kenyal saat menyusul sampai dinding dalam ujung kiri/kanan
+    if (ratioSpring.x < 0) {
+      if (!edgeHit || Math.abs(ratioSpring.v) > 0.35) {
+        edgeHit = true;
+        const impact = clamp(Math.abs(ratioSpring.v) * 0.18, 0.25, 1.0);
+        jellyS.v += impact * 8.5;
+        squishXS.v += impact * 4.5;
+        squishYS.v -= impact * 3.8;
+        barShiftS.v -= impact * 24.0;
+        barStretchS.v += impact * 0.20;
+      }
+      ratioSpring.x = 0;
+      if (ratioSpring.v < 0) ratioSpring.v = -ratioSpring.v * 0.36;
+    } else if (ratioSpring.x > 1) {
+      if (!edgeHit || Math.abs(ratioSpring.v) > 0.35) {
+        edgeHit = true;
+        const impact = clamp(Math.abs(ratioSpring.v) * 0.18, 0.25, 1.0);
+        jellyS.v += impact * 8.5;
+        squishXS.v += impact * 4.5;
+        squishYS.v -= impact * 3.8;
+        barShiftS.v += impact * 24.0;
+        barStretchS.v += impact * 0.20;
+      }
+      ratioSpring.x = 1;
+      if (ratioSpring.v > 0) ratioSpring.v = -ratioSpring.v * 0.36;
+    }
+
     const speed = Math.abs(ratioSpring.v);
-    // Saat melaju cepat -> memipih horizontal (compressS naik)
-    // Saat mendadak mengerem/berhenti di tujuan -> dorong pantulan melebar (jellyS naik)
-    if (prevSpeed - speed > 1.2 && speed < 1.8) {
-      jellyS.v += Math.min(9.5, (prevSpeed - speed) * 2.2);
+    const lagDist = Math.abs(activeTarget - ratioSpring.x);
+
+    if (prevSpeed - speed > 1.0 && speed < 1.8) {
+      jellyS.v += Math.min(9.0, (prevSpeed - speed) * 2.2);
     }
     prevSpeed = speed;
 
-    const targetCompress = clamp(speed * 0.24, 0, 1.0);
-    stepSpring(compressS, targetCompress, COMPRESS_SPRING.omega, COMPRESS_SPRING.zeta, dt);
+    // Poin 3: Efek squish bebas mengikuti kecepatan dan tarikan (tinggi bisa jadi lebih pendek atau makin tinggi)
+    const targetSquishX = clamp(speed * 0.22 + lagDist * 0.45, 0, 1.0);
+    const targetSquishY = clamp(speed * 0.26 - lagDist * 0.55, -0.65, 0.85);
+    stepSpring(squishXS, targetSquishX, SQUISH_X_SPRING.omega, SQUISH_X_SPRING.zeta, dt);
+    stepSpring(squishYS, targetSquishY, SQUISH_Y_SPRING.omega, SQUISH_Y_SPRING.zeta, dt);
 
-    const chasing = Math.abs(activeTarget - ratioSpring.x) > 0.03 || speed > 0.15;
+    // Poin 5: Transisi buka & kembali ke posisi off berjalan smooth bertahap
+    const chasing = lagDist > 0.02 || speed > 0.08;
     const openTarget = (isDragging || chasing) ? 1.0 : 0.0;
     const pSpr = openTarget > 0.5 ? PRESS_OPEN_SPRING : PRESS_CLOSE_SPRING;
 
     stepSpring(pressS, openTarget, pSpr.omega, pSpr.zeta, dt);
-    stepSpring(swellXS, openTarget, SWELL_SPRING.omega, SWELL_SPRING.zeta, dt);
-    stepSpring(swellYS, openTarget, SWELL_SPRING.omega, SWELL_SPRING.zeta, dt);
+    stepSpring(swellXS, openTarget, SWELL_W_SPRING.omega, SWELL_W_SPRING.zeta, dt);
+    stepSpring(swellYS, openTarget, SWELL_H_SPRING.omega, SWELL_H_SPRING.zeta, dt);
     stepSpring(jellyS, 0, JELLY_WOBBLE.omega, JELLY_WOBBLE.zeta, dt);
 
+    const atEdge = isDragging && (fingerRatio < 0 || fingerRatio > 1);
+    if (!atEdge) {
+      stepSpring(barShiftS, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
+      stepSpring(barStretchS, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
+    }
+
     phase += dt * (15.0 + speed * 4.5 + Math.abs(jellyS.x) * 5.0);
+
+    // Poin 1: Gerak dinamis kontainer kontrol
+    const bShift = clamp(barShiftS.x, -6, 6);
+    const bStretch = clamp(barStretchS.x, -0.04, 0.05);
+    const touchZoom = pressS.x * 0.04;
+    const ctrlScaleX = 1 + touchZoom + bStretch;
+    const ctrlScaleY = 1 + touchZoom - bStretch * 0.72;
+
+    if (isDragging || pressS.x > 0.01) {
+      containerEl.style.zIndex = "20";
+    } else {
+      containerEl.style.zIndex = "";
+    }
+
+    if (Math.abs(bShift) > 0.02 || Math.abs(ctrlScaleX - 1) > 0.0005 || Math.abs(ctrlScaleY - 1) > 0.0005) {
+      containerEl.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${ctrlScaleX.toFixed(4)}, ${ctrlScaleY.toFixed(4)})`;
+    } else {
+      containerEl.style.transform = "";
+    }
   }
 
   function renderOptics() {
@@ -2008,29 +2126,33 @@ function createUnifiedLiquidControl(options) {
     const padY = padYCss * dpr;
     const cardW = w - padX * 2;
     const cardH = h - padY * 2;
-    const { inset, innerW, innerH, tW, tH, maxTravel } = getThumbMetrics(cardW, cardH);
+    const { inset, innerW, innerH, tW, tH } = getThumbMetrics(cardW, cardH);
 
     const pc = clamp(pressS.x, 0, 1);
-    const comp = clamp(compressS.x, -0.35, 1.0);
-    const jellyWobble = jellyS.x * 0.055;
+    const sqX = clamp(squishXS.x, -0.35, 1.1);
+    const sqY = clamp(squishYS.x, -0.75, 0.95);
+    const jellyWobble = jellyS.x * 0.062;
 
-    // Poin 1: Melaju cepat -> menyempit horizontal (scaleX turun) & meninggi (scaleY naik).
-    // Berhenti / overshoot -> melebar horizontal (scaleX naik) dengan pantulan kenyal.
     const scaleX = 1
       + (TRAVEL_W * swellXS.x)
-      - (comp * 0.28)
+      - (sqX * 0.28)
       + jellyWobble;
 
     const scaleY = 1
       + (TRAVEL_H * swellYS.x)
-      + (comp * 0.14)
-      - jellyWobble * 0.45;
+      + (sqY * 0.24)
+      - jellyWobble * 0.48;
 
-    // Izinkan sedikit overshoot di ujung sebelum kembali ke batas [0, 1]
-    const displayRatio = asymptoticEdge(ratioSpring.x, 0, 1, 0.055);
-    const pillHalfW = (tW * scaleX) * 0.5;
+    const displayRatio = asymptoticEdge(ratioSpring.x, 0, 1, 0.06);
+    const { centerX: pillCenterX, pillHalfW } = computeInnerDockedPillGeometry(
+      displayRatio,
+      1,
+      padX + inset,
+      padX + inset + innerW,
+      tW,
+      scaleX
+    );
     const pillHalfH = (tH * scaleY) * 0.5;
-    const pillCenterX = padX + inset + displayRatio * maxTravel + tW * 0.5;
     const pillCenterY = h * 0.5;
 
     const labelText = containerEl === bgSlider ? currentBgLabel : (containerEl === frameSlider ? currentFrameLabel : "");
@@ -2052,7 +2174,7 @@ function createUnifiedLiquidControl(options) {
     const cornerR = Math.min(pillHalfW, pillHalfH);
     const boxHalfX = Math.max(0, pillHalfW - cornerR);
     const boxHalfY = Math.max(0, pillHalfH - cornerR);
-    const edgeRippleAmp = Math.min(2.0, Math.abs(ratioSpring.v) * 0.18) * dpr * pc;
+    const edgeRippleAmp = Math.min(2.2, Math.abs(ratioSpring.v) * 0.20) * dpr * pc;
 
     const padBound = Math.ceil(4 * dpr);
     const minX = Math.max(0, Math.floor(pillCenterX - pillHalfW - padBound));
@@ -2122,7 +2244,7 @@ function createUnifiedLiquidControl(options) {
     lastPtrTime = performance.now();
     startRatio = clamp(ratioSpring.x, 0, 1);
     fingerRatio = startRatio;
-    jellyS.v += 4.5;
+    jellyS.v += 5.2;
     try { containerEl.setPointerCapture(e.pointerId); } catch (_) {}
   });
 
@@ -2142,9 +2264,23 @@ function createUnifiedLiquidControl(options) {
     if (Math.abs(dx) > 4) moved = true;
 
     const rawRatio = startRatio + dx / maxTravelCss;
-    fingerRatio = asymptoticEdge(rawRatio, 0, 1, 0.055);
+    if (rawRatio < 0) {
+      fingerRatio = asymptoticEdge(rawRatio, 0, 1, 0.06);
+      const over = -rawRatio;
+      barShiftS.x = -5.5 * Math.tanh(over * 2.2);
+      barStretchS.x = 0.038 * Math.tanh(over * 2.2);
+    } else if (rawRatio > 1) {
+      fingerRatio = asymptoticEdge(rawRatio, 0, 1, 0.06);
+      const over = rawRatio - 1;
+      barShiftS.x = 5.5 * Math.tanh(over * 2.2);
+      barStretchS.x = 0.038 * Math.tanh(over * 2.2);
+    } else {
+      edgeHit = false;
+      fingerRatio = rawRatio;
+      phase += dtPtr * Math.min(28, Math.abs(vx) * 0.025);
+    }
+
     targetRatio = clamp(fingerRatio, 0, 1);
-    phase += dtPtr * Math.min(28, Math.abs(vx) * 0.025);
 
     const steps = getStepsCount();
     const idx = Math.min(steps - 1, Math.round(clamp(fingerRatio, 0, 1) * (steps - 1)));
@@ -2154,8 +2290,9 @@ function createUnifiedLiquidControl(options) {
   function endPointer(e) {
     if (!isDragging) return;
     isDragging = false;
-    // Saat dilepas, dorong efek pelebaran melebar sesaat sebelum settle
-    jellyS.v += 5.2;
+    jellyS.v += 5.5;
+    barShiftS.v += -barShiftS.x * 14;
+    barStretchS.v += -barStretchS.x * 15;
 
     const steps = getStepsCount();
     const curIdx = getCurrentIndex();
@@ -2209,8 +2346,8 @@ function createUnifiedLiquidControl(options) {
 const deviceToggleCtrl = createUnifiedLiquidControl({
   containerEl: deviceToggle,
   canvasEl: deviceToggleCanvas,
-  padXCss: 22,
-  padYCss: 28,
+  padXCss: 24,
+  padYCss: 32,
   insetCss: 3,
   fixedThumbWidth: null,
   fontSizeCss: 10.8,
@@ -2233,8 +2370,8 @@ const deviceToggleCtrl = createUnifiedLiquidControl({
 const navToggleCtrl = createUnifiedLiquidControl({
   containerEl: navToggle,
   canvasEl: navToggleCanvas,
-  padXCss: 22,
-  padYCss: 28,
+  padXCss: 24,
+  padYCss: 32,
   insetCss: 3,
   fixedThumbWidth: null,
   fontSizeCss: 10.8,
@@ -2257,8 +2394,8 @@ const navToggleCtrl = createUnifiedLiquidControl({
 const bgSliderCtrl = createUnifiedLiquidControl({
   containerEl: bgSlider,
   canvasEl: bgSliderCanvas,
-  padXCss: 24,
-  padYCss: 30,
+  padXCss: 26,
+  padYCss: 34,
   insetCss: 3,
   fixedThumbWidth: 84,
   fontSizeCss: 11.2,
@@ -2280,8 +2417,8 @@ const bgSliderCtrl = createUnifiedLiquidControl({
 const frameSliderCtrl = createUnifiedLiquidControl({
   containerEl: frameSlider,
   canvasEl: frameSliderCanvas,
-  padXCss: 24,
-  padYCss: 30,
+  padXCss: 26,
+  padYCss: 34,
   insetCss: 3,
   fixedThumbWidth: 84,
   fontSizeCss: 11.2,
@@ -2311,7 +2448,7 @@ saveMockupBtn.addEventListener("click", () => {
 });
 
 /* =========================================================
-   TAB SWITCHING & VIDEO-MATCHED LENS PHYSICS
+   TAB SWITCHING & DYNAMIC FINGER-TRACKING NAVBAR PHYSICS
    ========================================================= */
 function switchTab(tabIndex, options = {}) {
   const clamped = Math.max(0, Math.min(2, tabIndex));
@@ -2364,7 +2501,7 @@ liquidNav.addEventListener("pointerdown", (event) => {
   fingerVx = 0;
   pillDragStartPos = clamp(pillSpring.x, 0, 2);
   fingerTargetX = pillDragStartPos;
-  lensJellySpring.v += 5.0;
+  lensJellySpring.v += 5.5;
   try {
     liquidNav.setPointerCapture(event.pointerId);
   } catch (_) {}
@@ -2387,8 +2524,22 @@ liquidNav.addEventListener("pointermove", (event) => {
   }
 
   const rawPos = pillDragStartPos + dx / tabWidth;
-  fingerTargetX = asymptoticEdge(rawPos, 0, 2, 0.065);
-  jellyPhase += dtPtr * Math.min(28, Math.abs(fingerVx) * 0.025);
+
+  if (rawPos < 0) {
+    fingerTargetX = asymptoticEdge(rawPos, 0, 2, 0.075);
+    const over = -rawPos;
+    barShiftSpring.x = -7.5 * Math.tanh(over * 1.9);
+    barStretchSpring.x = 0.045 * Math.tanh(over * 1.9);
+  } else if (rawPos > 2) {
+    fingerTargetX = asymptoticEdge(rawPos, 0, 2, 0.075);
+    const over = rawPos - 2;
+    barShiftSpring.x = 7.5 * Math.tanh(over * 1.9);
+    barStretchSpring.x = 0.045 * Math.tanh(over * 1.9);
+  } else {
+    edgeImpactTriggered = false;
+    fingerTargetX = rawPos;
+    jellyPhase += dtPtr * Math.min(28, Math.abs(fingerVx) * 0.025);
+  }
 
   if (fingerTargetX >= 1.52 && !mockupSlideTriggeredInGesture && activeTab !== 2) {
     mockupSlideTriggeredInGesture = true;
@@ -2402,8 +2553,9 @@ function finishPillDrag(event) {
   pillDragging = false;
   pillPressing = false;
 
-  // Dorong efek pelebaran horizontal sesaat saat berhenti/dilepas
-  lensJellySpring.v += 5.8;
+  lensJellySpring.v += 6.2;
+  barShiftSpring.v += -barShiftSpring.x * 14;
+  barStretchSpring.v += -barStretchSpring.x * 15;
 
   const navRect = liquidNav.getBoundingClientRect();
   const targetTab = (!pillMoved && event && typeof event.clientX === "number")
@@ -2427,20 +2579,21 @@ liquidNav.addEventListener("pointercancel", () => {
 });
 
 function getLiquidPillShape() {
-  const comp = clamp(compressSpring.x, -0.35, 1.0);
-  const jellyWobble = lensJellySpring.x * 0.058;
+  const sqX = clamp(squishXSpring.x, -0.35, 1.1);
+  const sqY = clamp(squishYSpring.x, -0.75, 0.95);
+  const jellyWobble = lensJellySpring.x * 0.065;
 
-  // POIN 1: Saat melaju cepat -> menyempit horizontal (scaleX mengecil) & meninggi (scaleY naik).
-  // Saat berhenti / overshoot di tujuan -> melebar kembali dengan efek jelly bounce.
+  // Poin 2 & 3: Tinggi lensa saat aktif dinamis (TRAVEL_H = 0.44), serta efek squish bebas:
+  // drag cepat memipih horizontal (scaleX turun) dan tinggi lensa ikut berubah dinamis (bisa pendek atau makin tinggi)
   const scaleX = 1
     + (TRAVEL_W * swellXSpring.x)
-    - (comp * 0.30)
+    - (sqX * 0.30)
     + jellyWobble;
 
   const scaleY = 1
     + (TRAVEL_H * swellYSpring.x)
-    + (comp * 0.15)
-    - jellyWobble * 0.45;
+    + (sqY * 0.26)
+    - jellyWobble * 0.48;
 
   return { scaleX, scaleY };
 }
@@ -2449,32 +2602,80 @@ function updateLiquidPillPhysics(dt) {
   const activeTarget = pillDragging ? fingerTargetX : pillTarget;
   const moveSpring = pillDragging ? CHASE_SPRING : SLIDE_SPRING;
 
-  // Lensa menyusul posisi jari / target dengan underdamped spring sehingga alami ber-overshoot
+  // Lensa mengejar posisi jari / target dengan pantulan kenyal
   stepSpring(pillSpring, activeTarget, moveSpring.omega, moveSpring.zeta, dt);
 
-  const speed = Math.abs(pillSpring.v);
+  // Poin 4: Pantulan kenyal saat menyusul sampai dinding dalam ujung kiri/kanan navbar
+  if (pillSpring.x < 0) {
+    if (!edgeImpactTriggered || Math.abs(pillSpring.v) > 0.35) {
+      edgeImpactTriggered = true;
+      const impact = clamp(Math.abs(pillSpring.v) * 0.18, 0.28, 1.0);
+      lensJellySpring.v += impact * 9.5;
+      squishXSpring.v += impact * 4.8;
+      squishYSpring.v -= impact * 4.2;
+      barShiftSpring.v -= impact * 28.0;
+      barStretchSpring.v += impact * 0.22;
+    }
+    pillSpring.x = 0;
+    if (pillSpring.v < 0) pillSpring.v = -pillSpring.v * 0.38;
+  } else if (pillSpring.x > 2) {
+    if (!edgeImpactTriggered || Math.abs(pillSpring.v) > 0.35) {
+      edgeImpactTriggered = true;
+      const impact = clamp(Math.abs(pillSpring.v) * 0.18, 0.28, 1.0);
+      lensJellySpring.v += impact * 9.5;
+      squishXSpring.v += impact * 4.8;
+      squishYSpring.v -= impact * 4.2;
+      barShiftSpring.v += impact * 28.0;
+      barStretchSpring.v += impact * 0.22;
+    }
+    pillSpring.x = 2;
+    if (pillSpring.v > 0) pillSpring.v = -pillSpring.v * 0.38;
+  }
 
-  // Deteksi perlambatan mendadak (saat tiba di tab ujung & berbalik arah overshoot) -> picu pantulan melebar
-  if (prevPillSpeed - speed > 1.5 && speed < 2.2) {
+  const speed = Math.abs(pillSpring.v);
+  const lagDist = Math.abs(activeTarget - pillSpring.x);
+
+  // Picu pantulan melebar saat melambat/berhenti di tujuan
+  if (prevPillSpeed - speed > 1.2 && speed < 2.2) {
     lensJellySpring.v += Math.min(10.5, (prevPillSpeed - speed) * 2.1);
   }
   prevPillSpeed = speed;
 
-  // Kompresi horizontal proporsional dengan kecepatan gerak lensa
-  const targetCompress = clamp(speed * 0.14, 0, 1.0);
-  stepSpring(compressSpring, targetCompress, COMPRESS_SPRING.omega, COMPRESS_SPRING.zeta, dt);
+  // Poin 3: Efek squish non-proporsional (tinggi bisa jadi lebih pendek saat tarikan panjang, atau makin tinggi saat laju cepat)
+  const targetSquishX = clamp(speed * 0.15 + lagDist * 0.38, 0, 1.0);
+  const targetSquishY = clamp(speed * 0.18 - lagDist * 0.45, -0.65, 0.85);
+  stepSpring(squishXSpring, targetSquishX, SQUISH_X_SPRING.omega, SQUISH_X_SPRING.zeta, dt);
+  stepSpring(squishYSpring, targetSquishY, SQUISH_Y_SPRING.omega, SQUISH_Y_SPRING.zeta, dt);
 
-  // POIN 2: Aktif sebagai lensa pembesar saat disentuh/meluncur; meluruh jadi flat active pill saat diam
-  const chasing = Math.abs(pillSpring.x - activeTarget) > 0.03 || speed > 0.15;
+  // Poin 5 & 6: Semua transisi buka & kembali ke posisi off berjalan smooth bertahap (tidak quick)
+  const chasing = lagDist > 0.02 || speed > 0.08;
   const openTarget = (pillPressing || pillDragging || chasing) ? 1.0 : 0.0;
   const pSpr = openTarget > 0.5 ? PRESS_OPEN_SPRING : PRESS_CLOSE_SPRING;
 
   stepSpring(pressSpring, openTarget, pSpr.omega, pSpr.zeta, dt);
-  stepSpring(swellXSpring, openTarget, SWELL_SPRING.omega, SWELL_SPRING.zeta, dt);
-  stepSpring(swellYSpring, openTarget, SWELL_SPRING.omega, SWELL_SPRING.zeta, dt);
+  stepSpring(swellXSpring, openTarget, SWELL_W_SPRING.omega, SWELL_W_SPRING.zeta, dt);
+  stepSpring(swellYSpring, openTarget, SWELL_H_SPRING.omega, SWELL_H_SPRING.zeta, dt);
   stepSpring(lensJellySpring, 0, JELLY_WOBBLE.omega, JELLY_WOBBLE.zeta, dt);
 
+  const atEdge = pillDragging && (fingerTargetX < 0 || fingerTargetX > 2);
+  if (!atEdge) {
+    stepSpring(barShiftSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
+    stepSpring(barStretchSpring, 0, BAR_JELLY_SPRING.omega, BAR_JELLY_SPRING.zeta, dt);
+  }
+
   jellyPhase += dt * (15.0 + speed * 4.5 + Math.abs(lensJellySpring.x) * 5.2);
+
+  // Poin 1: Efek gerak dinamis kontainer navbar
+  const bShift = clamp(barShiftSpring.x, -7, 7);
+  const bStretch = clamp(barStretchSpring.x, -0.042, 0.052);
+  const touchZoom = pressSpring.x * 0.045;
+  const navScaleX = 1 + touchZoom + bStretch;
+  const navScaleY = 1 + touchZoom - bStretch * 0.72;
+  if (Math.abs(bShift) > 0.02 || Math.abs(navScaleX - 1) > 0.0005 || Math.abs(navScaleY - 1) > 0.0005) {
+    liquidNav.style.transform = `translate3d(${bShift.toFixed(2)}px, 0px, 0) scale(${navScaleX.toFixed(4)}, ${navScaleY.toFixed(4)})`;
+  } else {
+    liquidNav.style.transform = "";
+  }
 }
 
 window.addEventListener("beforeunload", () => {
@@ -2507,6 +2708,7 @@ function getFullScreenDimensions() {
 }
 
 function updateCachedNavRect() {
+  liquidNav.style.transform = "";
   const r = liquidNav.getBoundingClientRect();
   if (r.width > 0 && r.height > 0) {
     cachedNavBaseRect = { left: r.left, top: r.top, width: r.width, height: r.height };
@@ -2574,8 +2776,8 @@ function resize() {
 function resizeGlassCanvas() {
   const baseW = cachedNavBaseRect.width || liquidNav.offsetWidth || Math.min(344, width - 32);
   const baseH = cachedNavBaseRect.height || liquidNav.offsetHeight || 64;
-  const newWidth = Math.max(1, Math.round((baseW + 64) * dpr));
-  const newHeight = Math.max(1, Math.round((baseH + 88) * dpr));
+  const newWidth = Math.max(1, Math.round((baseW + 72) * dpr));
+  const newHeight = Math.max(1, Math.round((baseH + 104) * dpr));
 
   if (glassCanvas.width !== newWidth || glassCanvas.height !== newHeight) {
     glassCanvas.width = newWidth;
@@ -2655,20 +2857,27 @@ function drawLiquidNavRefraction() {
   const lensHeight = glassCanvas.height;
   if (!lensWidth || !lensHeight || !glassImageData) return;
 
-  const padX = 32 * dpr;
-  const padY = 44 * dpr;
+  const padX = 36 * dpr;
+  const padY = 52 * dpr;
   const navW = lensWidth - padX * 2;
   const navH = lensHeight - padY * 2;
   const insetPx = 5 * dpr;
-  const tabW = (navW - insetPx * 2) / 3;
+  const innerW = navW - insetPx * 2;
+  const tabW = innerW / 3;
 
   const { scaleX, scaleY } = getLiquidPillShape();
 
-  // Mengizinkan pill ber-overshoot melampaui pusat tab di ujung sebelum membal kembali
-  const displayX = asymptoticEdge(pillSpring.x, 0, 2, 0.065);
-  const pillHalfW = (tabW * scaleX) * 0.5;
+  // Poin 4: Sisi terluar lensa menyatu / menjembatani dengan dinding dalam navbar saat di ujung
+  const displayX = asymptoticEdge(pillSpring.x, 0, 2, 0.075);
+  const { centerX: pillCenterX, pillHalfW } = computeInnerDockedPillGeometry(
+    displayX,
+    2,
+    padX + insetPx,
+    padX + insetPx + innerW,
+    tabW,
+    scaleX
+  );
   const pillHalfH = ((navH - insetPx * 2) * scaleY) * 0.5;
-  const pillCenterX = padX + insetPx + (displayX + 0.5) * tabW;
   const pillCenterY = lensHeight * 0.5;
 
   const pc = clamp(pressSpring.x, 0, 1);
@@ -2698,7 +2907,7 @@ function drawLiquidNavRefraction() {
   const boxHalfX = Math.max(0, pillHalfW - cornerR);
   const boxHalfY = Math.max(0, pillHalfH - cornerR);
 
-  const edgeRippleAmp = Math.min(2.0, Math.abs(pillSpring.v) * 0.18) * dpr * pc;
+  const edgeRippleAmp = Math.min(2.2, Math.abs(pillSpring.v) * 0.20) * dpr * pc;
 
   const padBound = Math.ceil(4 * dpr);
   const minX = Math.max(0, Math.floor(pillCenterX - pillHalfW - padBound));
@@ -2876,19 +3085,32 @@ function renderWebGLScene(now, hidePill = false) {
 
   if (!hidePill && cachedNavBaseRect.width > 0 && width > 0 && height > 0) {
     const { scaleX, scaleY } = getLiquidPillShape();
-    const displayX = asymptoticEdge(pillSpring.x, 0, 2, 0.065);
+    const displayX = asymptoticEdge(pillSpring.x, 0, 2, 0.075);
 
-    const navCenterX = cachedNavBaseRect.left + cachedNavBaseRect.width * 0.5;
+    const bShift = clamp(barShiftSpring.x, -7, 7);
+    const bStretch = clamp(barStretchSpring.x, -0.042, 0.052);
+    const touchZoom = pressSpring.x * 0.045;
+    const navScaleX = 1 + touchZoom + bStretch;
+    const navScaleY = 1 + touchZoom - bStretch * 0.72;
+
+    const navCenterX = cachedNavBaseRect.left + cachedNavBaseRect.width * 0.5 + bShift;
     const navCenterY = cachedNavBaseRect.top + cachedNavBaseRect.height * 0.5;
-    const navW = cachedNavBaseRect.width;
-    const navH = cachedNavBaseRect.height;
+    const navW = cachedNavBaseRect.width * navScaleX;
+    const navH = cachedNavBaseRect.height * navScaleY;
 
-    const insetCss = 5;
-    const tabWCss = (navW - insetCss * 2) / 3;
-    const pillHalfWCss = (tabWCss * scaleX) * 0.5;
-    const pillHalfHCss = ((navH - 10) * scaleY) * 0.5;
+    const insetCss = 5 * navScaleX;
+    const innerWCss = navW - insetCss * 2;
+    const tabWCss = innerWCss / 3;
 
-    const centerXCss = (navCenterX - navW * 0.5) + insetCss + (displayX + 0.5) * tabWCss;
+    const { centerX: centerXCss, pillHalfW: pillHalfWCss } = computeInnerDockedPillGeometry(
+      displayX,
+      2,
+      (navCenterX - navW * 0.5) + insetCss,
+      (navCenterX - navW * 0.5) + insetCss + innerWCss,
+      tabWCss,
+      scaleX
+    );
+    const pillHalfHCss = ((navH - 10 * navScaleY) * scaleY) * 0.5;
     const centerYCss = navCenterY;
 
     gl.uniform4f(
