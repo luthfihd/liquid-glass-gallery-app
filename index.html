@@ -316,9 +316,9 @@ body {
 
 .lg-seg-canvas {
   position: absolute;
-  inset: -32px -24px;
-  width: calc(100% + 48px);
-  height: calc(100% + 64px);
+  inset: -26px -34px;
+  width: calc(100% + 68px);
+  height: calc(100% + 52px);
   z-index: 3;
   pointer-events: none;
 }
@@ -413,9 +413,9 @@ body {
 
 .lg-slider-canvas {
   position: absolute;
-  inset: -34px -26px;
-  width: calc(100% + 52px);
-  height: calc(100% + 68px);
+  inset: -28px -34px;
+  width: calc(100% + 68px);
+  height: calc(100% + 56px);
   z-index: 3;
   pointer-events: none;
 }
@@ -482,9 +482,9 @@ body {
 #glassLens {
   position: absolute;
   z-index: 3;
-  inset: -52px -36px;
-  width: calc(100% + 72px);
-  height: calc(100% + 104px);
+  inset: -42px -44px;
+  width: calc(100% + 88px);
+  height: calc(100% + 84px);
   pointer-events: none;
 }
 
@@ -721,7 +721,7 @@ let lastNavRenderSig = "";
 let cachedNavBaseRect = { left: 0, top: 0, width: 344, height: 68 };
 
 /* =========================================================
-   MESIN FISIKA PEGAS IDENTIK ACUAN.html UNTUK SELURUH CAMEL
+   MESIN FISIKA PEGAS iOS 26/27 NATIVE UNTUK SELURUH CAMEL
    ========================================================= */
 const RM = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1;
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -738,19 +738,21 @@ const smoothstep = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
-// State Fisika Navbar (CAMEL #1) - Persis ACUAN.html
+// State Fisika Navbar (CAMEL #1)
 let activeTab = 0;
 let navDown = false;
+let navDownTime = 0;
+let navDownX = 0;
+let navMoved = false;
 let navPx = 0;
 let navPxs = 0;
 let navPr = 0.5;
 let navHoldUntil = 0;
-let mockupSlideTriggeredInGesture = false;
 
 const navX = mkS(0);
 const navP = mkS(0);
 const navWd = mkS(102);
-const navHt = mkS(56);
+const navHt = mkS(58);
 const navZ = mkS(0);
 const navSX = mkS(0);
 const navSH = mkS(0);
@@ -762,12 +764,11 @@ let navStrS = 0;
 let navSvx = 0;
 let navStr = 0;
 
-// Geometri lensa navbar ter-update tiap frame untuk Canvas & WebGL Shader
 let navLensGeom = {
   centerXCss: 0,
   centerYCss: 0,
   halfWCss: 51,
-  halfHCss: 28,
+  halfHCss: 29,
   press: 0,
   velX: 0,
   iconZoom: 1
@@ -978,7 +979,7 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
 
   float pillDist = roundedBoxDistance(pillP, pillHalf, pillRadius);
   
-  float outerReach = 0.015 * uPillPress;
+  float outerReach = 0.011 * uPillPress;
   if (pillDist >= outerReach) return baseColor;
 
   vec2 pDir = normalize(pillP + vec2(0.00001));
@@ -988,31 +989,31 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
     if (uPillPress <= 0.001) return baseColor;
     float normDist = pillDist / max(0.0001, outerReach);
     float pull = pow(1.0 - normDist, 2.2);
-    vec2 outerShift = pDir * (0.0048 * pull * uPillPress);
+    vec2 outerShift = pDir * (0.0038 * pull * uPillPress);
     vec3 outerBg = sampleScene(uv + outerShift).rgb;
     baseColor.rgb = mix(baseColor.rgb, outerBg, pull * 0.85);
 
-    float shadowFalloff = exp(-pillDist * 185.0) * (0.14 * uPillPress);
+    float shadowFalloff = exp(-pillDist * 195.0) * (0.12 * uPillPress);
     baseColor.rgb *= (1.0 - shadowFalloff);
     return baseColor;
   }
 
   // Layer 2: Core Magnification + Bevel Edge Refraction
   float edgeBand = smoothstep(-pillRadius * 0.82, 0.0, pillDist);
-  float coreMag = (1.0 - edgeBand) * (0.024 * uPillPress);
+  float coreMag = (1.0 - edgeBand) * (0.020 * uPillPress);
   vec2 coreShift = -pillOffset * coreMag;
 
-  float bevelStrength = (0.034 * uPillPress) * pow(edgeBand, 1.85);
+  float bevelStrength = (0.028 * uPillPress) * pow(edgeBand, 1.85);
   vec2 bgShift = coreShift - pDir * bevelStrength;
 
   vec3 bgLiquid;
-  bgLiquid.r = sampleScene(uv + bgShift * 1.18).r;
+  bgLiquid.r = sampleScene(uv + bgShift * 1.16).r;
   bgLiquid.g = sampleScene(uv + bgShift).g;
-  bgLiquid.b = sampleScene(uv + bgShift * 0.82).b;
+  bgLiquid.b = sampleScene(uv + bgShift * 0.84).b;
 
-  // Layer 3: Transisi halus antara Flat Pill Tint (diam) & Frosted Liquid Glass (aktif)
-  float innerAO = smoothstep(-pillRadius * 0.18, 0.0, pillDist) * (0.025 * uPillPress);
-  bgLiquid = bgLiquid * (1.0 - innerAO) + vec3(0.032, 0.040, 0.052) * uPillPress;
+  // Layer 3: Transisi halus antara Flat Pill Tint & Frosted Liquid Glass
+  float innerAO = smoothstep(-pillRadius * 0.18, 0.0, pillDist) * (0.022 * uPillPress);
+  bgLiquid = bgLiquid * (1.0 - innerAO) + vec3(0.030, 0.038, 0.050) * uPillPress;
 
   float innerMask = smoothstep(0.0, -0.003, pillDist);
   baseColor.rgb = mix(baseColor.rgb, bgLiquid, innerMask);
@@ -1586,11 +1587,11 @@ function renderDeviceMockup() {
   if (includeNavInSS) {
     const navW = screenW * 0.82;
     const navH = 128;
-    const navX = screenX + (screenW - navW) / 2;
-    const navY = screenY + screenH - navH - 52;
+    const nX = screenX + (screenW - navW) / 2;
+    const nY = screenY + screenH - navH - 52;
 
     mctx.save();
-    drawRoundedRect(mctx, navX, navY, navW, navH, navH / 2);
+    drawRoundedRect(mctx, nX, nY, navW, navH, navH / 2);
     mctx.fillStyle = "rgba(18, 28, 40, 0.42)";
     mctx.fill();
     mctx.lineWidth = 1.5;
@@ -1599,13 +1600,14 @@ function renderDeviceMockup() {
 
     const prevX = navX.x;
     const prevP = navP.x;
-    navX.x = (liquidNav.clientWidth || 344) / 6;
+    const baseW = liquidNav.clientWidth || 344;
+    navX.x = baseW / 6;
     navP.x = 0;
     navLensGeom = {
       centerXCss: cachedNavBaseRect.left + navX.x,
       centerYCss: cachedNavBaseRect.top + 34,
-      halfWCss: ((liquidNav.clientWidth || 344) / 3 - 8) * 0.5,
-      halfHCss: 28,
+      halfWCss: (baseW / 3 - 10) * 0.5,
+      halfHCss: 29,
       press: 0,
       velX: 0,
       iconZoom: 1
@@ -1613,15 +1615,15 @@ function renderDeviceMockup() {
     lastNavRenderSig = "";
     drawLiquidNavRefraction();
 
-    const padX = 36 * dpr;
-    const padY = 52 * dpr;
+    const padX = 44 * dpr;
+    const padY = 42 * dpr;
     const srcW = glassCanvas.width - padX * 2;
     const srcH = glassCanvas.height - padY * 2;
     if (srcW > 0 && srcH > 0) {
       mctx.drawImage(
         glassCanvas,
         padX, padY, srcW, srcH,
-        navX, navY, navW, navH
+        nX, nY, navW, navH
       );
     }
 
@@ -1806,21 +1808,21 @@ function shadeContentOnlyRefractionPixel(
   const dirX = nLen > 0.0001 ? nx / nLen : 0;
   const dirY = nLen > 0.0001 ? ny / nLen : 0;
 
-  const rimZone = Math.min(pillHalfH * 0.72, 18.0 * dprScale);
+  const rimZone = Math.min(pillHalfH * 0.72, 16.0 * dprScale);
   const edgeRatio = cl((sdfPill + rimZone) / rimZone, 0, 1);
   const meniscusProfile = Math.pow(edgeRatio, 3.0);
 
   // Layer 1: Core Convex Magnification
-  const coreZoom = (0.054 * pc) * (1.0 - meniscusProfile * 0.75);
+  const coreZoom = (0.048 * pc) * (1.0 - meniscusProfile * 0.75);
   const coreShiftX = -dxPill * coreZoom;
   const coreShiftY = -dyPill * coreZoom;
 
   // Layer 2: Edge Bevel Refraction + Chromatic Dispersion Realtime
-  const pullMag = (10.8 * pc) * dprScale * meniscusProfile;
+  const pullMag = (9.6 * pc) * dprScale * meniscusProfile;
   const shiftX = coreShiftX - dirX * pullMag;
   const shiftY = coreShiftY - dirY * pullMag;
 
-  const disp = (1.80 * pc) * dprScale * meniscusProfile;
+  const disp = (1.65 * pc) * dprScale * meniscusProfile;
   const [rr, , , ra] = sampleBilinearPremultiplied(source, w, h, x + shiftX + dirX * disp, y + shiftY + dirY * disp);
   const [, gg, , ga] = sampleBilinearPremultiplied(source, w, h, x + shiftX, y + shiftY);
   const [, , bb, ba] = sampleBilinearPremultiplied(source, w, h, x + shiftX - dirX * disp, y + shiftY - dirY * disp);
@@ -1828,25 +1830,25 @@ function shadeContentOnlyRefractionPixel(
   const contentAlpha = Math.max(ra, ga, ba);
 
   // Layer 3: Inner Rim Shadow
-  const innerShadowBand = smoothstep(2.8 * dprScale, 0.0, Math.abs(sdfPill + 1.8 * dprScale));
-  const innerShadowAlpha = innerShadowBand * (0.075 * pc) * (1.0 - contentAlpha * 0.6);
+  const innerShadowBand = smoothstep(2.6 * dprScale, 0.0, Math.abs(sdfPill + 1.6 * dprScale));
+  const innerShadowAlpha = innerShadowBand * (0.070 * pc) * (1.0 - contentAlpha * 0.6);
 
   // Layer 4: Dual Specular Rim
-  const rimW = 1.25 * dprScale;
+  const rimW = 1.20 * dprScale;
   const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
   const up = cl(-dirY, 0, 1);
   const down = cl(dirY, 0, 1);
 
-  const motionPush = cl(dirX * velX * 0.24, -0.25, 0.60);
-  const causticGlow = Math.abs(velX) * 0.05 * Math.abs(dirX);
-  const primarySpec = Math.pow(up, 1.35) * 0.68;
-  const bounceSpec = Math.pow(down, 1.6) * 0.34;
-  const rimAlpha = rimBand * pc * (0.28 + primarySpec + bounceSpec + motionPush + causticGlow);
+  const motionPush = cl(dirX * velX * 0.22, -0.22, 0.55);
+  const causticGlow = Math.abs(velX) * 0.045 * Math.abs(dirX);
+  const primarySpec = Math.pow(up, 1.35) * 0.66;
+  const bounceSpec = Math.pow(down, 1.6) * 0.32;
+  const rimAlpha = rimBand * pc * (0.26 + primarySpec + bounceSpec + motionPush + causticGlow);
 
-  // Layer 5: Flat Active Pill Fill (saat off/diam) <-> Frosted Glass Body (saat aktif)
+  // Layer 5: Flat Active Pill Fill <-> Frosted Glass Body
   const flatPillAlpha = (1.0 - pc) * 0.14;
-  const topSheen = Math.pow(cl(1.0 - (ny + 1.0) * 0.65, 0, 1), 2.4) * (0.095 * pc);
-  const activeBody = (0.055 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
+  const topSheen = Math.pow(cl(1.0 - (ny + 1.0) * 0.65, 0, 1), 2.4) * (0.090 * pc);
+  const activeBody = (0.052 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
   const glassBodyAlpha = (flatPillAlpha + activeBody + topSheen) * (1.0 - contentAlpha);
 
   const outA = Math.min(1.0, contentAlpha + rimAlpha + innerShadowAlpha + glassBodyAlpha);
@@ -1874,7 +1876,7 @@ function shadeContentOnlyRefractionPixel(
 }
 
 /* =========================================================
-   CAMEL #2 & #3: TOGGLE & SLIDER (PERILAKU ACUAN.html + OPTIK BASE6.html)
+   CAMEL #2 & #3: TOGGLE & SLIDER
    ========================================================= */
 function createCamelLiquidControl(options) {
   const {
@@ -1899,8 +1901,9 @@ function createCamelLiquidControl(options) {
   let imgData = null;
   let lastCtrlSig = "";
 
-  // State Fisika Persis ACUAN.html
   let down = false;
+  let downTime = 0;
+  let downX = 0;
   let px = 0;
   let pxs = 0;
   let pr = 0.5;
@@ -1909,7 +1912,7 @@ function createCamelLiquidControl(options) {
 
   const X = mkS(0);
   const P = mkS(0);
-  const Wd = mkS(fixedThumbWidth || 60);
+  const Wd = mkS(fixedThumbWidth || 56);
   const Ht = mkS(30);
   const Z = mkS(0);
   const SX = mkS(0);
@@ -1924,7 +1927,7 @@ function createCamelLiquidControl(options) {
 
   let geom = {
     centerXCss: 0,
-    halfWCss: 30,
+    halfWCss: 28,
     halfHCss: 15,
     press: 0,
     velX: 0,
@@ -1934,6 +1937,7 @@ function createCamelLiquidControl(options) {
   const getW = () => containerEl.offsetWidth || 140;
   const getH = () => containerEl.offsetHeight || 36;
 
+  // Proporsi ukuran lensa idle seragam di semua menu: slotWidth - inset*2
   function getRestThumbWidth(w) {
     const innerW = Math.max(1, w - insetCss * 2);
     return fixedThumbWidth ? fixedThumbWidth : innerW * 0.5;
@@ -1966,57 +1970,79 @@ function createCamelLiquidControl(options) {
     const hBase = getH();
     const tW = getRestThumbWidth(w);
     const on_ = down || now < holdUntil;
+    // Melayang bebas mengikuti jari saat slide atau slow-hold; tidak pindah menu sebelum jari dilepas
+    const isTracking = down && (moved || (now - downTime) > 165);
 
-    pxs += (px - pxs) * Math.min(1, dt * 28);
-
-    const ALLOW = tW * 0.22;
-    const minC = lp(insetCss + tW * 0.5, insetCss + tW * 0.62 - ALLOW, cl(P.x, 0, 1));
-    const targetX = on_ ? pxs : getStepCenterX(getCurrentIndex(), w);
-    const tg = cl(targetX, minC, w - minC);
-
-    // Double sub-stepping identik ACUAN.html
-    for (let k = 0; k < 2; k++) {
-      sp(X, tg, 260, 24, dt / 2);
-      sp(P, on_ ? 1 : 0, 320, 21, dt / 2);
-    }
-
-    if (X.x < minC) {
-      X.x = minC;
-      if (X.v < 0) X.v = 0;
-    } else if (X.x > w - minC) {
-      X.x = w - minC;
-      if (X.v > 0) X.v = 0;
-    }
+    pxs += (px - pxs) * Math.min(1, dt * 36);
 
     const pp = Math.max(P.x, 0);
     const p1 = Math.min(pp, 1);
 
-    spd += (Math.abs(X.v) - spd) * Math.min(1, dt * 10);
-    svx += (X.v - svx) * Math.min(1, dt * 10);
-    const sn = cl(spd / 700, 0, 1);
+    spd += (Math.abs(X.v) - spd) * Math.min(1, dt * 12);
+    svx += (X.v - svx) * Math.min(1, dt * 12);
+    const sn = cl(spd / 520, 0, 1);
 
-    str += ((on_ ? Math.max(cl((pr - 0.15) / 0.85, 0, 1), sn) : 0) - str) * Math.min(1, dt * 10);
-    spdS += (spd - spdS) * Math.min(1, dt * 3);
-    strS += (str - strS) * Math.min(1, dt * 4);
+    str += ((on_ ? Math.max(cl((pr - 0.15) / 0.85, 0, 1), sn) : 0) - str) * Math.min(1, dt * 12);
+    spdS += (spd - spdS) * Math.min(1, dt * 4);
+    strS += (str - strS) * Math.min(1, dt * 5);
 
     const st = sn * p1;
-    const ac = cl((spd - spdS) / 650, -1, 1) * p1;
+    const ac = cl((spd - spdS) / 560, -1, 1) * p1;
     const ap = Math.max(ac, 0);
     const an = Math.max(-ac, 0);
 
     const restH = hBase - insetCss * 2;
-    const activeH = hBase + 14;
+    const activeH = hBase + 9;
 
-    sp(Wd, lp(tW, tW * 1.32, pp) + st * 56 + ap * 16 + an * 11 + str * 8 * p1, 190, 18, dt);
-    sp(Ht, lp(restH, activeH, pp) - st * 15 - ap * 11 + an * 16 + str * 10 * p1, 120, 12, dt);
-    sp(Z, on_ ? RM * (0.03 + 0.04 * str) : 0, 220, 15, dt);
-    sp(SX, RM * st * 0.1, 200, 16, dt);
-    sp(SH, RM * cl(svx * 0.004, -5, 5) * p1, 160, 16, dt);
-    sp(IZ, on_ ? RM * (0.06 + 0.06 * strS) : 0, 48, 12.5, dt);
+    const minSlotC = insetCss + tW * 0.5;
+    const maxSlotC = Math.max(minSlotC, w - minSlotC);
+    const snapCenter = getStepCenterX(getCurrentIndex(), w);
+    const rawTargetX = isTracking ? pxs : snapCenter;
 
-    const maxW = 2 * (Math.min(X.x, w - X.x) + ALLOW);
-    const wd = Math.max(Math.min(Wd.x, maxW), 28);
-    const h = Math.max(Ht.x, 24);
+    // Boleh lewati outline kontainer saat mentok, namun dijaga tetap di dalam batas layar
+    const rect = containerEl.getBoundingClientRect();
+    const screenMargin = 8;
+    const minScreenCenter = (screenMargin - rect.left) + tW * 0.5;
+    const maxScreenCenter = (window.innerWidth - screenMargin - rect.left) - tW * 0.5;
+
+    const maxEdgeOut = 14;
+    const minAllowedC = Math.max(minSlotC - maxEdgeOut, minScreenCenter);
+    const maxAllowedC = Math.min(maxSlotC + maxEdgeOut, maxScreenCenter);
+
+    const edgeOver = isTracking
+      ? Math.max(0, minSlotC - rawTargetX, rawTargetX - maxSlotC)
+      : 0;
+    const edgeStopRatio = cl(edgeOver / (tW * 0.5), 0, 1) * p1;
+
+    // Regang dan menyusut proporsional secukupnya (tidak panjang-panjang)
+    const targetW = lp(tW, tW * 1.05, pp) + st * 10 + ap * 4 + an * 3 + str * 2 * p1 - edgeStopRatio * (tW * 0.12);
+    const targetH = lp(restH, activeH, pp) - st * 6 - ap * 4 + an * 6 + str * 3 * p1 + edgeStopRatio * 4;
+
+    sp(Wd, targetW, 250, 20, dt);
+    sp(Ht, targetH, 175, 14, dt);
+    sp(Z, on_ ? RM * (0.016 + 0.018 * str) : 0, 260, 17, dt);
+    sp(SX, RM * (st * 0.045 - edgeStopRatio * 0.03), 240, 17, dt);
+    sp(SH, RM * cl(svx * 0.002 + (isTracking ? cl(rawTargetX - cl(rawTargetX, minSlotC, maxSlotC), -14, 14) * 0.16 : 0), -3, 3) * p1, 200, 17, dt);
+    sp(IZ, on_ ? RM * (0.03 + 0.03 * strS) : 0, 75, 14, dt);
+
+    const wd = Math.max(Wd.x, 26);
+    const h = Math.max(Ht.x, 22);
+    const tg = isTracking
+      ? cl(rawTargetX, minAllowedC, Math.max(minAllowedC, maxAllowedC))
+      : cl(snapCenter, minSlotC, maxSlotC);
+
+    for (let k = 0; k < 2; k++) {
+      sp(X, tg, 370, 27, dt / 2);
+      sp(P, on_ ? 1 : 0, 420, 24, dt / 2);
+    }
+
+    if (X.x < minAllowedC) {
+      X.x = minAllowedC;
+      if (X.v < 0) X.v = 0;
+    } else if (X.x > Math.max(minAllowedC, maxAllowedC)) {
+      X.x = Math.max(minAllowedC, maxAllowedC);
+      if (X.v > 0) X.v = 0;
+    }
 
     if (down || p1 > 0.01) {
       containerEl.style.zIndex = "20";
@@ -2024,7 +2050,7 @@ function createCamelLiquidControl(options) {
       containerEl.style.zIndex = "";
     }
 
-    containerEl.style.transform = `translateX(${SH.x.toFixed(2)}px) scale(${(1 + Z.x + SX.x).toFixed(4)},${(1 + Z.x - SX.x * 0.45).toFixed(4)})`;
+    containerEl.style.transform = `translateX(${SH.x.toFixed(2)}px) scale(${(1 + Z.x + SX.x).toFixed(4)},${(1 + Z.x - SX.x * 0.65).toFixed(4)})`;
 
     geom = {
       centerXCss: X.x,
@@ -2074,10 +2100,10 @@ function createCamelLiquidControl(options) {
     if (ctrlSig === lastCtrlSig) return;
     lastCtrlSig = ctrlSig;
 
-    // 1. Gambar buffer teks/ikon aktif dengan efek magnifikasi & zoom ACUAN
+    // 1. Buffer teks aktif tepat di tengah lensa
     bctx.clearRect(0, 0, w, h);
     bctx.save();
-    const magScale = 1 + 0.16 * pc + (geom.iconZoom - 1) * 0.45;
+    const magScale = 1 + 0.11 * pc + (geom.iconZoom - 1) * 0.35;
     bctx.translate(pillCenterX, pillCenterY);
     bctx.scale(magScale, magScale);
     bctx.translate(-pillCenterX, -pillCenterY);
@@ -2088,7 +2114,7 @@ function createCamelLiquidControl(options) {
     drawContent(bctx, w, h, padX + inset, padY + inset, innerW, innerH);
     bctx.restore();
 
-    // 2. Hitung refraksi bilineer real-time hanya pada kapsul lensa
+    // 2. Refraksi bilineer real-time hanya pada kapsul lensa
     const source = bctx.getImageData(0, 0, w, h).data;
     const output = imgData.data;
     const cornerR = Math.min(pillHalfW, pillHalfH);
@@ -2162,12 +2188,14 @@ function createCamelLiquidControl(options) {
   containerEl.addEventListener("pointerdown", (e) => {
     if (e.button !== undefined && e.button !== 0) return;
     down = true;
+    downTime = performance.now();
     moved = false;
     const rect = containerEl.getBoundingClientRect();
-    px = pxs = e.clientX - rect.left;
+    downX = e.clientX - rect.left;
+    px = pxs = downX;
     pr = prs(e);
-    holdUntil = performance.now() + 300;
-    Z.v += RM * (0.9 + 1.2 * pr);
+    holdUntil = downTime + 210;
+    Z.v += RM * (0.65 + 0.85 * pr);
     try { containerEl.setPointerCapture(e.pointerId); } catch (_) {}
   });
 
@@ -2175,18 +2203,15 @@ function createCamelLiquidControl(options) {
     if (!down) return;
     const rect = containerEl.getBoundingClientRect();
     const nextPx = e.clientX - rect.left;
-    if (Math.abs(nextPx - px) > 3) moved = true;
+    if (Math.abs(nextPx - downX) > 4) moved = true;
     px = nextPx;
     pr = prs(e);
-
-    const idx = getIndexFromX(px, getW());
-    onSelectIndex(idx);
   });
 
   function endPointer() {
     if (!down) return;
     down = false;
-    Z.v -= RM * 0.6;
+    Z.v -= RM * 0.45;
 
     const w = getW();
     const steps = getStepsCount();
@@ -2194,13 +2219,15 @@ function createCamelLiquidControl(options) {
     let nextIdx;
 
     if (!moved) {
+      // One quick tap: stay di posisi aktif saat disentuh, baru bergeser ke tujuan saat dilepas
       if (steps === 2 && !fixedThumbWidth) {
-        const tappedIdx = px < w * 0.5 ? 0 : 1;
+        const tappedIdx = downX < w * 0.5 ? 0 : 1;
         nextIdx = tappedIdx === curIdx ? (1 - curIdx) : tappedIdx;
       } else {
-        const tappedIdx = getIndexFromX(px, w);
+        const tappedIdx = getIndexFromX(downX, w);
         nextIdx = tappedIdx === curIdx ? (curIdx + 1) % steps : tappedIdx;
       }
+      holdUntil = performance.now() + 140;
     } else {
       nextIdx = getIndexFromX(px, w);
     }
@@ -2211,7 +2238,7 @@ function createCamelLiquidControl(options) {
   containerEl.addEventListener("pointerup", endPointer);
   containerEl.addEventListener("pointercancel", () => {
     down = false;
-    Z.v -= RM * 0.6;
+    Z.v -= RM * 0.45;
   });
 
   return {
@@ -2234,8 +2261,8 @@ function createCamelLiquidControl(options) {
 const deviceToggleCtrl = createCamelLiquidControl({
   containerEl: deviceToggle,
   canvasEl: deviceToggleCanvas,
-  padXCss: 24,
-  padYCss: 32,
+  padXCss: 34,
+  padYCss: 26,
   insetCss: 3,
   fixedThumbWidth: null,
   fontSizeCss: 10.8,
@@ -2249,8 +2276,8 @@ const deviceToggleCtrl = createCamelLiquidControl({
     }
   },
   drawContent: (c, w, h, ix, iy, iw) => {
-    c.fillText("iPhone", ix + iw * 0.25, h * 0.5);
-    c.fillText("Android", ix + iw * 0.75, h * 0.5);
+    c.fillText("iPhone", ix + iw * 0.25, h * 0.5 + 0.5 * dpr);
+    c.fillText("Android", ix + iw * 0.75, h * 0.5 + 0.5 * dpr);
   }
 });
 
@@ -2258,8 +2285,8 @@ const deviceToggleCtrl = createCamelLiquidControl({
 const navToggleCtrl = createCamelLiquidControl({
   containerEl: navToggle,
   canvasEl: navToggleCanvas,
-  padXCss: 24,
-  padYCss: 32,
+  padXCss: 34,
+  padYCss: 26,
   insetCss: 3,
   fixedThumbWidth: null,
   fontSizeCss: 10.8,
@@ -2273,8 +2300,8 @@ const navToggleCtrl = createCamelLiquidControl({
     }
   },
   drawContent: (c, w, h, ix, iy, iw) => {
-    c.fillText("Nav On", ix + iw * 0.25, h * 0.5);
-    c.fillText("Nav Off", ix + iw * 0.75, h * 0.5);
+    c.fillText("Nav On", ix + iw * 0.25, h * 0.5 + 0.5 * dpr);
+    c.fillText("Nav Off", ix + iw * 0.75, h * 0.5 + 0.5 * dpr);
   }
 });
 
@@ -2282,10 +2309,10 @@ const navToggleCtrl = createCamelLiquidControl({
 const bgSliderCtrl = createCamelLiquidControl({
   containerEl: bgSlider,
   canvasEl: bgSliderCanvas,
-  padXCss: 26,
-  padYCss: 34,
+  padXCss: 34,
+  padYCss: 28,
   insetCss: 3,
-  fixedThumbWidth: 84,
+  fixedThumbWidth: 76,
   fontSizeCss: 11.2,
   getStepsCount: () => 5,
   getCurrentIndex: () => bgPresetIndex,
@@ -2297,7 +2324,7 @@ const bgSliderCtrl = createCamelLiquidControl({
     }
   },
   drawContent: (c, w, h) => {
-    c.fillText(currentBgLabel, w * 0.5, h * 0.5);
+    c.fillText(currentBgLabel, w * 0.5, h * 0.5 + 0.5 * dpr);
   }
 });
 
@@ -2305,10 +2332,10 @@ const bgSliderCtrl = createCamelLiquidControl({
 const frameSliderCtrl = createCamelLiquidControl({
   containerEl: frameSlider,
   canvasEl: frameSliderCanvas,
-  padXCss: 26,
-  padYCss: 34,
+  padXCss: 34,
+  padYCss: 28,
   insetCss: 3,
-  fixedThumbWidth: 84,
+  fixedThumbWidth: 76,
   fontSizeCss: 11.2,
   getStepsCount: () => frameFinishes.length,
   getCurrentIndex: () => frameFinishIndex,
@@ -2319,7 +2346,7 @@ const frameSliderCtrl = createCamelLiquidControl({
     }
   },
   drawContent: (c, w, h) => {
-    c.fillText(currentFrameLabel, w * 0.5, h * 0.5);
+    c.fillText(currentFrameLabel, w * 0.5, h * 0.5 + 0.5 * dpr);
   }
 });
 
@@ -2336,11 +2363,13 @@ saveMockupBtn.addEventListener("click", () => {
 });
 
 /* =========================================================
-   CAMEL #1: NAVBAR 3-TAB (PERILAKU ACUAN.html + OPTIK BASE6.html)
+   CAMEL #1: NAVBAR 3-TAB
    ========================================================= */
 const navW = () => cachedNavBaseRect.width || liquidNav.clientWidth || 344;
-const navTw = () => navW() / 3;
-const navCtr = (i) => (i + 0.5) * navTw();
+const navInset = 5;
+const navInnerW = () => Math.max(1, navW() - navInset * 2);
+const navTw = () => navInnerW() / 3;
+const navCtr = (i) => navInset + (i + 0.5) * navTw();
 const navLx = (e) => {
   const rect = liquidNav.getBoundingClientRect();
   return e.clientX - rect.left;
@@ -2350,10 +2379,9 @@ function switchTab(tabIndex, options = {}) {
   const clamped = cl(tabIndex, 0, 2);
   const prevTab = activeTab;
 
-  if (clamped === 2 && !options.skipCapture && (prevTab === 0 || !capturedRawScene || !mockupSlideTriggeredInGesture)) {
+  if (clamped === 2 && !options.skipCapture && (prevTab === 0 || !capturedRawScene)) {
     triggerCameraBlitz();
     captureCurrentExploreScreen();
-    mockupSlideTriggeredInGesture = true;
   }
 
   activeTab = clamped;
@@ -2386,32 +2414,30 @@ function switchTab(tabIndex, options = {}) {
 liquidNav.addEventListener("pointerdown", (e) => {
   if (e.button !== undefined && e.button !== 0) return;
   navDown = true;
-  mockupSlideTriggeredInGesture = false;
+  navDownTime = performance.now();
+  navMoved = false;
   liquidNav.setPointerCapture(e.pointerId);
-  navPx = navPxs = navLx(e);
+  navDownX = navPx = navPxs = navLx(e);
   navPr = prs(e);
-  navHoldUntil = performance.now() + 300;
-  navZ.v += RM * (0.9 + 1.2 * navPr);
+  navHoldUntil = navDownTime + 210;
+  navZ.v += RM * (0.65 + 0.85 * navPr);
 });
 
 liquidNav.addEventListener("pointermove", (e) => {
   if (!navDown) return;
-  navPx = navLx(e);
+  const nextPx = navLx(e);
+  if (Math.abs(nextPx - navDownX) > 4) navMoved = true;
+  navPx = nextPx;
   navPr = prs(e);
-
-  const hoverTab = cl(Math.floor(navPx / navTw()), 0, 2);
-  if (hoverTab === 2 && !mockupSlideTriggeredInGesture && activeTab !== 2) {
-    mockupSlideTriggeredInGesture = true;
-    triggerCameraBlitz();
-    captureCurrentExploreScreen();
-  }
 });
 
 function releaseNav() {
   if (!navDown) return;
   navDown = false;
-  const targetTab = cl(Math.floor(navPx / navTw()), 0, 2);
-  navZ.v -= RM * 0.6;
+  // Hanya berpindah ke menu tujuan ketika jari dilepas
+  const releasePos = navMoved ? navPx : navDownX;
+  const targetTab = cl(Math.floor((releasePos - navInset) / navTw()), 0, 2);
+  navZ.v -= RM * 0.45;
   switchTab(targetTab);
 }
 
@@ -2430,54 +2456,80 @@ function updateLiquidPillPhysics(now, dt) {
   const w = navW();
   const t = navTw();
   const on_ = navDown || now < navHoldUntil;
+  // Melayang bebas mengikuti jari saat slide atau slow-hold; tidak pindah menu sebelum jari dilepas
+  const isTracking = navDown && (navMoved || (now - navDownTime) > 165);
 
-  navPxs += (navPx - navPxs) * Math.min(1, dt * 28);
-  const ALLOW = t * 0.25;
-  const minC = lp(t / 2, t * 0.7 - ALLOW, cl(navP.x, 0, 1));
-  const tg = cl(on_ ? navPxs : navCtr(activeTab), minC, w - minC);
-
-  // Double sub-stepping identik ACUAN.html
-  for (let k = 0; k < 2; k++) {
-    sp(navX, tg, 260, 24, dt / 2);
-    sp(navP, on_ ? 1 : 0, 320, 21, dt / 2);
-  }
-
-  if (navX.x < minC) {
-    navX.x = minC;
-    if (navX.v < 0) navX.v = 0;
-  } else if (navX.x > w - minC) {
-    navX.x = w - minC;
-    if (navX.v > 0) navX.v = 0;
-  }
+  navPxs += (navPx - navPxs) * Math.min(1, dt * 36);
 
   const pp = Math.max(navP.x, 0);
   const p1 = Math.min(pp, 1);
 
-  navSpd += (Math.abs(navX.v) - navSpd) * Math.min(1, dt * 10);
-  navSvx += (navX.v - navSvx) * Math.min(1, dt * 10);
-  const sn = cl(navSpd / 800, 0, 1);
+  navSpd += (Math.abs(navX.v) - navSpd) * Math.min(1, dt * 12);
+  navSvx += (navX.v - navSvx) * Math.min(1, dt * 12);
+  const sn = cl(navSpd / 600, 0, 1);
 
-  navStr += ((on_ ? Math.max(cl((navPr - 0.15) / 0.85, 0, 1), sn) : 0) - navStr) * Math.min(1, dt * 10);
-  navSpdS += (navSpd - navSpdS) * Math.min(1, dt * 3);
-  navStrS += (navStr - navStrS) * Math.min(1, dt * 4);
+  navStr += ((on_ ? Math.max(cl((navPr - 0.15) / 0.85, 0, 1), sn) : 0) - navStr) * Math.min(1, dt * 12);
+  navSpdS += (navSpd - navSpdS) * Math.min(1, dt * 4);
+  navStrS += (navStr - navStrS) * Math.min(1, dt * 5);
 
   const st = sn * p1;
-  const ac = cl((navSpd - navSpdS) / 700, -1, 1) * p1;
+  const ac = cl((navSpd - navSpdS) / 560, -1, 1) * p1;
   const ap = Math.max(ac, 0);
   const an = Math.max(-ac, 0);
 
-  sp(navWd, lp(t - 8, t * 1.4, pp) + st * 95 + ap * 24 + an * 16 + navStr * 10 * p1, 190, 18, dt);
-  sp(navHt, lp(56, 80, pp) - st * 24 - ap * 16 + an * 26 + navStr * 14 * p1, 120, 12, dt);
-  sp(navZ, on_ ? RM * (0.03 + 0.04 * navStr) : 0, 220, 15, dt);
-  sp(navSX, RM * st * 0.1, 200, 16, dt);
-  sp(navSH, RM * cl(navSvx * 0.004, -5, 5) * p1, 160, 16, dt);
-  sp(navIZ, on_ ? RM * (0.06 + 0.06 * navStrS) : 0, 48, 12.5, dt);
+  // Proporsi ukuran lensa idle seragam di semua menu: slotWidth - inset*2
+  const restW = t - navInset * 2;
+  const restH = (cachedNavBaseRect.height || 68) - navInset * 2;
 
-  const maxW = 2 * (Math.min(navX.x, w - navX.x) + ALLOW);
-  const wd = Math.max(Math.min(navWd.x, maxW), 30);
-  const h = Math.max(navHt.x, 30);
+  const minSlotC = navInset + t * 0.5;
+  const maxSlotC = Math.max(minSlotC, w - minSlotC);
+  const rawTargetX = isTracking ? navPxs : navCtr(activeTab);
 
-  liquidNav.style.transform = `translateX(${navSH.x.toFixed(2)}px) scale(${(1 + navZ.x + navSX.x).toFixed(4)},${(1 + navZ.x - navSX.x * 0.45).toFixed(4)})`;
+  // Boleh lewati outline sisi navbar saat mentok, namun dijaga tetap di dalam batas layar
+  const screenMargin = 10;
+  const minScreenCenter = (screenMargin - cachedNavBaseRect.left) + restW * 0.5;
+  const maxScreenCenter = (width - screenMargin - cachedNavBaseRect.left) - restW * 0.5;
+
+  const maxEdgeOut = 18;
+  const minAllowedC = Math.max(minSlotC - maxEdgeOut, minScreenCenter);
+  const maxAllowedC = Math.min(maxSlotC + maxEdgeOut, maxScreenCenter);
+
+  const edgeOver = isTracking
+    ? Math.max(0, minSlotC - rawTargetX, rawTargetX - maxSlotC)
+    : 0;
+  const edgeStopRatio = cl(edgeOver / (restW * 0.55), 0, 1) * p1;
+
+  // Regang dan menyusut proporsional secukupnya (tidak panjang-panjang)
+  const targetW = lp(restW, restW * 1.05, pp) + st * 14 + ap * 5 + an * 4 + navStr * 2.5 * p1 - edgeStopRatio * (restW * 0.12);
+  const targetH = lp(restH, 76, pp) - st * 8 - ap * 5 + an * 8 + navStr * 3.5 * p1 + edgeStopRatio * 4.5;
+
+  sp(navWd, targetW, 250, 20, dt);
+  sp(navHt, targetH, 175, 14, dt);
+  sp(navZ, on_ ? RM * (0.016 + 0.018 * navStr) : 0, 260, 17, dt);
+  sp(navSX, RM * (st * 0.05 - edgeStopRatio * 0.035), 240, 17, dt);
+  sp(navSH, RM * cl(navSvx * 0.002 + (isTracking ? cl(rawTargetX - cl(rawTargetX, minSlotC, maxSlotC), -18, 18) * 0.18 : 0), -3.5, 3.5) * p1, 200, 17, dt);
+  sp(navIZ, on_ ? RM * (0.035 + 0.03 * navStrS) : 0, 75, 14, dt);
+
+  const wd = Math.max(navWd.x, 30);
+  const h = Math.max(navHt.x, 28);
+  const tg = isTracking
+    ? cl(rawTargetX, minAllowedC, Math.max(minAllowedC, maxAllowedC))
+    : cl(navCtr(activeTab), minSlotC, maxSlotC);
+
+  for (let k = 0; k < 2; k++) {
+    sp(navX, tg, 370, 27, dt / 2);
+    sp(navP, on_ ? 1 : 0, 420, 24, dt / 2);
+  }
+
+  if (navX.x < minAllowedC) {
+    navX.x = minAllowedC;
+    if (navX.v < 0) navX.v = 0;
+  } else if (navX.x > Math.max(minAllowedC, maxAllowedC)) {
+    navX.x = Math.max(minAllowedC, maxAllowedC);
+    if (navX.v > 0) navX.v = 0;
+  }
+
+  liquidNav.style.transform = `translateX(${navSH.x.toFixed(2)}px) scale(${(1 + navZ.x + navSX.x).toFixed(4)},${(1 + navZ.x - navSX.x * 0.65).toFixed(4)})`;
 
   navLensGeom = {
     centerXCss: cachedNavBaseRect.left + navSH.x + navX.x,
@@ -2485,7 +2537,7 @@ function updateLiquidPillPhysics(now, dt) {
     halfWCss: wd * 0.5,
     halfHCss: h * 0.5,
     press: p1,
-    velX: navSvx / 320,
+    velX: navSvx / 260,
     iconZoom: 1 + navIZ.x
   };
 }
@@ -2590,8 +2642,8 @@ function resize() {
 function resizeGlassCanvas() {
   const baseW = cachedNavBaseRect.width || liquidNav.offsetWidth || Math.min(344, width - 32);
   const baseH = cachedNavBaseRect.height || liquidNav.offsetHeight || 68;
-  const newWidth = Math.max(1, Math.round((baseW + 72) * dpr));
-  const newHeight = Math.max(1, Math.round((baseH + 104) * dpr));
+  const newWidth = Math.max(1, Math.round((baseW + 88) * dpr));
+  const newHeight = Math.max(1, Math.round((baseH + 84) * dpr));
 
   if (glassCanvas.width !== newWidth || glassCanvas.height !== newHeight) {
     glassCanvas.width = newWidth;
@@ -2645,8 +2697,8 @@ function drawTabVectorIcon(octx, tabIdx, cx, cy, s) {
 
 function drawAllTabsGraphics(targetCtx, padX, padY, insetPx, tabW, navH, color, lineWidth) {
   const labels = ["Explore", "Snap", "Mockup"];
-  const iconY = padY + navH * 0.38;
-  const textY = padY + navH * 0.75;
+  const iconY = padY + navH * 0.37;
+  const textY = padY + navH * 0.74;
 
   targetCtx.strokeStyle = color;
   targetCtx.fillStyle = color;
@@ -2671,8 +2723,8 @@ function drawLiquidNavRefraction() {
   const lensHeight = glassCanvas.height;
   if (!lensWidth || !lensHeight || !glassImageData) return;
 
-  const padX = 36 * dpr;
-  const padY = 52 * dpr;
+  const padX = 44 * dpr;
+  const padY = 42 * dpr;
   const navW = lensWidth - padX * 2;
   const navH = lensHeight - padY * 2;
   const insetPx = 5 * dpr;
@@ -2689,10 +2741,10 @@ function drawLiquidNavRefraction() {
   if (navSig === lastNavRenderSig) return;
   lastNavRenderSig = navSig;
 
-  // 1. Buffer ikon & label aktif ter-magnifikasi di dalam lensa (gaya ACUAN.html)
+  // 1. Buffer ikon & label aktif ter-magnifikasi halus di dalam lensa
   navAccentCtx.clearRect(0, 0, lensWidth, lensHeight);
   navAccentCtx.save();
-  const magScale = 1 + 0.22 * pc + (navLensGeom.iconZoom - 1) * 0.5;
+  const magScale = 1 + 0.13 * pc + (navLensGeom.iconZoom - 1) * 0.4;
   navAccentCtx.translate(pillCenterX, pillCenterY);
   navAccentCtx.scale(magScale, magScale);
   navAccentCtx.translate(-pillCenterX, -pillCenterY);
