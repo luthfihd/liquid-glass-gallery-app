@@ -2312,7 +2312,7 @@ function createCamelLiquidControl(options) {
   };
 }
 
-function drawSliderIndicators(c, w, h, totalSteps, activeIdx, swatchColor, isInsideLens) {
+function drawSliderIndicators(c, w, h, totalSteps, activeIdx, isInsideLens) {
   const dotY = h * 0.5 + 12.5 * dpr;
   const gap = 5.5 * dpr;
   const startX = w * 0.5 - ((totalSteps - 1) * gap) * 0.5;
@@ -2405,9 +2405,9 @@ const bgSliderCtrl = createCamelLiquidControl({
     }
   },
   drawContent: (c, w, h, ix, iy, iw, ih, isInsideLens) => {
-    const finishes = getFrameFinishes();
-    c.fillText(currentFrameLabel, w * 0.5, h * 0.5 - 2 * dpr);
-    drawSliderIndicators(c, w, h, finishes.length, frameFinishIndex, null, isInsideLens);
+    const presets = getBackgroundPresets(capturedPalette);
+    c.fillText(currentBgLabel, w * 0.5, h * 0.5 - 2 * dpr);
+    drawSliderIndicators(c, w, h, presets.length, bgPresetIndex, isInsideLens);
   }
 });
 
@@ -2438,10 +2438,8 @@ const frameSliderCtrl = createCamelLiquidControl({
   },
   drawContent: (c, w, h, ix, iy, iw, ih, isInsideLens) => {
     const finishes = getFrameFinishes();
-    const activeFinish = finishes[frameFinishIndex];
-    const swatch = activeFinish ? activeFinish.stops[0] : null;
-    c.fillText(currentFrameLabel, w * 0.5 + 4 * dpr, h * 0.5 - 2 * dpr);
-    drawSliderIndicators(c, w, h, finishes.length, frameFinishIndex, swatch, isInsideLens);
+    c.fillText(currentFrameLabel, w * 0.5, h * 0.5 - 2 * dpr);
+    drawSliderIndicators(c, w, h, finishes.length, frameFinishIndex, isInsideLens);
   }
 });
 
