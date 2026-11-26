@@ -375,6 +375,120 @@ body {
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
 }
 
+/* PWA-SAFE CUSTOM POPOVER PICKER (UNTUK WARNA & GALERI DI iOS STANDALONE) */
+.custom-picker-popover {
+  position: absolute;
+  bottom: max(150px, calc(140px + env(safe-area-inset-bottom, 0px)));
+  left: 50%;
+  transform: translateX(-50%) translateY(10px) scale(0.95);
+  z-index: 25;
+  width: min(350px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border-radius: 22px;
+  background: rgba(16, 26, 38, 0.78);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  border: var(--hairline) solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), inset 0 0.5px 0 rgba(255, 255, 255, 0.42);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.custom-picker-popover.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.picker-close-btn {
+  border: 0;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.picker-swatches {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 7px;
+}
+
+.swatch-btn {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s ease;
+}
+
+.swatch-btn:active {
+  transform: scale(0.88);
+}
+
+.picker-hue-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hue-range {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+  outline: none;
+  border: var(--hairline) solid rgba(255, 255, 255, 0.35);
+}
+
+.hue-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.picker-gallery-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 38px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  border: var(--hairline) solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* CAMEL: Sliders (BG & Frame) */
 .mockup-sliders {
   position: relative;
@@ -504,10 +618,17 @@ body {
   .liquid-nav, .lg-segmented, .lg-slider-card { will-change: auto; }
 }
 
-#photoInput,
-#customBgPhotoInput,
-#customBgColorInput,
-#customFrameColorInput,
+/* PENTING UNTUK PWA iOS: JANGAN PAKAI display:none PADA INPUT FILE/COLOR */
+.pwa-hidden-input {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 #counter {
   display: none;
 }
@@ -550,13 +671,13 @@ body {
 
     <div class="snap-controls">
       <div class="snap-gallery-wrap">
-        <button class="photo-pick-btn" id="photoPickBtn" type="button" aria-label="Pilih foto dari galeri">
+        <label class="photo-pick-btn" for="photoInput" id="photoPickBtn" aria-label="Pilih foto dari galeri">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <rect width="18" height="18" x="3" y="3" rx="3" ry="3"/>
             <circle cx="9" cy="9" r="2"/>
             <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
           </svg>
-        </button>
+        </label>
       </div>
 
       <button class="shot-btn" id="shotBtn" type="button" aria-label="Ambil foto">
@@ -594,6 +715,26 @@ body {
       <canvas id="mockupPreviewCanvas"></canvas>
     </div>
 
+    <!-- POPOVER CUSTOM PICKER (100% NATIVE PWA FRIENDLY) -->
+    <div class="custom-picker-popover" id="customPickerPopover" aria-hidden="true">
+      <div class="picker-header">
+        <span id="pickerTitle">Custom Warna</span>
+        <button type="button" class="picker-close-btn" id="pickerCloseBtn">Selesai</button>
+      </div>
+      <div class="picker-swatches" id="pickerSwatches"></div>
+      <div class="picker-hue-row" id="pickerHueRow">
+        <input type="range" min="0" max="360" value="210" class="hue-range" id="pickerHueRange" aria-label="Geser rona warna">
+      </div>
+      <label class="picker-gallery-action" for="customBgPhotoInput" id="pickerGalleryLabel" style="display:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="18" x="3" y="3" rx="3" ry="3"/>
+          <circle cx="9" cy="9" r="2"/>
+          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+        </svg>
+        <span>Pilih Foto BG dari Galeri</span>
+      </label>
+    </div>
+
     <div class="mockup-sliders">
       <div class="lg-slider-card" id="bgSlider" aria-label="Geser atau pilih custom background">
         <canvas class="lg-slider-canvas" id="bgSliderCanvas" aria-hidden="true"></canvas>
@@ -618,10 +759,8 @@ body {
     </nav>
   </div>
 
-  <input type="file" id="photoInput" accept="image/*" multiple>
-  <input type="file" id="customBgPhotoInput" accept="image/*">
-  <input type="color" id="customBgColorInput" value="#1e3a5f">
-  <input type="color" id="customFrameColorInput" value="#4a6fa5">
+  <input type="file" id="photoInput" class="pwa-hidden-input" accept="image/*" multiple>
+  <input type="file" id="customBgPhotoInput" class="pwa-hidden-input" accept="image/*">
   <span id="counter" aria-live="polite">1 / 5</span>
 </main>
 
@@ -658,7 +797,6 @@ const cameraVideo = document.getElementById("cameraVideo");
 const cameraFallback = document.getElementById("cameraFallback");
 const closeSnapBtn = document.getElementById("closeSnapBtn");
 const flipCameraBtn = document.getElementById("flipCameraBtn");
-const photoPickBtn = document.getElementById("photoPickBtn");
 const shotBtn = document.getElementById("shotBtn");
 const photoInput = document.getElementById("photoInput");
 
@@ -677,8 +815,13 @@ const frameSlider = document.getElementById("frameSlider");
 const frameSliderCanvas = document.getElementById("frameSliderCanvas");
 
 const customBgPhotoInput = document.getElementById("customBgPhotoInput");
-const customBgColorInput = document.getElementById("customBgColorInput");
-const customFrameColorInput = document.getElementById("customFrameColorInput");
+const customPickerPopover = document.getElementById("customPickerPopover");
+const pickerTitle = document.getElementById("pickerTitle");
+const pickerCloseBtn = document.getElementById("pickerCloseBtn");
+const pickerSwatches = document.getElementById("pickerSwatches");
+const pickerHueRow = document.getElementById("pickerHueRow");
+const pickerHueRange = document.getElementById("pickerHueRange");
+const pickerGalleryLabel = document.getElementById("pickerGalleryLabel");
 
 const sceneCanvas = document.createElement("canvas");
 const ctx = sceneCanvas.getContext("2d");
@@ -794,7 +937,7 @@ let capturedPalette = null;
 let capturedImageUrl = "";
 
 /* =========================================================
-   STATE PENGATURAN BG & FRAME (PRESET + CUSTOM)
+   STATE PENGATURAN BG & FRAME (PRESET + CUSTOM PWA-SAFE)
    ========================================================= */
 let bgPresetIndex = 0;
 let frameFinishIndex = 0;
@@ -805,6 +948,14 @@ let customBgColorHex = "#1e3a5f";
 let customBgImageObj = null;
 let customBgImageUrl = "";
 let customFrameColorHex = "#4a6fa5";
+let activePickerMode = null; // "bgColor" | "bgPhoto" | "frameColor"
+
+const SWATCH_COLORS = [
+  "#1e3a5f", "#0f766e", "#166534", "#854d0e",
+  "#9a3412", "#9f1239", "#6b21a8", "#334155",
+  "#38bdf8", "#34d399", "#facc15", "#fb923c",
+  "#f472b6", "#a78bfa", "#e2e8f0", "#18181b"
+];
 
 function hexToRgb(hex) {
   const clean = (hex || "#4a6fa5").replace("#", "");
@@ -815,6 +966,10 @@ function hexToRgb(hex) {
   return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
 }
 
+function rgbToHex(r, g, b) {
+  return "#" + [r, g, b].map((v) => cl(Math.round(v), 0, 255).toString(16).padStart(2, "0")).join("");
+}
+
 function adjustRgbTone(rgb, factor) {
   return rgb.map((v) => cl(Math.round(v * factor), 0, 255));
 }
@@ -822,6 +977,67 @@ function adjustRgbTone(rgb, factor) {
 function rgbCss(rgb) {
   return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 }
+
+function openCustomPicker(mode) {
+  activePickerMode = mode;
+  pickerSwatches.innerHTML = "";
+
+  if (mode === "bgPhoto") {
+    pickerTitle.textContent = "Custom Background Foto";
+    pickerSwatches.style.display = "none";
+    pickerHueRow.style.display = "none";
+    pickerGalleryLabel.style.display = "flex";
+  } else {
+    pickerTitle.textContent = mode === "bgColor" ? "Warna Background" : "Warna Frame Perangkat";
+    pickerSwatches.style.display = "grid";
+    pickerHueRow.style.display = "flex";
+    pickerGalleryLabel.style.display = "none";
+
+    SWATCH_COLORS.forEach((hex) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "swatch-btn";
+      btn.style.backgroundColor = hex;
+      btn.setAttribute("aria-label", hex);
+      btn.addEventListener("click", () => {
+        applyPickedColor(hex);
+      });
+      pickerSwatches.appendChild(btn);
+    });
+  }
+
+  customPickerPopover.classList.add("open");
+  customPickerPopover.setAttribute("aria-hidden", "false");
+}
+
+function closeCustomPicker() {
+  activePickerMode = null;
+  customPickerPopover.classList.remove("open");
+  customPickerPopover.setAttribute("aria-hidden", "true");
+}
+
+function applyPickedColor(hex) {
+  if (activePickerMode === "bgColor") {
+    customBgColorHex = hex;
+    bgPresetIndex = 5;
+    bgSliderCtrl.sync(bgPresetIndex);
+    updateMockupBackgroundDOM();
+    renderDeviceMockup();
+  } else if (activePickerMode === "frameColor") {
+    customFrameColorHex = hex;
+    frameFinishIndex = 4;
+    frameSliderCtrl.sync(frameFinishIndex);
+    renderDeviceMockup();
+  }
+}
+
+pickerCloseBtn.addEventListener("click", closeCustomPicker);
+
+pickerHueRange.addEventListener("input", (e) => {
+  const hue = Number(e.target.value);
+  const [r, g, b] = hslToRgb(hue, 0.68, activePickerMode === "bgColor" ? 0.34 : 0.48);
+  applyPickedColor(rgbToHex(r, g, b));
+});
 
 function getFrameFinishes() {
   const baseRgb = hexToRgb(customFrameColorHex);
@@ -1028,7 +1244,6 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
 
   vec2 pDir = normalize(pillP + vec2(0.00001));
 
-  // Layer 1: Elevation Contact Shadow & Outer Meniscus Pull
   if (pillDist >= 0.0) {
     if (uPillPress <= 0.001) return baseColor;
     float normDist = pillDist / max(0.0001, outerReach);
@@ -1042,7 +1257,6 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
     return baseColor;
   }
 
-  // Layer 2: Core Magnification + Bevel Edge Refraction
   float edgeBand = smoothstep(-pillRadius * 0.82, 0.0, pillDist);
   float coreMag = (1.0 - edgeBand) * (0.020 * uPillPress);
   vec2 coreShift = -pillOffset * coreMag;
@@ -1055,7 +1269,6 @@ vec4 applyPillLiquid(vec4 baseColor, vec2 uv, float aspect) {
   bgLiquid.g = sampleScene(uv + bgShift).g;
   bgLiquid.b = sampleScene(uv + bgShift * 0.84).b;
 
-  // Layer 3: Transisi halus antara Flat Pill Tint & Frosted Liquid Glass
   float innerAO = smoothstep(-pillRadius * 0.18, 0.0, pillDist) * (0.022 * uPillPress);
   bgLiquid = bgLiquid * (1.0 - innerAO) + vec3(0.030, 0.038, 0.050) * uPillPress;
 
@@ -1363,10 +1576,6 @@ closeSnapBtn.addEventListener("click", () => {
 flipCameraBtn.addEventListener("click", () => {
   facingMode = facingMode === "environment" ? "user" : "environment";
   startCamera();
-});
-
-photoPickBtn.addEventListener("click", () => {
-  photoInput.click();
 });
 
 photoInput.addEventListener("change", async (event) => {
@@ -1880,12 +2089,10 @@ function shadeContentOnlyRefractionPixel(
   const edgeRatio = cl((sdfPill + rimZone) / rimZone, 0, 1);
   const meniscusProfile = Math.pow(edgeRatio, 3.0);
 
-  // Layer 1: Core Convex Magnification
   const coreZoom = (0.048 * pc) * (1.0 - meniscusProfile * 0.75);
   const coreShiftX = -dxPill * coreZoom;
   const coreShiftY = -dyPill * coreZoom;
 
-  // Layer 2: Edge Bevel Refraction + Chromatic Dispersion Realtime (khas iOS 26)
   const pullMag = (9.6 * pc) * dprScale * meniscusProfile;
   const shiftX = coreShiftX - dirX * pullMag;
   const shiftY = coreShiftY - dirY * pullMag;
@@ -1897,11 +2104,9 @@ function shadeContentOnlyRefractionPixel(
 
   const contentAlpha = Math.max(ra, ga, ba);
 
-  // Layer 3: Inner Rim Shadow
   const innerShadowBand = smoothstep(2.6 * dprScale, 0.0, Math.abs(sdfPill + 1.6 * dprScale));
   const innerShadowAlpha = innerShadowBand * (0.070 * pc) * (1.0 - contentAlpha * 0.6);
 
-  // Layer 4: Dual Specular Rim
   const rimW = 1.20 * dprScale;
   const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
   const up = cl(-dirY, 0, 1);
@@ -1913,7 +2118,6 @@ function shadeContentOnlyRefractionPixel(
   const bounceSpec = Math.pow(down, 1.6) * 0.32;
   const rimAlpha = rimBand * pc * (0.26 + primarySpec + bounceSpec + motionPush + causticGlow);
 
-  // Layer 5: Flat Active Pill Fill <-> Frosted Glass Body
   const flatPillAlpha = (1.0 - pc) * 0.14;
   const topSheen = Math.pow(cl(1.0 - (ny + 1.0) * 0.65, 0, 1), 2.4) * (0.090 * pc);
   const activeBody = (0.052 * pc) * (0.4 + 0.6 * (1.0 - meniscusProfile));
@@ -1944,7 +2148,7 @@ function shadeContentOnlyRefractionPixel(
 }
 
 /* =========================================================
-   CAMEL #2 & #3: TOGGLE & SLIDER (LIVE SCRUB + TAP + CUSTOM)
+   CAMEL #2 & #3: TOGGLE & SLIDER (PWA-SAFE GESTURE + TAP)
    ========================================================= */
 function createCamelLiquidControl(options) {
   const {
@@ -2251,10 +2455,9 @@ function createCamelLiquidControl(options) {
     pr = prs(e);
     holdUntil = performance.now() + 260;
     Z.v += RM * (0.65 + 0.85 * pr);
-    try { containerEl.setPointerCapture(e.pointerId); } catch (_) {}
   });
 
-  containerEl.addEventListener("pointermove", (e) => {
+  window.addEventListener("pointermove", (e) => {
     if (!down) return;
     const rect = containerEl.getBoundingClientRect();
     px = e.clientX - rect.left;
@@ -2280,7 +2483,6 @@ function createCamelLiquidControl(options) {
 
     let nextIdx;
     if (!didDrag && fixedThumbWidth) {
-      // Tap pada slider BG/Frame: langsung maju ke opsi berikutnya secara siklik
       nextIdx = (getCurrentIndex() + 1) % steps;
       px = pxs = prevPxs = getStepCenterX(nextIdx, w);
     } else {
@@ -2293,8 +2495,8 @@ function createCamelLiquidControl(options) {
     }
   }
 
-  containerEl.addEventListener("pointerup", endPointer);
-  containerEl.addEventListener("pointercancel", endPointer);
+  window.addEventListener("pointerup", endPointer);
+  window.addEventListener("pointercancel", endPointer);
 
   return {
     sync(idx) {
@@ -2399,9 +2601,11 @@ const bgSliderCtrl = createCamelLiquidControl({
     const chosen = presets[idx];
     if (!chosen) return;
     if (chosen.type === "customColor") {
-      customBgColorInput.click();
+      openCustomPicker("bgColor");
     } else if (chosen.type === "customPhoto") {
-      customBgPhotoInput.click();
+      openCustomPicker("bgPhoto");
+    } else {
+      closeCustomPicker();
     }
   },
   drawContent: (c, w, h, ix, iy, iw, ih, isInsideLens) => {
@@ -2433,7 +2637,9 @@ const frameSliderCtrl = createCamelLiquidControl({
     const finishes = getFrameFinishes();
     const chosen = finishes[idx];
     if (chosen?.type === "customColor") {
-      customFrameColorInput.click();
+      openCustomPicker("frameColor");
+    } else {
+      closeCustomPicker();
     }
   },
   drawContent: (c, w, h, ix, iy, iw, ih, isInsideLens) => {
@@ -2441,14 +2647,6 @@ const frameSliderCtrl = createCamelLiquidControl({
     c.fillText(currentFrameLabel, w * 0.5, h * 0.5 - 2 * dpr);
     drawSliderIndicators(c, w, h, finishes.length, frameFinishIndex, isInsideLens);
   }
-});
-
-// Event listener untuk Custom BG Color, Custom BG Photo, dan Custom Frame Color
-customBgColorInput.addEventListener("input", (e) => {
-  customBgColorHex = e.target.value;
-  bgPresetIndex = 5;
-  updateMockupBackgroundDOM();
-  renderDeviceMockup();
 });
 
 customBgPhotoInput.addEventListener("change", async (e) => {
@@ -2465,15 +2663,10 @@ customBgPhotoInput.addEventListener("change", async (e) => {
     bgSliderCtrl.sync(bgPresetIndex);
     updateMockupBackgroundDOM();
     renderDeviceMockup();
+    closeCustomPicker();
   } catch (err) {
     console.error("Gagal memuat custom background:", err);
   }
-});
-
-customFrameColorInput.addEventListener("input", (e) => {
-  customFrameColorHex = e.target.value;
-  frameFinishIndex = 4;
-  renderDeviceMockup();
 });
 
 saveMockupBtn.addEventListener("click", () => {
@@ -2504,6 +2697,10 @@ const navLx = (e) => {
 function switchTab(tabIndex, options = {}) {
   const clamped = cl(tabIndex, 0, 2);
   const prevTab = activeTab;
+
+  if (clamped !== 2) {
+    closeCustomPicker();
+  }
 
   if (clamped === 2 && !options.skipCapture && (prevTab === 0 || !capturedRawScene)) {
     triggerCameraBlitz();
