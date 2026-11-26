@@ -2421,7 +2421,7 @@ function updateLiquidPillPhysics(now, dt) {
   const restW = t - navInset * 2;
   const restH = (cachedNavBaseRect.height || 68) - navInset * 2;
   // Dimensi lensa aktif proporsional yang menyelimuti satu tab penuh secara simetris
-  const idealActiveW = t * 1.22;
+  const idealActiveW = t * 1.16;
   const idealActiveH = 80;
 
   // Batas pusat perjalanan lensa dengan overhang tepi ALLOW:
@@ -2470,7 +2470,7 @@ function updateLiquidPillPhysics(now, dt) {
 
   // Saat slide cepat (st / ap tinggi): lensa memanjang secara horizontal dan memipih vertikal.
   // Saat melambat / membentur ujung (an tinggi): lensa menciut sesaat lalu kembali meregang proporsional saat diam.
-  sp(navWd, lp(restW, idealActiveW, pp) + st * 78 + ap * 22 - an * 20 + navStr * 8 * p1, 190, 18, dt);
+  sp(navWd, lp(restW, idealActiveW, pp) + st * 6 + ap * 2 - an * 14, 190, 18, dt);
   sp(navHt, lp(restH, idealActiveH, pp) - st * 22 - ap * 14 + an * 18 + navStr * 8 * p1, 120, 12, dt);
 
   sp(navZ, on_ ? RM * (0.03 + 0.04 * navStr) : 0, 220, 15, dt);
