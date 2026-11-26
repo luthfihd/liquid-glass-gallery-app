@@ -505,6 +505,9 @@ body {
 }
 
 #photoInput,
+#customBgPhotoInput,
+#customBgColorInput,
+#customFrameColorInput,
 #counter {
   display: none;
 }
@@ -592,11 +595,11 @@ body {
     </div>
 
     <div class="mockup-sliders">
-      <div class="lg-slider-card" id="bgSlider" aria-label="Geser tema background">
+      <div class="lg-slider-card" id="bgSlider" aria-label="Geser atau pilih custom background">
         <canvas class="lg-slider-canvas" id="bgSliderCanvas" aria-hidden="true"></canvas>
       </div>
 
-      <div class="lg-slider-card" id="frameSlider" aria-label="Geser warna frame perangkat">
+      <div class="lg-slider-card" id="frameSlider" aria-label="Geser atau pilih custom warna frame perangkat">
         <canvas class="lg-slider-canvas" id="frameSliderCanvas" aria-hidden="true"></canvas>
       </div>
     </div>
@@ -616,6 +619,9 @@ body {
   </div>
 
   <input type="file" id="photoInput" accept="image/*" multiple>
+  <input type="file" id="customBgPhotoInput" accept="image/*">
+  <input type="color" id="customBgColorInput" value="#1e3a5f">
+  <input type="color" id="customFrameColorInput" value="#4a6fa5">
   <span id="counter" aria-live="polite">1 / 5</span>
 </main>
 
@@ -669,6 +675,10 @@ const bgSlider = document.getElementById("bgSlider");
 const bgSliderCanvas = document.getElementById("bgSliderCanvas");
 const frameSlider = document.getElementById("frameSlider");
 const frameSliderCanvas = document.getElementById("frameSliderCanvas");
+
+const customBgPhotoInput = document.getElementById("customBgPhotoInput");
+const customBgColorInput = document.getElementById("customBgColorInput");
+const customFrameColorInput = document.getElementById("customFrameColorInput");
 
 const sceneCanvas = document.createElement("canvas");
 const ctx = sceneCanvas.getContext("2d");
@@ -783,17 +793,52 @@ let capturedRawScene = null;
 let capturedPalette = null;
 let capturedImageUrl = "";
 
+/* =========================================================
+   STATE PENGATURAN BG & FRAME (PRESET + CUSTOM)
+   ========================================================= */
 let bgPresetIndex = 0;
 let frameFinishIndex = 0;
 let currentBgLabel = "BG: Photo Blur";
 let currentFrameLabel = "Frame: Titanium";
 
-const frameFinishes = [
-  { name: "Titanium", stops: ["#686e78", "#2d3138", "#555b65", "#1e2126", "#4e545e"] },
-  { name: "Obsidian", stops: ["#383c42", "#141619", "#2a2d32", "#0c0d10", "#25282d"] },
-  { name: "Silver", stops: ["#e4e8ee", "#9da4ae", "#d2d7df", "#7e8590", "#c4cad3"] },
-  { name: "Desert Gold", stops: ["#cbb396", "#6e5a44", "#b3997b", "#4c3d2d", "#9f8568"] }
-];
+let customBgColorHex = "#1e3a5f";
+let customBgImageObj = null;
+let customBgImageUrl = "";
+let customFrameColorHex = "#4a6fa5";
+
+function hexToRgb(hex) {
+  const clean = (hex || "#4a6fa5").replace("#", "");
+  const full = clean.length === 3
+    ? clean.split("").map((ch) => ch + ch).join("")
+    : clean.padEnd(6, "0");
+  const num = parseInt(full, 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+
+function adjustRgbTone(rgb, factor) {
+  return rgb.map((v) => cl(Math.round(v * factor), 0, 255));
+}
+
+function rgbCss(rgb) {
+  return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+}
+
+function getFrameFinishes() {
+  const baseRgb = hexToRgb(customFrameColorHex);
+  const hi = rgbCss(adjustRgbTone(baseRgb, 1.38));
+  const midDark = rgbCss(adjustRgbTone(baseRgb, 0.56));
+  const mid = rgbCss(adjustRgbTone(baseRgb, 1.05));
+  const deep = rgbCss(adjustRgbTone(baseRgb, 0.36));
+  const edge = rgbCss(adjustRgbTone(baseRgb, 0.92));
+
+  return [
+    { name: "Titanium", stops: ["#686e78", "#2d3138", "#555b65", "#1e2126", "#4e545e"] },
+    { name: "Obsidian", stops: ["#383c42", "#141619", "#2a2d32", "#0c0d10", "#25282d"] },
+    { name: "Silver", stops: ["#e4e8ee", "#9da4ae", "#d2d7df", "#7e8590", "#c4cad3"] },
+    { name: "Desert Gold", stops: ["#cbb396", "#6e5a44", "#b3997b", "#4c3d2d", "#9f8568"] },
+    { name: "Custom Color", type: "customColor", stops: [hi, midDark, mid, deep, edge] }
+  ];
+}
 
 const wrapIndex = (index) =>
   ((index % items.length) + items.length) % items.length;
@@ -1368,7 +1413,7 @@ shotBtn.addEventListener("click", () => {
 });
 
 /* =========================================================
-   CAMERA BLITZ & MOCKUP COMPOSITOR
+   CAMERA BLITZ & MOCKUP COMPOSITOR (BG & FRAME PRESET + CUSTOM)
    ========================================================= */
 function triggerCameraBlitz() {
   captureFlash.classList.remove("flash-anim");
@@ -1432,6 +1477,11 @@ function getBackgroundPresets(pal) {
     muted: [222, 232, 245],
     primary: [24, 42, 62]
   };
+  const customRgb = hexToRgb(customBgColorHex);
+  const customLight = rgbCss(adjustRgbTone(customRgb, 1.28));
+  const customMid = rgbCss(customRgb);
+  const customDeep = rgbCss(adjustRgbTone(customRgb, 0.42));
+
   return [
     { name: "Photo Blur", type: "photo" },
     {
@@ -1461,6 +1511,17 @@ function getBackgroundPresets(pal) {
       c1: "#1f242b",
       c2: "#101318",
       c3: "#07090c"
+    },
+    {
+      name: "Custom Color",
+      type: "customColor",
+      c1: customLight,
+      c2: customMid,
+      c3: customDeep
+    },
+    {
+      name: "Custom Photo",
+      type: "customPhoto"
     }
   ];
 }
@@ -1470,7 +1531,10 @@ function updateMockupBackgroundDOM() {
   const preset = presets[bgPresetIndex] || presets[0];
   currentBgLabel = `BG: ${preset.name}`;
 
-  if (preset.type === "photo" && capturedImageUrl) {
+  if (preset.type === "customPhoto" && customBgImageUrl) {
+    mockupBg.style.backgroundImage = `url("${customBgImageUrl}")`;
+    mockupBg.style.filter = "none";
+  } else if ((preset.type === "photo" || preset.type === "customPhoto") && capturedImageUrl) {
     mockupBg.style.backgroundImage = `url("${capturedImageUrl}")`;
     mockupBg.style.filter = "blur(24px) saturate(1.25) brightness(0.66)";
   } else {
@@ -1490,7 +1554,12 @@ function drawBackgroundOnExportCanvas(mctx, outW, outH) {
   const presets = getBackgroundPresets(capturedPalette);
   const preset = presets[bgPresetIndex] || presets[0];
 
-  if (preset.type === "photo" && images.length) {
+  if (preset.type === "customPhoto" && customBgImageObj) {
+    drawImageToContext(mctx, customBgImageObj, 0, 0, outW, outH);
+    return;
+  }
+
+  if ((preset.type === "photo" || preset.type === "customPhoto") && images.length) {
     const activeIndex = wrapIndex(Math.round(scroll));
     const blurSnap = backdropSnapshots[activeIndex];
     if (blurSnap) {
@@ -1512,7 +1581,8 @@ function drawBackgroundOnExportCanvas(mctx, outW, outH) {
 function renderDeviceMockup() {
   if (!capturedRawScene) return;
 
-  const finish = frameFinishes[frameFinishIndex] || frameFinishes[0];
+  const finishes = getFrameFinishes();
+  const finish = finishes[frameFinishIndex] || finishes[0];
   currentFrameLabel = `Frame: ${finish.name}`;
 
   const outW = 1200;
@@ -1874,7 +1944,7 @@ function shadeContentOnlyRefractionPixel(
 }
 
 /* =========================================================
-   CAMEL #2 & #3: TOGGLE & SLIDER (BG & FRAME)
+   CAMEL #2 & #3: TOGGLE & SLIDER (LIVE SCRUB + TAP + CUSTOM)
    ========================================================= */
 function createCamelLiquidControl(options) {
   const {
@@ -1888,6 +1958,7 @@ function createCamelLiquidControl(options) {
     getStepsCount,
     getCurrentIndex,
     onSelectIndex,
+    onCommitIndex,
     drawContent
   } = options;
 
@@ -1900,6 +1971,8 @@ function createCamelLiquidControl(options) {
   let lastCtrlSig = "";
 
   let down = false;
+  let downStartX = 0;
+  let didDrag = false;
   let px = 0;
   let pxs = 0;
   let prevPxs = 0;
@@ -2001,7 +2074,6 @@ function createCamelLiquidControl(options) {
     const snapCenter = getStepCenterX(getCurrentIndex(), w);
     const tg = cl(on_ ? pxs : snapCenter, minC, maxC);
 
-    // Pegas dengan sedikit inersia overshoot saat dilepas sebelum idle
     const posK = on_ ? 260 : 300;
     const posC = on_ ? 24 : 18.5;
     for (let k = 0; k < 2; k++) {
@@ -2080,8 +2152,10 @@ function createCamelLiquidControl(options) {
     const pillHalfH = geom.halfHCss * dpr;
     const pc = geom.press;
 
-    const labelText = containerEl === bgSlider ? currentBgLabel : (containerEl === frameSlider ? currentFrameLabel : "");
-    const ctrlSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${geom.iconZoom.toFixed(3)}|${currentAccentRgb.join(",")}|${labelText}|${w}x${h}`;
+    const extraSig = containerEl === bgSlider
+      ? `${currentBgLabel}|${bgPresetIndex}|${customBgColorHex}|${Boolean(customBgImageUrl)}`
+      : (containerEl === frameSlider ? `${currentFrameLabel}|${frameFinishIndex}|${customFrameColorHex}` : `${getCurrentIndex()}`);
+    const ctrlSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${geom.iconZoom.toFixed(3)}|${currentAccentRgb.join(",")}|${extraSig}|${w}x${h}`;
     if (ctrlSig === lastCtrlSig) return;
     lastCtrlSig = ctrlSig;
 
@@ -2095,7 +2169,7 @@ function createCamelLiquidControl(options) {
     bctx.fillStyle = `rgb(${currentAccentRgb.join(",")})`;
     bctx.textAlign = "center";
     bctx.textBaseline = "middle";
-    drawContent(bctx, w, h, padX + inset, padY + inset, innerW, innerH);
+    drawContent(bctx, w, h, padX + inset, padY + inset, innerW, innerH, true);
     bctx.restore();
 
     const source = bctx.getImageData(0, 0, w, h).data;
@@ -2147,7 +2221,7 @@ function createCamelLiquidControl(options) {
     sctx.fillStyle = "rgba(255, 255, 255, 0.94)";
     sctx.textAlign = "center";
     sctx.textBaseline = "middle";
-    drawContent(sctx, w, h, padX + inset, padY + inset, innerW, innerH);
+    drawContent(sctx, w, h, padX + inset, padY + inset, innerW, innerH, false);
     sctx.restore();
 
     sctx.save();
@@ -2170,8 +2244,9 @@ function createCamelLiquidControl(options) {
   containerEl.addEventListener("pointerdown", (e) => {
     if (e.button !== undefined && e.button !== 0) return;
     down = true;
+    didDrag = false;
     const rect = containerEl.getBoundingClientRect();
-    px = pxs = prevPxs = e.clientX - rect.left;
+    downStartX = px = pxs = prevPxs = e.clientX - rect.left;
     fingerSpd = 0;
     pr = prs(e);
     holdUntil = performance.now() + 260;
@@ -2184,6 +2259,14 @@ function createCamelLiquidControl(options) {
     const rect = containerEl.getBoundingClientRect();
     px = e.clientX - rect.left;
     pr = prs(e);
+    if (Math.abs(px - downStartX) > 6) {
+      didDrag = true;
+    }
+    if (didDrag) {
+      const w = getW();
+      const nextIdx = getIndexFromX(px, w);
+      onSelectIndex(nextIdx, false);
+    }
   });
 
   function endPointer() {
@@ -2193,8 +2276,21 @@ function createCamelLiquidControl(options) {
     Wd.v += RM * 18;
     Ht.v -= RM * 12;
     const w = getW();
-    const nextIdx = getIndexFromX(px, w);
-    onSelectIndex(nextIdx);
+    const steps = getStepsCount();
+
+    let nextIdx;
+    if (!didDrag && fixedThumbWidth) {
+      // Tap pada slider BG/Frame: langsung maju ke opsi berikutnya secara siklik
+      nextIdx = (getCurrentIndex() + 1) % steps;
+      px = pxs = prevPxs = getStepCenterX(nextIdx, w);
+    } else {
+      nextIdx = getIndexFromX(px, w);
+    }
+
+    onSelectIndex(nextIdx, true);
+    if (onCommitIndex) {
+      onCommitIndex(nextIdx, !didDrag);
+    }
   }
 
   containerEl.addEventListener("pointerup", endPointer);
@@ -2214,6 +2310,21 @@ function createCamelLiquidControl(options) {
     updateSpring,
     renderOptics
   };
+}
+
+function drawSliderIndicators(c, w, h, totalSteps, activeIdx, swatchColor, isInsideLens) {
+  const dotY = h * 0.5 + 12.5 * dpr;
+  const gap = 5.5 * dpr;
+  const startX = w * 0.5 - ((totalSteps - 1) * gap) * 0.5;
+
+  for (let i = 0; i < totalSteps; i++) {
+    c.beginPath();
+    c.arc(startX + i * gap, dotY, (i === activeIdx ? 1.85 : 1.15) * dpr, 0, Math.PI * 2);
+    c.fillStyle = i === activeIdx
+      ? (isInsideLens ? `rgb(${currentAccentRgb.join(",")})` : "rgba(255,255,255,0.95)")
+      : "rgba(255,255,255,0.34)";
+    c.fill();
+  }
 }
 
 // CAMEL Toggle 1: Device Segmented Toggle (iPhone / Android)
@@ -2264,49 +2375,107 @@ const navToggleCtrl = createCamelLiquidControl({
   }
 });
 
-// CAMEL Slider 1: Background Theme Slider
+// CAMEL Slider 1: Background Theme & Custom BG Slider
 const bgSliderCtrl = createCamelLiquidControl({
   containerEl: bgSlider,
   canvasEl: bgSliderCanvas,
   padXCss: 36,
   padYCss: 36,
   insetCss: 3,
-  fixedThumbWidth: 76,
-  fontSizeCss: 11.2,
-  getStepsCount: () => 5,
+  fixedThumbWidth: 74,
+  fontSizeCss: 10.8,
+  getStepsCount: () => getBackgroundPresets(capturedPalette).length,
   getCurrentIndex: () => bgPresetIndex,
   onSelectIndex: (idx) => {
     if (bgPresetIndex !== idx) {
       bgPresetIndex = idx;
+      if (navigator.vibrate) navigator.vibrate(6);
       updateMockupBackgroundDOM();
       renderDeviceMockup();
     }
   },
-  drawContent: (c, w, h) => {
-    c.fillText(currentBgLabel, w * 0.5, h * 0.5 + 0.5 * dpr);
+  onCommitIndex: (idx) => {
+    const presets = getBackgroundPresets(capturedPalette);
+    const chosen = presets[idx];
+    if (!chosen) return;
+    if (chosen.type === "customColor") {
+      customBgColorInput.click();
+    } else if (chosen.type === "customPhoto") {
+      customBgPhotoInput.click();
+    }
+  },
+  drawContent: (c, w, h, ix, iy, iw, ih, isInsideLens) => {
+    const finishes = getFrameFinishes();
+    c.fillText(currentFrameLabel, w * 0.5, h * 0.5 - 2 * dpr);
+    drawSliderIndicators(c, w, h, finishes.length, frameFinishIndex, null, isInsideLens);
   }
 });
 
-// CAMEL Slider 2: Frame Color Slider
+// CAMEL Slider 2: Frame Color & Custom Frame Slider
 const frameSliderCtrl = createCamelLiquidControl({
   containerEl: frameSlider,
   canvasEl: frameSliderCanvas,
   padXCss: 36,
   padYCss: 36,
   insetCss: 3,
-  fixedThumbWidth: 76,
-  fontSizeCss: 11.2,
-  getStepsCount: () => frameFinishes.length,
+  fixedThumbWidth: 74,
+  fontSizeCss: 10.8,
+  getStepsCount: () => getFrameFinishes().length,
   getCurrentIndex: () => frameFinishIndex,
   onSelectIndex: (idx) => {
     if (frameFinishIndex !== idx) {
       frameFinishIndex = idx;
+      if (navigator.vibrate) navigator.vibrate(6);
       renderDeviceMockup();
     }
   },
-  drawContent: (c, w, h) => {
-    c.fillText(currentFrameLabel, w * 0.5, h * 0.5 + 0.5 * dpr);
+  onCommitIndex: (idx) => {
+    const finishes = getFrameFinishes();
+    const chosen = finishes[idx];
+    if (chosen?.type === "customColor") {
+      customFrameColorInput.click();
+    }
+  },
+  drawContent: (c, w, h, ix, iy, iw, ih, isInsideLens) => {
+    const finishes = getFrameFinishes();
+    const activeFinish = finishes[frameFinishIndex];
+    const swatch = activeFinish ? activeFinish.stops[0] : null;
+    c.fillText(currentFrameLabel, w * 0.5 + 4 * dpr, h * 0.5 - 2 * dpr);
+    drawSliderIndicators(c, w, h, finishes.length, frameFinishIndex, swatch, isInsideLens);
   }
+});
+
+// Event listener untuk Custom BG Color, Custom BG Photo, dan Custom Frame Color
+customBgColorInput.addEventListener("input", (e) => {
+  customBgColorHex = e.target.value;
+  bgPresetIndex = 5;
+  updateMockupBackgroundDOM();
+  renderDeviceMockup();
+});
+
+customBgPhotoInput.addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  customBgPhotoInput.value = "";
+  if (!file || !file.type.startsWith("image/")) return;
+
+  try {
+    const url = URL.createObjectURL(file);
+    sessionObjectUrls.push(url);
+    customBgImageObj = await loadImage(url, true);
+    customBgImageUrl = url;
+    bgPresetIndex = 6;
+    bgSliderCtrl.sync(bgPresetIndex);
+    updateMockupBackgroundDOM();
+    renderDeviceMockup();
+  } catch (err) {
+    console.error("Gagal memuat custom background:", err);
+  }
+});
+
+customFrameColorInput.addEventListener("input", (e) => {
+  customFrameColorHex = e.target.value;
+  frameFinishIndex = 4;
+  renderDeviceMockup();
 });
 
 saveMockupBtn.addEventListener("click", () => {
@@ -2396,7 +2565,6 @@ function releaseNav() {
   const destX = navCtr(targetTab);
   const distToDest = destX - navX.x;
 
-  // Dorongan inersia & kenyal sesaat sebelum pill mendarat ke posisi idle (khas iOS 26)
   if (RM) {
     navX.v += cl(distToDest * 2.2, -320, 320);
     navWd.v += 24;
@@ -2422,7 +2590,6 @@ function updateLiquidPillPhysics(now, dt) {
   const t = navTw();
   const on_ = navDown || now < navHoldUntil;
 
-  // Pelacakan jari langsung
   navPxs += (navPx - navPxs) * Math.min(1, dt * 28);
   const instFingerSpd = Math.abs(navPxs - navPrevPxs) / Math.max(0.001, dt);
   navPrevPxs = navPxs;
@@ -2438,8 +2605,6 @@ function updateLiquidPillPhysics(now, dt) {
   const maxC = w - minC;
   const tg = cl(on_ ? navPxs : navCtr(activeTab), minC, maxC);
 
-  // Ketika jari dilepas (on_ === false), damping dibuat underdamped (18.0 & 16.0)
-  // sehingga pill mengalami sedikit overshoot inersia dan membal beberapa ms sebelum idle
   const posK = on_ ? 260 : 310;
   const posC = on_ ? 24 : 18.0;
   const pressK = on_ ? 320 : 340;
@@ -2477,7 +2642,6 @@ function updateLiquidPillPhysics(now, dt) {
   const ap = Math.max(ac, 0);
   const an = Math.max(-ac, 0);
 
-  // Damping pegas ukuran pill sedikit lebih kenyal saat lepas (14.5 & 10.5) agar ikut membal lembut sebelum idle
   const wdC = on_ ? 18 : 14.5;
   const htC = on_ ? 12 : 10.2;
 
@@ -2732,7 +2896,6 @@ function drawLiquidNavRefraction() {
   if (navSig === lastNavRenderSig) return;
   lastNavRenderSig = navSig;
 
-  // 1. Buffer dalam lensa: ikon SOLID FILLED + dispersi kromatik bilineer iOS 26
   navAccentCtx.clearRect(0, 0, lensWidth, lensHeight);
   navAccentCtx.save();
   const magScale = 1 + 0.13 * pc + (navLensGeom.iconZoom - 1) * 0.4;
@@ -2794,7 +2957,6 @@ function drawLiquidNavRefraction() {
 
   navLensCtx.putImageData(glassImageData, 0, 0);
 
-  // 2. Lapisan luar lensa: ikon OUTLINE murni
   glassCtx.clearRect(0, 0, lensWidth, lensHeight);
   glassCtx.save();
   glassCtx.translate(lensWidth * 0.5, lensHeight * 0.5);
