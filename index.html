@@ -2295,8 +2295,8 @@ function createCamelLiquidControl(options) {
       if (X.v > 0) X.v *= -0.25;
     }
 
-    sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * 0.24) + ap * (tW * 0.08) - an * (tW * 0.08) + str * 4 * p1, 210, 14.5, dt);
-    sp(Ht, lp(restH, idealActiveH, pp) - st * 10 - ap * 6 + an * 10 + str * 5 * p1, 150, 10.5, dt);
+    sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * -0.40) + ap * (tW * 0.08) - an * (tW * 0.08) + str * 4 * p1, 210, 14.5, dt);
+    sp(Ht, lp(restH, idealActiveH, pp) - st * -5 - ap * 6 + an * 10 + str * 5 * p1, 150, 10.5, dt);
 
     // 2. Hitung seberapa dekat lensa dengan tepi kiri/kanan (0 = di tengah, 1 = mentok ujung)
     const halfTrack = Math.max(1, w * 0.5 - minC);
@@ -2304,7 +2304,7 @@ function createCamelLiquidControl(options) {
     const edgeFactor = smoothstep(0.65, 1.0, normPos);
 
     // 3. Pendekkan lebar saat mentok (misal memendek hingga 22% saat pressed di ujung)
-    const edgeShorten = 1 - edgeFactor * 0.12 * p1;
+    const edgeShorten = 1 - edgeFactor * 0.03 * p1;
 
     sp(Z, on_ ? RM * (0.015 + 0.018 * str) : 0, 220, 13.5, dt);
     sp(SX, RM * st * 0.05, 200, 14.5, dt);
@@ -2847,8 +2847,8 @@ function updateLiquidPillPhysics(now, dt) {
   const wdC = on_ ? 18 : 14.5;
   const htC = on_ ? 12 : 10.2;
 
-  sp(navWd, lp(restW, idealActiveW, pp) + st * 6 + ap * 2 - an * 14, 210, wdC, dt);
-  sp(navHt, lp(restH, idealActiveH, pp) - st * 22 - ap * 14 + an * 18 + navStr * 8 * p1, 145, htC, dt);
+  sp(navWd, lp(restW, idealActiveW, pp) + st * -50 + ap * 2 - an * 14, 210, wdC, dt);
+  sp(navHt, lp(restH, idealActiveH, pp) - st * -20 - ap * 14 + an * 18 + navStr * 8 * p1, 145, htC, dt);
 
   sp(navZ, on_ ? RM * (0.03 + 0.04 * navStr) : 0, 220, 13.5, dt);
   sp(navSX, RM * st * 0.09, 200, 14.5, dt);
