@@ -375,7 +375,7 @@ body {
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
 }
 
-/* CAMEL: Sliders */
+/* CAMEL: Sliders (BG & Frame) */
 .mockup-sliders {
   position: relative;
   z-index: 3;
@@ -1604,7 +1604,7 @@ function renderDeviceMockup() {
     navLensGeom = {
       centerXCss: cachedNavBaseRect.left + navX.x,
       centerYCss: cachedNavBaseRect.top + 34,
-      halfWCss: (navTw() - navInset * 2) * 0.5,
+      halfWCss: (navTw() - navInset * 2 + 10) * 0.5,
       halfHCss: 29,
       press: 0,
       velX: 0,
@@ -1874,7 +1874,7 @@ function shadeContentOnlyRefractionPixel(
 }
 
 /* =========================================================
-   CAMEL #2 & #3: TOGGLE & SLIDER
+   CAMEL #2 & #3: TOGGLE & SLIDER (BG & FRAME)
    ========================================================= */
 function createCamelLiquidControl(options) {
   const {
@@ -1981,7 +1981,6 @@ function createCamelLiquidControl(options) {
     const motionSpd = Math.max(spd, fingerSpd * 0.85);
     const sn = cl(motionSpd / 560, 0, 1);
 
-    // Deformasi aktif hanya saat ada kecepatan/kekuatan drag/slide (sn > 0), bukan hold diam
     const activeDragForce = down ? Math.max(cl((pr - 0.35) / 0.65, 0, 1) * sn, sn) : 0;
     str += (activeDragForce - str) * Math.min(1, dt * 12);
     spdS += (motionSpd - spdS) * Math.min(1, dt * 4);
@@ -2002,25 +2001,28 @@ function createCamelLiquidControl(options) {
     const snapCenter = getStepCenterX(getCurrentIndex(), w);
     const tg = cl(on_ ? pxs : snapCenter, minC, maxC);
 
+    // Pegas dengan sedikit inersia overshoot saat dilepas sebelum idle
+    const posK = on_ ? 260 : 300;
+    const posC = on_ ? 24 : 18.5;
     for (let k = 0; k < 2; k++) {
-      sp(X, tg, 260, 24, dt / 2);
-      sp(P, on_ ? 1 : 0, 320, 21, dt / 2);
+      sp(X, tg, posK, posC, dt / 2);
+      sp(P, on_ ? 1 : 0, 320, 16.5, dt / 2);
     }
 
     if (X.x < minC) {
       X.x = minC;
-      if (X.v < 0) X.v = 0;
+      if (X.v < 0) X.v *= -0.25;
     } else if (X.x > maxC) {
       X.x = maxC;
-      if (X.v > 0) X.v = 0;
+      if (X.v > 0) X.v *= -0.25;
     }
 
-    sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * 0.34) + ap * (tW * 0.12) - an * (tW * 0.10) + str * 6 * p1, 190, 18, dt);
-    sp(Ht, lp(restH, idealActiveH, pp) - st * 10 - ap * 6 + an * 10 + str * 5 * p1, 120, 12, dt);
+    sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * 0.34) + ap * (tW * 0.12) - an * (tW * 0.10) + str * 6 * p1, 210, 14.5, dt);
+    sp(Ht, lp(restH, idealActiveH, pp) - st * 10 - ap * 6 + an * 10 + str * 5 * p1, 150, 10.5, dt);
 
-    sp(Z, on_ ? RM * (0.015 + 0.018 * str) : 0, 220, 15, dt);
-    sp(SX, RM * st * 0.05, 200, 16, dt);
-    sp(SH, RM * cl(svx * 0.0025, -3.5, 3.5) * p1, 160, 16, dt);
+    sp(Z, on_ ? RM * (0.015 + 0.018 * str) : 0, 220, 13.5, dt);
+    sp(SX, RM * st * 0.05, 200, 14.5, dt);
+    sp(SH, RM * cl(svx * 0.0025, -3.5, 3.5) * p1, 160, 14.5, dt);
     sp(IZ, on_ ? RM * (0.03 + 0.03 * strS) : 0, 48, 12.5, dt);
 
     const maxW = 2 * (Math.min(X.x, w - X.x) + ALLOW);
@@ -2172,7 +2174,7 @@ function createCamelLiquidControl(options) {
     px = pxs = prevPxs = e.clientX - rect.left;
     fingerSpd = 0;
     pr = prs(e);
-    holdUntil = performance.now() + 300;
+    holdUntil = performance.now() + 260;
     Z.v += RM * (0.65 + 0.85 * pr);
     try { containerEl.setPointerCapture(e.pointerId); } catch (_) {}
   });
@@ -2187,7 +2189,9 @@ function createCamelLiquidControl(options) {
   function endPointer() {
     if (!down) return;
     down = false;
-    Z.v -= RM * 0.45;
+    Z.v -= RM * 0.55;
+    Wd.v += RM * 18;
+    Ht.v -= RM * 12;
     const w = getW();
     const nextIdx = getIndexFromX(px, w);
     onSelectIndex(nextIdx);
@@ -2318,12 +2322,7 @@ saveMockupBtn.addEventListener("click", () => {
 });
 
 /* =========================================================
-   CAMEL #1: NAVBAR 3-TAB
-   1. Behaviour asli ACUAN.html dikembalikan utuh (direct finger tracking,
-      quick tap langsung pindah tab, holdUntil 300ms, pegas X/P/Z/SX/SH/IZ).
-   2. Deformasi lensa hanya dipicu kecepatan & kekuatan drag/slide (bukan setiap hold);
-      saat diam di atas menu (termasuk saat mentok ujung kiri/kanan navbar),
-      lensa meregang kembali secara proporsional.
+   CAMEL #1: NAVBAR 3-TAB (iOS 26 NATIVE + INERTIAL SETTLE BOUNCE)
    ========================================================= */
 const navW = () => cachedNavBaseRect.width || liquidNav.clientWidth || 344;
 const navInset = 5;
@@ -2378,7 +2377,7 @@ liquidNav.addEventListener("pointerdown", (e) => {
   navPx = navPxs = navPrevPxs = navLx(e);
   navFingerSpd = 0;
   navPr = prs(e);
-  navHoldUntil = performance.now() + 300;
+  navHoldUntil = performance.now() + 260;
   navZ.v += RM * (0.9 + 1.2 * navPr);
 });
 
@@ -2391,8 +2390,19 @@ liquidNav.addEventListener("pointermove", (e) => {
 function releaseNav() {
   if (!navDown) return;
   navDown = false;
-  navZ.v -= RM * 0.6;
+  navZ.v -= RM * 0.72;
+
   const targetTab = cl(Math.floor((navPx - navInset) / navTw()), 0, 2);
+  const destX = navCtr(targetTab);
+  const distToDest = destX - navX.x;
+
+  // Dorongan inersia & kenyal sesaat sebelum pill mendarat ke posisi idle (khas iOS 26)
+  if (RM) {
+    navX.v += cl(distToDest * 2.2, -320, 320);
+    navWd.v += 24;
+    navHt.v -= 16;
+  }
+
   switchTab(targetTab);
 }
 
@@ -2412,37 +2422,40 @@ function updateLiquidPillPhysics(now, dt) {
   const t = navTw();
   const on_ = navDown || now < navHoldUntil;
 
-  // Pelacakan jari langsung seperti ACUAN.html
+  // Pelacakan jari langsung
   navPxs += (navPx - navPxs) * Math.min(1, dt * 28);
   const instFingerSpd = Math.abs(navPxs - navPrevPxs) / Math.max(0.001, dt);
   navPrevPxs = navPxs;
   navFingerSpd += (instFingerSpd - navFingerSpd) * Math.min(1, dt * 14);
 
-  const restW = t - navInset * 2;
+  const restW = t - navInset * 2 + 10;
   const restH = (cachedNavBaseRect.height || 68) - navInset * 2;
-  // Dimensi lensa aktif proporsional yang menyelimuti satu tab penuh secara simetris
   const idealActiveW = t * 1.16;
   const idealActiveH = 80;
 
-  // Batas pusat perjalanan lensa dengan overhang tepi ALLOW:
-  // Saat jari berhenti di ujung kiri (Explore) atau kanan (Mockup),
-  // 2 * (minC - navInset + ALLOW) == idealActiveW, sehingga lensa tetap meregang proporsional!
-  const ALLOW = t * 0.21;
+  const ALLOW = t * 0.12;
   const minC = lp(navInset + t * 0.5, navInset + idealActiveW * 0.5 - ALLOW, cl(navP.x, 0, 1));
   const maxC = w - minC;
   const tg = cl(on_ ? navPxs : navCtr(activeTab), minC, maxC);
 
+  // Ketika jari dilepas (on_ === false), damping dibuat underdamped (18.0 & 16.0)
+  // sehingga pill mengalami sedikit overshoot inersia dan membal beberapa ms sebelum idle
+  const posK = on_ ? 260 : 310;
+  const posC = on_ ? 24 : 18.0;
+  const pressK = on_ ? 320 : 340;
+  const pressC = on_ ? 21 : 16.0;
+
   for (let k = 0; k < 2; k++) {
-    sp(navX, tg, 260, 24, dt / 2);
-    sp(navP, on_ ? 1 : 0, 320, 21, dt / 2);
+    sp(navX, tg, posK, posC, dt / 2);
+    sp(navP, on_ ? 1 : 0, pressK, pressC, dt / 2);
   }
 
   if (navX.x < minC) {
     navX.x = minC;
-    if (navX.v < 0) navX.v = 0;
+    if (navX.v < 0) navX.v *= -0.28;
   } else if (navX.x > maxC) {
     navX.x = maxC;
-    if (navX.v > 0) navX.v = 0;
+    if (navX.v > 0) navX.v *= -0.28;
   }
 
   const pp = Math.max(navP.x, 0);
@@ -2451,13 +2464,9 @@ function updateLiquidPillPhysics(now, dt) {
   navSpd += (Math.abs(navX.v) - navSpd) * Math.min(1, dt * 10);
   navSvx += (navX.v - navSvx) * Math.min(1, dt * 10);
 
-  // Kecepatan gabungan pegas & geseran jari
   const motionSpd = Math.max(navSpd, navFingerSpd * 0.85);
   const sn = cl(motionSpd / 740, 0, 1);
 
-  // Deformasi menciut/memanjang HANYA aktif berdasarkan kekuatan & kecepatan drag/slide (sn).
-  // Ketika jari diam di atas menu (baik di tengah maupun saat mentok sisi kiri/kanan navbar)
-  // sambil masih hold, sn -> 0 sehingga lensa rileks & meregang kembali proporsional ke (idealActiveW x idealActiveH).
   const activeSlideForce = navDown ? Math.max(cl((navPr - 0.35) / 0.65, 0, 1) * sn, sn) : 0;
   navStr += (activeSlideForce - navStr) * Math.min(1, dt * 12);
   navSpdS += (motionSpd - navSpdS) * Math.min(1, dt * 3);
@@ -2468,14 +2477,16 @@ function updateLiquidPillPhysics(now, dt) {
   const ap = Math.max(ac, 0);
   const an = Math.max(-ac, 0);
 
-  // Saat slide cepat (st / ap tinggi): lensa memanjang secara horizontal dan memipih vertikal.
-  // Saat melambat / membentur ujung (an tinggi): lensa menciut sesaat lalu kembali meregang proporsional saat diam.
-  sp(navWd, lp(restW, idealActiveW, pp) + st * 6 + ap * 2 - an * 14, 190, 18, dt);
-  sp(navHt, lp(restH, idealActiveH, pp) - st * 22 - ap * 14 + an * 18 + navStr * 8 * p1, 120, 12, dt);
+  // Damping pegas ukuran pill sedikit lebih kenyal saat lepas (14.5 & 10.5) agar ikut membal lembut sebelum idle
+  const wdC = on_ ? 18 : 14.5;
+  const htC = on_ ? 12 : 10.2;
 
-  sp(navZ, on_ ? RM * (0.03 + 0.04 * navStr) : 0, 220, 15, dt);
-  sp(navSX, RM * st * 0.09, 200, 16, dt);
-  sp(navSH, RM * cl(navSvx * 0.004, -5, 5) * p1, 160, 16, dt);
+  sp(navWd, lp(restW, idealActiveW, pp) + st * 6 + ap * 2 - an * 14, 210, wdC, dt);
+  sp(navHt, lp(restH, idealActiveH, pp) - st * 22 - ap * 14 + an * 18 + navStr * 8 * p1, 145, htC, dt);
+
+  sp(navZ, on_ ? RM * (0.03 + 0.04 * navStr) : 0, 220, 13.5, dt);
+  sp(navSX, RM * st * 0.09, 200, 14.5, dt);
+  sp(navSH, RM * cl(navSvx * 0.004, -5, 5) * p1, 160, 14.5, dt);
   sp(navIZ, on_ ? RM * (0.06 + 0.06 * navStrS) : 0, 48, 12.5, dt);
 
   const maxW = 2 * (Math.min(navX.x - navInset, (w - navInset) - navX.x) + ALLOW);
