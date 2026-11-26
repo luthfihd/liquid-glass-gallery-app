@@ -741,20 +741,12 @@ const smoothstep = (a, b, x) => {
 // State Fisika Navbar (CAMEL #1)
 let activeTab = 0;
 let navDown = false;
-let navDownTime = 0;
-let navDownX = 0;
-let navMoved = false;
 let navPx = 0;
 let navPxs = 0;
+let navPrevPxs = 0;
+let navFingerSpd = 0;
 let navPr = 0.5;
 let navHoldUntil = 0;
-
-// Variabel ritme tahan-slide-tahan-slide & rebound tepi
-let navFingerSpd = 0;
-let navPrevPxs = 0;
-let navHoldPulse = 0;
-let navEdgeBump = 0;
-let navEdgeWasHit = false;
 
 const navX = mkS(0);
 const navP = mkS(0);
@@ -1753,7 +1745,7 @@ function renderDeviceMockup() {
 }
 
 /* =========================================================
-   MESIN OPTIK REALTIME BASE6.html (CONTENT-ONLY BILINEAR REFRACTION)
+   MESIN OPTIK REALTIME (CONTENT-ONLY BILINEAR REFRACTION)
    ========================================================= */
 function sampleBilinearPremultiplied(source, w, h, fx, fy) {
   const x = fx < 0 ? 0 : (fx > w - 1 ? w - 1 : fx);
@@ -1908,20 +1900,12 @@ function createCamelLiquidControl(options) {
   let lastCtrlSig = "";
 
   let down = false;
-  let downTime = 0;
-  let downX = 0;
   let px = 0;
   let pxs = 0;
+  let prevPxs = 0;
+  let fingerSpd = 0;
   let pr = 0.5;
   let holdUntil = 0;
-  let moved = false;
-
-  // State ritme tahan-slide-tahan-slide & membal di ujung
-  let fingerSpd = 0;
-  let prevPxs = 0;
-  let holdPulse = 0;
-  let edgeBump = 0;
-  let edgeWasHit = false;
 
   const X = mkS(0);
   const P = mkS(0);
@@ -1982,124 +1966,66 @@ function createCamelLiquidControl(options) {
     const hBase = getH();
     const tW = getRestThumbWidth(w);
     const on_ = down || now < holdUntil;
-    const isTracking = down && (moved || (now - downTime) > 155);
 
-    pxs += (px - pxs) * Math.min(1, dt * 36);
+    pxs += (px - pxs) * Math.min(1, dt * 28);
     const instFingerSpd = Math.abs(pxs - prevPxs) / Math.max(0.001, dt);
     prevPxs = pxs;
-    fingerSpd += (instFingerSpd - fingerSpd) * Math.min(1, dt * 16);
+    fingerSpd += (instFingerSpd - fingerSpd) * Math.min(1, dt * 14);
 
     const pp = Math.max(P.x, 0);
     const p1 = Math.min(pp, 1);
 
-    spd += (Math.abs(X.v) - spd) * Math.min(1, dt * 14);
-    svx += (X.v - svx) * Math.min(1, dt * 14);
-    const sn = cl(Math.max(spd, fingerSpd) / 480, 0, 1);
+    spd += (Math.abs(X.v) - spd) * Math.min(1, dt * 10);
+    svx += (X.v - svx) * Math.min(1, dt * 10);
 
-    str += ((on_ ? Math.max(cl((pr - 0.15) / 0.85, 0, 1), sn) : 0) - str) * Math.min(1, dt * 12);
-    spdS += (Math.max(spd, fingerSpd) - spdS) * Math.min(1, dt * 5);
+    const motionSpd = Math.max(spd, fingerSpd * 0.85);
+    const sn = cl(motionSpd / 560, 0, 1);
+
+    // Deformasi aktif hanya saat ada kecepatan/kekuatan drag/slide (sn > 0), bukan hold diam
+    const activeDragForce = down ? Math.max(cl((pr - 0.35) / 0.65, 0, 1) * sn, sn) : 0;
+    str += (activeDragForce - str) * Math.min(1, dt * 12);
+    spdS += (motionSpd - spdS) * Math.min(1, dt * 4);
     strS += (str - strS) * Math.min(1, dt * 5);
 
-    // Ritme tahan-slide-tahan-slide:
-    // Saat slide cepat -> meregang & memipih; saat ditahan diam -> mengempis jadi kapsul pendek & tinggi menonjol keluar outline
-    const isPausingHold = isTracking && sn < 0.16;
-    holdPulse += ((isPausingHold ? 1 : 0) - holdPulse) * Math.min(1, dt * 11);
-
     const st = sn * p1;
-    const ac = cl((Math.max(spd, fingerSpd) - spdS) / 480, -1, 1) * p1;
+    const ac = cl((motionSpd - spdS) / 520, -1, 1) * p1;
     const ap = Math.max(ac, 0);
     const an = Math.max(-ac, 0);
 
     const restH = hBase - insetCss * 2;
-    const activeH = hBase + 7;
+    const idealActiveW = tW * 1.18;
+    const idealActiveH = hBase + 8;
 
-    const minSlotC = insetCss + tW * 0.5;
-    const maxSlotC = Math.max(minSlotC, w - minSlotC);
+    const ALLOW = tW * 0.16;
+    const minC = lp(insetCss + tW * 0.5, idealActiveW * 0.5 - ALLOW, cl(P.x, 0, 1));
+    const maxC = Math.max(minC, w - minC);
     const snapCenter = getStepCenterX(getCurrentIndex(), w);
-    const rawTargetX = isTracking ? pxs : snapCenter;
-
-    // Regang tidak terlalu panjang (max +15%), mengempis saat ditahan menjadi kapsul pendek
-    const stretchDelta = st * (tW * 0.14) + ap * (tW * 0.05);
-    const squishInDelta = (holdPulse * (tW * 0.15) + an * (tW * 0.08)) * p1;
-    const freeW = cl(tW + stretchDelta - squishInDelta, tW * 0.80, tW * 1.16);
-
-    const rect = containerEl.getBoundingClientRect();
-    const screenMargin = 8;
-    const minLeftEdge = Math.max(insetCss - 12, screenMargin - rect.left);
-    const maxRightEdge = Math.min(w - insetCss + 12, window.innerWidth - screenMargin - rect.left);
-
-    let targetW = freeW;
-    let targetCenter = rawTargetX;
-    let hittingEdge = false;
-
-    if (isTracking) {
-      const desiredLeft = rawTargetX - freeW * 0.5;
-      const desiredRight = rawTargetX + freeW * 0.5;
-
-      if (desiredRight > maxRightEdge) {
-        hittingEdge = true;
-        if (!edgeWasHit) {
-          edgeWasHit = true;
-          edgeBump = Math.min(1, 0.55 + sn * 0.45);
-        }
-        edgeBump *= Math.exp(-dt * 7.5);
-        // Mengecil sementara lalu membal balik ke ukuran normal proporsional dengan anchor di sisi kiri
-        const impactCompress = edgeBump * (tW * 0.22);
-        targetW = Math.max(tW * 0.76, lp(tW, freeW, edgeBump) - impactCompress);
-        targetCenter = maxRightEdge - targetW * 0.5;
-      } else if (desiredLeft < minLeftEdge) {
-        hittingEdge = true;
-        if (!edgeWasHit) {
-          edgeWasHit = true;
-          edgeBump = Math.min(1, 0.55 + sn * 0.45);
-        }
-        edgeBump *= Math.exp(-dt * 7.5);
-        // Mengecil sementara lalu membal balik ke ukuran normal proporsional dengan anchor di sisi kanan
-        const impactCompress = edgeBump * (tW * 0.22);
-        targetW = Math.max(tW * 0.76, lp(tW, freeW, edgeBump) - impactCompress);
-        targetCenter = minLeftEdge + targetW * 0.5;
-      }
-    } else {
-      targetCenter = cl(snapCenter, minSlotC, maxSlotC);
-    }
-
-    if (!hittingEdge) {
-      edgeWasHit = false;
-      edgeBump *= Math.exp(-dt * 12);
-    }
-
-    // Tinggi dinamis: memipih saat slide cepat, meninggi melewati outline saat mengempis/ditahan atau terkompresi tepi
-    const edgePinch = Math.max(0, tW - targetW) / Math.max(1, tW * 0.22);
-    const targetH = lp(restH, activeH, pp)
-      - st * 7.5
-      - ap * 3.5
-      + (holdPulse * 8.5 + an * 5.5) * p1
-      + edgePinch * 6.0;
-
-    sp(Wd, targetW, 255, 16, dt);
-    sp(Ht, targetH, 185, 13, dt);
-    sp(Z, on_ ? RM * (0.015 + 0.016 * str) : 0, 250, 15, dt);
-    sp(SX, RM * (st * 0.04 - holdPulse * 0.03 * p1 - edgePinch * 0.035), 230, 15, dt);
-    sp(SH, RM * cl(svx * 0.002 + (isTracking ? cl(rawTargetX - cl(rawTargetX, minSlotC, maxSlotC), -14, 14) * 0.16 : 0), -3, 3) * p1, 195, 15, dt);
-    sp(IZ, on_ ? RM * (0.03 + 0.03 * strS) : 0, 75, 14, dt);
-
-    const wd = Math.max(Wd.x, 26);
-    const h = Math.max(Ht.x, 22);
+    const tg = cl(on_ ? pxs : snapCenter, minC, maxC);
 
     for (let k = 0; k < 2; k++) {
-      sp(X, targetCenter, 340, 21, dt / 2);
-      sp(P, on_ ? 1 : 0, 390, 20, dt / 2);
+      sp(X, tg, 260, 24, dt / 2);
+      sp(P, on_ ? 1 : 0, 320, 21, dt / 2);
     }
 
-    const minFinalC = minLeftEdge + wd * 0.5;
-    const maxFinalC = Math.max(minFinalC, maxRightEdge - wd * 0.5);
-    if (X.x < minFinalC) {
-      X.x = minFinalC;
+    if (X.x < minC) {
+      X.x = minC;
       if (X.v < 0) X.v = 0;
-    } else if (X.x > maxFinalC) {
-      X.x = maxFinalC;
+    } else if (X.x > maxC) {
+      X.x = maxC;
       if (X.v > 0) X.v = 0;
     }
+
+    sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * 0.34) + ap * (tW * 0.12) - an * (tW * 0.10) + str * 6 * p1, 190, 18, dt);
+    sp(Ht, lp(restH, idealActiveH, pp) - st * 10 - ap * 6 + an * 10 + str * 5 * p1, 120, 12, dt);
+
+    sp(Z, on_ ? RM * (0.015 + 0.018 * str) : 0, 220, 15, dt);
+    sp(SX, RM * st * 0.05, 200, 16, dt);
+    sp(SH, RM * cl(svx * 0.0025, -3.5, 3.5) * p1, 160, 16, dt);
+    sp(IZ, on_ ? RM * (0.03 + 0.03 * strS) : 0, 48, 12.5, dt);
+
+    const maxW = 2 * (Math.min(X.x, w - X.x) + ALLOW);
+    const wd = Math.max(Math.min(Wd.x, maxW), 26);
+    const h = Math.max(Ht.x, 22);
 
     if (down || p1 > 0.01) {
       containerEl.style.zIndex = "20";
@@ -2107,7 +2033,7 @@ function createCamelLiquidControl(options) {
       containerEl.style.zIndex = "";
     }
 
-    containerEl.style.transform = `translateX(${SH.x.toFixed(2)}px) scale(${(1 + Z.x + SX.x).toFixed(4)},${(1 + Z.x - SX.x * 0.65).toFixed(4)})`;
+    containerEl.style.transform = `translateX(${SH.x.toFixed(2)}px) scale(${(1 + Z.x + SX.x).toFixed(4)},${(1 + Z.x - SX.x * 0.45).toFixed(4)})`;
 
     geom = {
       centerXCss: X.x,
@@ -2242,16 +2168,11 @@ function createCamelLiquidControl(options) {
   containerEl.addEventListener("pointerdown", (e) => {
     if (e.button !== undefined && e.button !== 0) return;
     down = true;
-    downTime = performance.now();
-    moved = false;
-    edgeWasHit = false;
-    edgeBump = 0;
     const rect = containerEl.getBoundingClientRect();
-    downX = e.clientX - rect.left;
-    px = pxs = prevPxs = downX;
+    px = pxs = prevPxs = e.clientX - rect.left;
     fingerSpd = 0;
     pr = prs(e);
-    holdUntil = downTime + 210;
+    holdUntil = performance.now() + 300;
     Z.v += RM * (0.65 + 0.85 * pr);
     try { containerEl.setPointerCapture(e.pointerId); } catch (_) {}
   });
@@ -2259,36 +2180,21 @@ function createCamelLiquidControl(options) {
   containerEl.addEventListener("pointermove", (e) => {
     if (!down) return;
     const rect = containerEl.getBoundingClientRect();
-    const nextPx = e.clientX - rect.left;
-    if (Math.abs(nextPx - downX) > 4) moved = true;
-    px = nextPx;
+    px = e.clientX - rect.left;
     pr = prs(e);
   });
 
   function endPointer() {
     if (!down) return;
     down = false;
-    edgeWasHit = false;
     Z.v -= RM * 0.45;
-
     const w = getW();
-    const curIdx = getCurrentIndex();
-
-    if (!moved) {
-      holdUntil = performance.now() + 120;
-      onSelectIndex(curIdx);
-    } else {
-      const nextIdx = getIndexFromX(px, w);
-      onSelectIndex(nextIdx);
-    }
+    const nextIdx = getIndexFromX(px, w);
+    onSelectIndex(nextIdx);
   }
 
   containerEl.addEventListener("pointerup", endPointer);
-  containerEl.addEventListener("pointercancel", () => {
-    down = false;
-    edgeWasHit = false;
-    Z.v -= RM * 0.45;
-  });
+  containerEl.addEventListener("pointercancel", endPointer);
 
   return {
     sync(idx) {
@@ -2413,6 +2319,11 @@ saveMockupBtn.addEventListener("click", () => {
 
 /* =========================================================
    CAMEL #1: NAVBAR 3-TAB
+   1. Behaviour asli ACUAN.html dikembalikan utuh (direct finger tracking,
+      quick tap langsung pindah tab, holdUntil 300ms, pegas X/P/Z/SX/SH/IZ).
+   2. Deformasi lensa hanya dipicu kecepatan & kekuatan drag/slide (bukan setiap hold);
+      saat diam di atas menu (termasuk saat mentok ujung kiri/kanan navbar),
+      lensa meregang kembali secara proporsional.
    ========================================================= */
 const navW = () => cachedNavBaseRect.width || liquidNav.clientWidth || 344;
 const navInset = 5;
@@ -2463,37 +2374,24 @@ function switchTab(tabIndex, options = {}) {
 liquidNav.addEventListener("pointerdown", (e) => {
   if (e.button !== undefined && e.button !== 0) return;
   navDown = true;
-  navDownTime = performance.now();
-  navMoved = false;
-  navEdgeWasHit = false;
-  navEdgeBump = 0;
   liquidNav.setPointerCapture(e.pointerId);
-  navDownX = navPx = navPxs = navPrevPxs = navLx(e);
+  navPx = navPxs = navPrevPxs = navLx(e);
   navFingerSpd = 0;
   navPr = prs(e);
-  navHoldUntil = navDownTime + 210;
-  navZ.v += RM * (0.65 + 0.85 * navPr);
+  navHoldUntil = performance.now() + 300;
+  navZ.v += RM * (0.9 + 1.2 * navPr);
 });
 
 liquidNav.addEventListener("pointermove", (e) => {
   if (!navDown) return;
-  const nextPx = navLx(e);
-  if (Math.abs(nextPx - navDownX) > 4) navMoved = true;
-  navPx = nextPx;
+  navPx = navLx(e);
   navPr = prs(e);
 });
 
 function releaseNav() {
   if (!navDown) return;
   navDown = false;
-  navEdgeWasHit = false;
-  navZ.v -= RM * 0.45;
-
-  if (!navMoved) {
-    navHoldUntil = performance.now() + 120;
-    return;
-  }
-
+  navZ.v -= RM * 0.6;
   const targetTab = cl(Math.floor((navPx - navInset) / navTw()), 0, 2);
   switchTab(targetTab);
 }
@@ -2513,126 +2411,78 @@ function updateLiquidPillPhysics(now, dt) {
   const w = navW();
   const t = navTw();
   const on_ = navDown || now < navHoldUntil;
-  const isTracking = navDown && (navMoved || (now - navDownTime) > 155);
 
-  navPxs += (navPx - navPxs) * Math.min(1, dt * 36);
+  // Pelacakan jari langsung seperti ACUAN.html
+  navPxs += (navPx - navPxs) * Math.min(1, dt * 28);
   const instFingerSpd = Math.abs(navPxs - navPrevPxs) / Math.max(0.001, dt);
   navPrevPxs = navPxs;
-  navFingerSpd += (instFingerSpd - navFingerSpd) * Math.min(1, dt * 16);
+  navFingerSpd += (instFingerSpd - navFingerSpd) * Math.min(1, dt * 14);
+
+  const restW = t - navInset * 2;
+  const restH = (cachedNavBaseRect.height || 68) - navInset * 2;
+  // Dimensi lensa aktif proporsional yang menyelimuti satu tab penuh secara simetris
+  const idealActiveW = t * 1.22;
+  const idealActiveH = 80;
+
+  // Batas pusat perjalanan lensa dengan overhang tepi ALLOW:
+  // Saat jari berhenti di ujung kiri (Explore) atau kanan (Mockup),
+  // 2 * (minC - navInset + ALLOW) == idealActiveW, sehingga lensa tetap meregang proporsional!
+  const ALLOW = t * 0.21;
+  const minC = lp(navInset + t * 0.5, navInset + idealActiveW * 0.5 - ALLOW, cl(navP.x, 0, 1));
+  const maxC = w - minC;
+  const tg = cl(on_ ? navPxs : navCtr(activeTab), minC, maxC);
+
+  for (let k = 0; k < 2; k++) {
+    sp(navX, tg, 260, 24, dt / 2);
+    sp(navP, on_ ? 1 : 0, 320, 21, dt / 2);
+  }
+
+  if (navX.x < minC) {
+    navX.x = minC;
+    if (navX.v < 0) navX.v = 0;
+  } else if (navX.x > maxC) {
+    navX.x = maxC;
+    if (navX.v > 0) navX.v = 0;
+  }
 
   const pp = Math.max(navP.x, 0);
   const p1 = Math.min(pp, 1);
 
-  navSpd += (Math.abs(navX.v) - navSpd) * Math.min(1, dt * 14);
-  navSvx += (navX.v - navSvx) * Math.min(1, dt * 14);
-  const sn = cl(Math.max(navSpd, navFingerSpd) / 540, 0, 1);
+  navSpd += (Math.abs(navX.v) - navSpd) * Math.min(1, dt * 10);
+  navSvx += (navX.v - navSvx) * Math.min(1, dt * 10);
 
-  navStr += ((on_ ? Math.max(cl((navPr - 0.15) / 0.85, 0, 1), sn) : 0) - navStr) * Math.min(1, dt * 12);
-  navSpdS += (Math.max(navSpd, navFingerSpd) - navSpdS) * Math.min(1, dt * 5);
-  navStrS += (navStr - navStrS) * Math.min(1, dt * 5);
+  // Kecepatan gabungan pegas & geseran jari
+  const motionSpd = Math.max(navSpd, navFingerSpd * 0.85);
+  const sn = cl(motionSpd / 740, 0, 1);
 
-  // Ritme tahan-slide-tahan-slide:
-  // Saat slide cepat -> meregang (tidak terlalu panjang) & memipih;
-  // Saat ditahan diam -> mengempis jadi kapsul pendek & tingginya menonjol melewati outline navbar
-  const isPausingHold = isTracking && sn < 0.16;
-  navHoldPulse += ((isPausingHold ? 1 : 0) - navHoldPulse) * Math.min(1, dt * 11);
+  // Deformasi menciut/memanjang HANYA aktif berdasarkan kekuatan & kecepatan drag/slide (sn).
+  // Ketika jari diam di atas menu (baik di tengah maupun saat mentok sisi kiri/kanan navbar)
+  // sambil masih hold, sn -> 0 sehingga lensa rileks & meregang kembali proporsional ke (idealActiveW x idealActiveH).
+  const activeSlideForce = navDown ? Math.max(cl((navPr - 0.35) / 0.65, 0, 1) * sn, sn) : 0;
+  navStr += (activeSlideForce - navStr) * Math.min(1, dt * 12);
+  navSpdS += (motionSpd - navSpdS) * Math.min(1, dt * 3);
+  navStrS += (navStr - navStrS) * Math.min(1, dt * 4);
 
   const st = sn * p1;
-  const ac = cl((Math.max(navSpd, navFingerSpd) - navSpdS) / 500, -1, 1) * p1;
+  const ac = cl((motionSpd - navSpdS) / 680, -1, 1) * p1;
   const ap = Math.max(ac, 0);
   const an = Math.max(-ac, 0);
 
-  const restW = t - navInset * 2;
-  const restH = (cachedNavBaseRect.height || 68) - navInset * 2;
+  // Saat slide cepat (st / ap tinggi): lensa memanjang secara horizontal dan memipih vertikal.
+  // Saat melambat / membentur ujung (an tinggi): lensa menciut sesaat lalu kembali meregang proporsional saat diam.
+  sp(navWd, lp(restW, idealActiveW, pp) + st * 78 + ap * 22 - an * 20 + navStr * 8 * p1, 190, 18, dt);
+  sp(navHt, lp(restH, idealActiveH, pp) - st * 22 - ap * 14 + an * 18 + navStr * 8 * p1, 120, 12, dt);
 
-  const minSlotC = navInset + t * 0.5;
-  const maxSlotC = Math.max(minSlotC, w - minSlotC);
-  const rawTargetX = isTracking ? navPxs : navCtr(activeTab);
+  sp(navZ, on_ ? RM * (0.03 + 0.04 * navStr) : 0, 220, 15, dt);
+  sp(navSX, RM * st * 0.09, 200, 16, dt);
+  sp(navSH, RM * cl(navSvx * 0.004, -5, 5) * p1, 160, 16, dt);
+  sp(navIZ, on_ ? RM * (0.06 + 0.06 * navStrS) : 0, 48, 12.5, dt);
 
-  // Lebar dinamis: regang tidak kepanjangan (max +15%), mengempis menjadi kapsul pendek saat tahan
-  const stretchDelta = st * (restW * 0.14) + ap * (restW * 0.05);
-  const squishInDelta = (navHoldPulse * (restW * 0.16) + an * (restW * 0.08)) * p1;
-  const freeW = cl(restW + stretchDelta - squishInDelta, restW * 0.78, restW * 1.15);
+  const maxW = 2 * (Math.min(navX.x - navInset, (w - navInset) - navX.x) + ALLOW);
+  const wd = Math.max(Math.min(navWd.x, maxW), 32);
+  const h = Math.max(navHt.x, 30);
 
-  // Batas tepi luar kontainer (aman dalam layar)
-  const screenMargin = 10;
-  const minLeftEdge = Math.max(navInset - 16, screenMargin - cachedNavBaseRect.left);
-  const maxRightEdge = Math.min(w - navInset + 16, width - screenMargin - cachedNavBaseRect.left);
-
-  let targetW = freeW;
-  let targetCenter = rawTargetX;
-  let hittingEdge = false;
-
-  if (isTracking) {
-    const desiredLeft = rawTargetX - freeW * 0.5;
-    const desiredRight = rawTargetX + freeW * 0.5;
-
-    if (desiredRight > maxRightEdge) {
-      hittingEdge = true;
-      if (!navEdgeWasHit) {
-        navEdgeWasHit = true;
-        navEdgeBump = Math.min(1, 0.60 + sn * 0.40);
-      }
-      navEdgeBump *= Math.exp(-dt * 7.5);
-      // Mengecil sementara saat mentok kanan, lalu membal balik ke ukuran normal proporsional dengan anchor di sisi kiri
-      const impactCompress = navEdgeBump * (restW * 0.24);
-      targetW = Math.max(restW * 0.74, lp(restW, freeW, navEdgeBump) - impactCompress);
-      targetCenter = maxRightEdge - targetW * 0.5;
-    } else if (desiredLeft < minLeftEdge) {
-      hittingEdge = true;
-      if (!navEdgeWasHit) {
-        navEdgeWasHit = true;
-        navEdgeBump = Math.min(1, 0.60 + sn * 0.40);
-      }
-      navEdgeBump *= Math.exp(-dt * 7.5);
-      // Mengecil sementara saat mentok kiri, lalu membal balik ke ukuran normal proporsional dengan anchor di sisi kanan
-      const impactCompress = navEdgeBump * (restW * 0.24);
-      targetW = Math.max(restW * 0.74, lp(restW, freeW, navEdgeBump) - impactCompress);
-      targetCenter = minLeftEdge + targetW * 0.5;
-    }
-  } else {
-    targetCenter = cl(navCtr(activeTab), minSlotC, maxSlotC);
-  }
-
-  if (!hittingEdge) {
-    navEdgeWasHit = false;
-    navEdgeBump *= Math.exp(-dt * 12);
-  }
-
-  // Tinggi dinamis: memipih saat slide cepat, meninggi melewati outline navbar saat mengempis/ditahan atau terkompresi tepi
-  const edgePinch = Math.max(0, restW - targetW) / Math.max(1, restW * 0.24);
-  const targetH = lp(restH, 74, pp)
-    - st * 10
-    - ap * 4.5
-    + (navHoldPulse * 13 + an * 7.5) * p1
-    + edgePinch * 8.5;
-
-  sp(navWd, targetW, 255, 16, dt);
-  sp(navHt, targetH, 185, 13, dt);
-  sp(navZ, on_ ? RM * (0.015 + 0.016 * navStr) : 0, 250, 15, dt);
-  sp(navSX, RM * (st * 0.045 - navHoldPulse * 0.035 * p1 - edgePinch * 0.035), 230, 15, dt);
-  sp(navSH, RM * cl(navSvx * 0.002 + (isTracking ? cl(rawTargetX - cl(rawTargetX, minSlotC, maxSlotC), -18, 18) * 0.18 : 0), -3.5, 3.5) * p1, 195, 15, dt);
-  sp(navIZ, on_ ? RM * (0.035 + 0.03 * navStrS) : 0, 75, 14, dt);
-
-  const wd = Math.max(navWd.x, 30);
-  const h = Math.max(navHt.x, 28);
-
-  for (let k = 0; k < 2; k++) {
-    sp(navX, targetCenter, 340, 21, dt / 2);
-    sp(navP, on_ ? 1 : 0, 390, 20, dt / 2);
-  }
-
-  const minFinalC = minLeftEdge + wd * 0.5;
-  const maxFinalC = Math.max(minFinalC, maxRightEdge - wd * 0.5);
-  if (navX.x < minFinalC) {
-    navX.x = minFinalC;
-    if (navX.v < 0) navX.v = 0;
-  } else if (navX.x > maxFinalC) {
-    navX.x = maxFinalC;
-    if (navX.v > 0) navX.v = 0;
-  }
-
-  liquidNav.style.transform = `translateX(${navSH.x.toFixed(2)}px) scale(${(1 + navZ.x + navSX.x).toFixed(4)},${(1 + navZ.x - navSX.x * 0.65).toFixed(4)})`;
+  liquidNav.style.transform = `translateX(${navSH.x.toFixed(2)}px) scale(${(1 + navZ.x + navSX.x).toFixed(4)},${(1 + navZ.x - navSX.x * 0.45).toFixed(4)})`;
 
   navLensGeom = {
     centerXCss: cachedNavBaseRect.left + navSH.x + navX.x,
