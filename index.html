@@ -2273,7 +2273,7 @@ function createCamelLiquidControl(options) {
     const idealActiveW = tW * 1.10;
     const idealActiveH = hBase + 8;
 
-    const ALLOW = tW * 0.05;
+    const ALLOW = tW * 0.08;
     const activeHalfLimit = Math.max(insetCss + tW * 0.42, idealActiveW * 0.5 - ALLOW);
     const minC = lp(insetCss + tW * 0.5, idealActiveW * 0.5 - ALLOW, cl(P.x, 0, 1));
     const maxC = Math.max(minC, w - minC);
@@ -2304,7 +2304,7 @@ function createCamelLiquidControl(options) {
     const edgeFactor = smoothstep(0.65, 1.0, normPos);
 
     // 3. Pendekkan lebar saat mentok (misal memendek hingga 22% saat pressed di ujung)
-    const edgeShorten = 1 - edgeFactor * 0.1 * p1;
+    const edgeShorten = 1 - edgeFactor * 0.12 * p1;
 
     sp(Z, on_ ? RM * (0.015 + 0.018 * str) : 0, 220, 13.5, dt);
     sp(SX, RM * st * 0.05, 200, 14.5, dt);
