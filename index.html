@@ -2849,7 +2849,7 @@ function updateLiquidPillPhysics(now, dt) {
 
   // Ubah 2 baris di bawah untuk atur Lebar & Tinggi Lensa Saat Drag
   sp(navWd, lp(restW, idealActiveW, pp) + st * -40 + ap * 2 - an * 14, 210, wdC, dt);
-  sp(navHt, lp(restH, idealActiveH, pp) - st * -10 - ap * 14 + an * 18 + navStr * 8 * p1, 145, htC, dt);
+  sp(navHt, lp(restH, idealActiveH, pp) - st * 20 - ap * 14 + an * 18 + navStr * 8 * p1, 145, htC, dt);
 
   sp(navZ, on_ ? RM * (0.03 + 0.04 * navStr) : 0, 220, 13.5, dt);
   sp(navSX, RM * st * 0.09, 200, 14.5, dt);
