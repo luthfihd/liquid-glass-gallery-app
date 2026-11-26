@@ -2269,10 +2269,11 @@ function createCamelLiquidControl(options) {
     const an = Math.max(-ac, 0);
 
     const restH = hBase - insetCss * 2;
-    const idealActiveW = tW * 1.18;
+    // 1. Perkecil lebar aktif & ALLOW agar tidak terlalu meluber saat mentok
+    const idealActiveW = tW * 1.04;
     const idealActiveH = hBase + 8;
 
-    const ALLOW = tW * 0.16;
+    const ALLOW = tW * 0.05;
     const minC = lp(insetCss + tW * 0.5, idealActiveW * 0.5 - ALLOW, cl(P.x, 0, 1));
     const maxC = Math.max(minC, w - minC);
     const snapCenter = getStepCenterX(getCurrentIndex(), w);
@@ -2293,8 +2294,20 @@ function createCamelLiquidControl(options) {
       if (X.v > 0) X.v *= -0.25;
     }
 
-    sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * 0.34) + ap * (tW * 0.12) - an * (tW * 0.10) + str * 6 * p1, 210, 14.5, dt);
+    sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * 0.24) + ap * (tW * 0.08) - an * (tW * 0.08) + str * 4 * p1, 210, 14.5, dt);
     sp(Ht, lp(restH, idealActiveH, pp) - st * 10 - ap * 6 + an * 10 + str * 5 * p1, 150, 10.5, dt);
+
+    // 2. Hitung seberapa dekat lensa dengan tepi kiri/kanan (0 = di tengah, 1 = mentok ujung)
+    const distToEdge = Math.min(X.x - minC, maxC - X.x);
+    const edgeZone = tW * 0.35;
+    const edgeFactor = 1 - cl(distToEdge / Math.max(1, edgeZone), 0, 1);
+
+    // 3. Pendekkan lebar saat mentok (misal memendek hingga 22% saat pressed di ujung)
+    const edgeShorten = 1 - edgeFactor * 0.22 * p1;
+
+    const maxW = 2 * (Math.min(X.x, w - X.x) + ALLOW);
+    const wd = Math.max(Math.min(Wd.x * edgeShorten, maxW), 26);
+    const h = Math.max(Ht.x, 22);
 
     sp(Z, on_ ? RM * (0.015 + 0.018 * str) : 0, 220, 13.5, dt);
     sp(SX, RM * st * 0.05, 200, 14.5, dt);
