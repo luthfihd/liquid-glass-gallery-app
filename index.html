@@ -2450,7 +2450,8 @@ function createCamelLiquidControl(options) {
     down = true;
     didDrag = false;
     const rect = containerEl.getBoundingClientRect();
-    downStartX = px = pxs = prevPxs = e.clientX - rect.left;
+    downStartX = px = e.clientX - rect.left;
+    pxs = prevPxs = X.x;
     fingerSpd = 0;
     pr = prs(e);
     holdUntil = performance.now() + 260;
@@ -2460,12 +2461,13 @@ function createCamelLiquidControl(options) {
   window.addEventListener("pointermove", (e) => {
     if (!down) return;
     const rect = containerEl.getBoundingClientRect();
-    px = e.clientX - rect.left;
+    const curX = e.clientX - rect.left;
     pr = prs(e);
-    if (Math.abs(px - downStartX) > 6) {
+    if (Math.abs(curX - downStartX) > 6) {
       didDrag = true;
     }
     if (didDrag) {
+      px = curX;
       const w = getW();
       const nextIdx = getIndexFromX(px, w);
       onSelectIndex(nextIdx, false);
@@ -2479,15 +2481,9 @@ function createCamelLiquidControl(options) {
     Wd.v += RM * 18;
     Ht.v -= RM * 12;
     const w = getW();
-    const steps = getStepsCount();
 
-    let nextIdx;
-    if (!didDrag && fixedThumbWidth) {
-      nextIdx = (getCurrentIndex() + 1) % steps;
-      px = pxs = prevPxs = getStepCenterX(nextIdx, w);
-    } else {
-      nextIdx = getIndexFromX(px, w);
-    }
+    const nextIdx = didDrag ? getIndexFromX(px, w) : getCurrentIndex();
+    px = pxs = prevPxs = getStepCenterX(nextIdx, w);
 
     onSelectIndex(nextIdx, true);
     if (onCommitIndex) {
