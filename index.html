@@ -1266,6 +1266,51 @@ void main() {
                 image.src = url;
             });
         }
+        function normalizeGalleryFileToImage(file, maxDim = 2048) {
+    return new Promise((resolve, reject) => {
+        const blobUrl = URL.createObjectURL(file);
+        const rawImg = new Image();
+        rawImg.onload = () => {
+            try {
+                let w = rawImg.naturalWidth || rawImg.width;
+                let h = rawImg.naturalHeight || rawImg.height;
+                if (w > maxDim || h > maxDim) {
+                    const scale = maxDim / Math.max(w, h);
+                    w = Math.round(w * scale);
+                    h = Math.round(h * scale);
+                }
+
+                const c = document.createElement("canvas");
+                c.width = Math.max(1, w);
+                c.height = Math.max(1, h);
+                const cctx = c.getContext("2d");
+                cctx.drawImage(rawImg, 0, 0, c.width, c.height);
+
+                URL.revokeObjectURL(blobUrl);
+
+                c.toBlob((normalizedBlob) => {
+                    if (!normalizedBlob) {
+                        reject(new Error("Gagal mengonversi foto galeri."));
+                        return;
+                    }
+                    const cleanUrl = URL.createObjectURL(normalizedBlob);
+                    sessionObjectUrls.push(cleanUrl);
+                    loadImage(cleanUrl, true)
+                        .then((finalImg) => resolve({ image: finalImg, url: cleanUrl }))
+                        .catch(reject);
+                }, "image/jpeg", 0.92);
+            } catch (err) {
+                URL.revokeObjectURL(blobUrl);
+                reject(err);
+            }
+        };
+        rawImg.onerror = () => {
+            URL.revokeObjectURL(blobUrl);
+            reject(new Error("Gagal membaca file foto galeri."));
+        };
+        rawImg.src = blobUrl;
+    });
+}
 
         function drawRoundedRect(context, x, y, w, h, radius) {
             const r = Math.min(radius, w / 2, h / 2);
@@ -1470,20 +1515,24 @@ void main() {
         });
 
         photoInput.addEventListener("change", async (event) => {
-            const files = Array.from(event.target.files || []).filter((file) =>
-                file.type.startsWith("image/")
-            );
-            photoInput.value = "";
-            if (!files.length) return;
+    const files = Array.from(event.target.files || []).filter((file) =>
+        file.type.startsWith("image/")
+    );
+    photoInput.value = "";
+    if (!files.length) return;
 
-            const urls = files.map((file) => {
-                const url = URL.createObjectURL(file);
-                sessionObjectUrls.push(url);
-                return url;
-            });
+    const cleanUrls = [];
+    for (const file of files) {
+        try {
+            const { url } = await normalizeGalleryFileToImage(file, 2048);
+            cleanUrls.push(url);
+        } catch (err) {
+            console.error("Gagal memproses foto galeri:", err);
+        }
+    }
 
-            await addNewPhotosAndFocus(urls);
-        });
+    await addNewPhotosAndFocus(cleanUrls);
+});
 
         shotBtn.addEventListener("click", () => {
             if (!cameraStream || !cameraVideo.videoWidth || !cameraVideo.videoHeight) {
@@ -2608,30 +2657,25 @@ void main() {
         });
 
         // Upload & langsung terapkan Custom Photo ke halaman dan canvas mockup
-        customBgPhotoInput.addEventListener("change", (e) => {
-            const file = e.target.files && e.target.files[0];
-            customBgPhotoInput.value = "";
-            if (!file) return;
+        customBgPhotoInput.addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    customBgPhotoInput.value = "";
+    if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = async () => {
-                try {
-                    const dataUrl = reader.result;
-                    const loadedImg = await loadImage(dataUrl, true);
-                    customBgImageObj = loadedImg;
-                    customBgImageUrl = dataUrl;
+    try {
+        const { image, url } = await normalizeGalleryFileToImage(file, 2048);
+        customBgImageObj = image;
+        customBgImageUrl = url;
 
-                    bgPresetIndex = 6;
-                    bgSliderCtrl.sync(bgPresetIndex);
-                    syncNativeInputOverlays();
-                    updateMockupBackgroundDOM();
-                    renderDeviceMockup();
-                } catch (err) {
-                    console.error("Gagal memuat foto background:", err);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+        bgPresetIndex = 6;
+        bgSliderCtrl.sync(bgPresetIndex);
+        syncNativeInputOverlays();
+        updateMockupBackgroundDOM();
+        renderDeviceMockup();
+    } catch (err) {
+        console.error("Gagal memuat foto background:", err);
+    }
+});
 
         saveMockupBtn.addEventListener("click", () => {
             if (!mockupPreviewCanvas.width) return;
@@ -3504,5 +3548,4 @@ void main() {
         init();
     </script>
 </body>
-
 </html>
