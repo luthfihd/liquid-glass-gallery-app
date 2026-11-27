@@ -2068,7 +2068,7 @@ void main() {
             const innerShadowBand = smoothstep(2.6 * dprScale, 0.0, Math.abs(sdfPill + 1.6 * dprScale));
             const innerShadowAlpha = innerShadowBand * (0.070 * pc) * (1.0 - contentAlpha * 0.6);
 
-            const rimW = 1.20 * dprScale;
+            const rimW = 0.35 * dprScale;
             const rimBand = smoothstep(rimW, 0, Math.abs(sdfPill + rimW * 0.45));
             const up = cl(-dirY, 0, 1);
             const down = cl(dirY, 0, 1);
