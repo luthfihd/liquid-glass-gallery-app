@@ -2565,30 +2565,51 @@ void main() {
             const bgPresets = getBackgroundPresets(capturedPalette);
             const bgChosen = bgPresets[bgPresetIndex];
             nativeBgColorInput.classList.toggle("is-armed", bgChosen?.type === "customColor");
-            
 
             const frameFinishes = getFrameFinishes();
             const frameChosen = frameFinishes[frameFinishIndex];
             nativeFrameColorInput.classList.toggle("is-armed", frameChosen?.type === "customColor");
         }
 
-        [nativeBgColorInput, nativeFrameColorInput].forEach((inp) => {
+        // Izinkan user tetap menggeser slider meskipun posisi sedang di Custom Color (input is-armed)
+        function bindNativeColorOverlayGestures(inputEl, sliderEl) {
             let startX = 0;
-            inp.addEventListener("touchstart", (e) => {
-                startX = e.touches[0].clientX;
-            }, {
-                passive: true
-            });
-            inp.addEventListener("touchmove", (e) => {
-                if (Math.abs(e.touches[0].clientX - startX) > 8) {
-                    inp.classList.remove("is-armed");
-                }
-            }, {
-                passive: true
-            });
-        });
+            let moved = false;
 
-        // CAMEL Slider 1: Background Theme + Native Color + Native Photo
+            inputEl.addEventListener("pointerdown", (e) => {
+                startX = e.clientX;
+                moved = false;
+                // Teruskan event ke sliderEl agar pegas tetap merespons sentuhan
+                sliderEl.dispatchEvent(new PointerEvent("pointerdown", {
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    pointerId: e.pointerId,
+                    pointerType: e.pointerType,
+                    pressure: e.pressure,
+                    bubbles: false
+                }));
+            });
+
+            inputEl.addEventListener("pointermove", (e) => {
+                if (Math.abs(e.clientX - startX) > 7) {
+                    moved = true;
+                    // Lepas overlay sementara supaya tidak memicu color picker saat jari diangkat setelah menggeser
+                    inputEl.classList.remove("is-armed");
+                }
+            });
+
+            inputEl.addEventListener("click", (e) => {
+                // Jika user menggeser (bukan mengetuk), batalkan pembukaan native color picker
+                if (moved) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        bindNativeColorOverlayGestures(nativeBgColorInput, bgSlider);
+        bindNativeColorOverlayGestures(nativeFrameColorInput, frameSlider);
+
+        // CAMEL Slider 1: Background Theme + Native Color
         const bgSliderCtrl = createCamelLiquidControl({
             containerEl: bgSlider,
             canvasEl: bgSliderCanvas,
@@ -2608,14 +2629,14 @@ void main() {
                     syncNativeInputOverlays();
                 }
             },
-            onCommitIndex: (idx) => {
+            onCommitIndex: (idx, isTap) => {
                 syncNativeInputOverlays();
                 const chosen = getBackgroundPresets(capturedPalette)[idx];
-                if (chosen?.type === "customColor") {
+                // Untuk browser desktop/Android yang mengizinkan showPicker saat tap
+                if (isTap && chosen?.type === "customColor") {
                     triggerNativeInput(nativeBgColorInput);
                 }
             },
-            
             drawContent: (c, w, h, ix, iy, iw, ih, isInsideLens) => {
                 const presets = getBackgroundPresets(capturedPalette);
                 c.fillText(currentBgLabel, w * 0.5, h * 0.5 - 2 * dpr);
@@ -2642,10 +2663,10 @@ void main() {
                     syncNativeInputOverlays();
                 }
             },
-            onCommitIndex: (idx) => {
+            onCommitIndex: (idx, isTap) => {
                 syncNativeInputOverlays();
                 const chosen = getFrameFinishes()[idx];
-                if (chosen?.type === "customColor") {
+                if (isTap && chosen?.type === "customColor") {
                     triggerNativeInput(nativeFrameColorInput);
                 }
             },
