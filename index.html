@@ -1787,13 +1787,6 @@ function drawBackgroundOnExportCanvas(mctx, outW, outH) {
   mctx.fillRect(0, 0, outW, outH);
 }
 
-  const grad = mctx.createLinearGradient(0, 0, outW, outH);
-  grad.addColorStop(0, preset.c1 || "#1d2d3b");
-  grad.addColorStop(0.52, preset.c2 || "#121e2b");
-  grad.addColorStop(1, preset.c3 || "#071019");
-  mctx.fillStyle = grad;
-  mctx.fillRect(0, 0, outW, outH);
-
 function renderDeviceMockup() {
   if (!capturedRawScene) return;
 
