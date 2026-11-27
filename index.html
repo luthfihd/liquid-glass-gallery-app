@@ -643,7 +643,6 @@
                 <div class="lg-slider-card" id="bgSlider" aria-label="Geser atau pilih custom background">
                     <canvas class="lg-slider-canvas" id="bgSliderCanvas" aria-hidden="true"></canvas>
                     <input type="color" id="nativeBgColorInput" class="native-overlay-input" value="#1e3a5f" aria-label="Pilih warna background">
-                    <input type="file" id="customBgPhotoInput" class="native-overlay-input" accept="image/*" aria-label="Pilih foto background">
                 </div>
 
                 <div class="lg-slider-card" id="frameSlider" aria-label="Geser atau pilih custom warna frame perangkat">
@@ -719,7 +718,7 @@
         const frameSlider = document.getElementById("frameSlider");
         const frameSliderCanvas = document.getElementById("frameSliderCanvas");
 
-        const customBgPhotoInput = document.getElementById("customBgPhotoInput");
+        
         const nativeBgColorInput = document.getElementById("nativeBgColorInput");
         const nativeFrameColorInput = document.getElementById("nativeFrameColorInput");
 
@@ -857,8 +856,6 @@
         let currentFrameLabel = "Frame: Titanium";
 
         let customBgColorHex = "#1e3a5f";
-        let customBgImageObj = null;
-        let customBgImageUrl = "";
         let customFrameColorHex = "#4a6fa5";
 
         function hexToRgb(hex) {
@@ -1679,8 +1676,8 @@ void main() {
                     c3: customDeep
                 },
                 {
-                    name: "Custom Photo",
-                    type: "customPhoto"
+                    name: "Transparent",
+                    type: "transparent"
                 }
             ];
         }
@@ -1690,13 +1687,27 @@ void main() {
             const preset = presets[bgPresetIndex] || presets[0];
             currentBgLabel = `BG: ${preset.name}`;
 
-            if (preset.type === "customPhoto" && customBgImageUrl) {
-                mockupBg.style.backgroundImage = `url("${customBgImageUrl}")`;
+            if (preset.type === "transparent") {
+                mockupBg.style.backgroundColor = "#121a24";
+                mockupBg.style.backgroundImage = `
+                    linear-gradient(45deg, rgba(255,255,255,0.06) 25%, transparent 25%),
+                    linear-gradient(-45deg, rgba(255,255,255,0.06) 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.06) 75%),
+                    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.06) 75%)
+                `;
+                mockupBg.style.backgroundSize = "24px 24px";
+                mockupBg.style.backgroundPosition = "0 0, 0 12px, 12px -12px, -12px 0";
                 mockupBg.style.filter = "none";
-            } else if ((preset.type === "photo" || preset.type === "customPhoto") && capturedImageUrl) {
+            } else if (preset.type === "photo" && capturedImageUrl) {
+                mockupBg.style.backgroundColor = "";
+                mockupBg.style.backgroundSize = "cover";
+                mockupBg.style.backgroundPosition = "center";
                 mockupBg.style.backgroundImage = `url("${capturedImageUrl}")`;
                 mockupBg.style.filter = "blur(24px) saturate(1.25) brightness(0.66)";
             } else {
+                mockupBg.style.backgroundColor = "";
+                mockupBg.style.backgroundSize = "cover";
+                mockupBg.style.backgroundPosition = "center";
                 mockupBg.style.backgroundImage = `radial-gradient(circle at 22% 18%, ${preset.c1} 0%, ${preset.c2} 52%, ${preset.c3} 100%)`;
                 mockupBg.style.filter = "none";
             }
@@ -1713,12 +1724,12 @@ void main() {
             const presets = getBackgroundPresets(capturedPalette);
             const preset = presets[bgPresetIndex] || presets[0];
 
-            if (preset.type === "customPhoto" && customBgImageObj) {
-                drawImageToContext(mctx, customBgImageObj, 0, 0, outW, outH);
+            if (preset.type === "transparent") {
+                mctx.clearRect(0, 0, outW, outH);
                 return;
             }
 
-            if ((preset.type === "photo" || preset.type === "customPhoto") && images.length) {
+            if (preset.type === "photo" && images.length) {
                 const activeIndex = wrapIndex(Math.round(scroll));
                 const blurSnap = backdropSnapshots[activeIndex];
                 if (blurSnap) {
@@ -2318,7 +2329,7 @@ void main() {
                 const pc = geom.press;
 
                 const extraSig = containerEl === bgSlider ?
-                    `${currentBgLabel}|${bgPresetIndex}|${customBgColorHex}|${Boolean(customBgImageUrl)}` :
+                    `${currentBgLabel}|${bgPresetIndex}|${customBgColorHex}` :
                     (containerEl === frameSlider ? `${currentFrameLabel}|${frameFinishIndex}|${customFrameColorHex}` : `${getCurrentIndex()}`);
                 const ctrlSig = `${pillCenterX.toFixed(2)}|${pillHalfW.toFixed(2)}|${pillHalfH.toFixed(2)}|${pc.toFixed(3)}|${geom.iconZoom.toFixed(3)}|${currentAccentRgb.join(",")}|${extraSig}|${w}x${h}`;
                 if (ctrlSig === lastCtrlSig) return;
@@ -2554,14 +2565,14 @@ void main() {
             const bgPresets = getBackgroundPresets(capturedPalette);
             const bgChosen = bgPresets[bgPresetIndex];
             nativeBgColorInput.classList.toggle("is-armed", bgChosen?.type === "customColor");
-            customBgPhotoInput.classList.toggle("is-armed", bgChosen?.type === "customPhoto");
+            
 
             const frameFinishes = getFrameFinishes();
             const frameChosen = frameFinishes[frameFinishIndex];
             nativeFrameColorInput.classList.toggle("is-armed", frameChosen?.type === "customColor");
         }
 
-        [nativeBgColorInput, customBgPhotoInput, nativeFrameColorInput].forEach((inp) => {
+        [nativeBgColorInput, nativeFrameColorInput].forEach((inp) => {
             let startX = 0;
             inp.addEventListener("touchstart", (e) => {
                 startX = e.touches[0].clientX;
@@ -2602,10 +2613,9 @@ void main() {
                 const chosen = getBackgroundPresets(capturedPalette)[idx];
                 if (chosen?.type === "customColor") {
                     triggerNativeInput(nativeBgColorInput);
-                } else if (chosen?.type === "customPhoto") {
-                    triggerNativeInput(customBgPhotoInput);
                 }
             },
+            
             drawContent: (c, w, h, ix, iy, iw, ih, isInsideLens) => {
                 const presets = getBackgroundPresets(capturedPalette);
                 c.fillText(currentBgLabel, w * 0.5, h * 0.5 - 2 * dpr);
@@ -2663,29 +2673,6 @@ void main() {
             syncNativeInputOverlays();
             renderDeviceMockup();
         });
-
-        // Upload & langsung terapkan Custom Photo ke halaman dan canvas mockup
-        customBgPhotoInput.addEventListener("change", async (e) => {
-    const input = e.target;
-    const file = input.files && input.files[0];
-    if (!file) return;
-
-    try {
-        const { image, url } = await normalizeGalleryFileToImage(file, 2048);
-        customBgImageObj = image;
-        customBgImageUrl = url;
-
-        bgPresetIndex = 6;
-        bgSliderCtrl.sync(bgPresetIndex);
-        syncNativeInputOverlays();
-        updateMockupBackgroundDOM();
-        renderDeviceMockup();
-    } catch (err) {
-        console.error("Gagal memuat foto background:", err);
-    } finally {
-        input.value = "";
-    }
-});
 
         saveMockupBtn.addEventListener("click", () => {
             if (!mockupPreviewCanvas.width) return;
