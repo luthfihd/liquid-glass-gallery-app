@@ -1266,50 +1266,57 @@ void main() {
                 image.src = url;
             });
         }
-        function normalizeGalleryFileToImage(file, maxDim = 2048) {
-    return new Promise((resolve, reject) => {
-        const blobUrl = URL.createObjectURL(file);
-        const rawImg = new Image();
-        rawImg.onload = () => {
-            try {
-                let w = rawImg.naturalWidth || rawImg.width;
-                let h = rawImg.naturalHeight || rawImg.height;
-                if (w > maxDim || h > maxDim) {
-                    const scale = maxDim / Math.max(w, h);
-                    w = Math.round(w * scale);
-                    h = Math.round(h * scale);
-                }
+        async function normalizeGalleryFileToImage(file, maxDim = 2048) {
+    let sourceDrawable = null;
+    let srcW = 0;
+    let srcH = 0;
 
-                const c = document.createElement("canvas");
-                c.width = Math.max(1, w);
-                c.height = Math.max(1, h);
-                const cctx = c.getContext("2d");
-                cctx.drawImage(rawImg, 0, 0, c.width, c.height);
+    // Jalur 1: createImageBitmap (paling stabil di iOS/Android PWA untuk foto galeri & HEIC)
+    if (typeof createImageBitmap === "function") {
+        try {
+            const bmp = await createImageBitmap(file);
+            sourceDrawable = bmp;
+            srcW = bmp.width;
+            srcH = bmp.height;
+        } catch (err) {
+            console.warn("createImageBitmap fallback ke FileReader:", err);
+        }
+    }
 
-                URL.revokeObjectURL(blobUrl);
+    // Jalur 2: Fallback FileReader DataURL
+    if (!sourceDrawable) {
+        const rawDataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error("Gagal membaca file galeri."));
+            reader.readAsDataURL(file);
+        });
+        const img = await loadImage(rawDataUrl, true);
+        sourceDrawable = img;
+        srcW = img.naturalWidth || img.width;
+        srcH = img.naturalHeight || img.height;
+    }
 
-                c.toBlob((normalizedBlob) => {
-                    if (!normalizedBlob) {
-                        reject(new Error("Gagal mengonversi foto galeri."));
-                        return;
-                    }
-                    const cleanUrl = URL.createObjectURL(normalizedBlob);
-                    sessionObjectUrls.push(cleanUrl);
-                    loadImage(cleanUrl, true)
-                        .then((finalImg) => resolve({ image: finalImg, url: cleanUrl }))
-                        .catch(reject);
-                }, "image/jpeg", 0.92);
-            } catch (err) {
-                URL.revokeObjectURL(blobUrl);
-                reject(err);
-            }
-        };
-        rawImg.onerror = () => {
-            URL.revokeObjectURL(blobUrl);
-            reject(new Error("Gagal membaca file foto galeri."));
-        };
-        rawImg.src = blobUrl;
-    });
+    if (srcW > maxDim || srcH > maxDim) {
+        const scale = maxDim / Math.max(srcW, srcH);
+        srcW = Math.round(srcW * scale);
+        srcH = Math.round(srcH * scale);
+    }
+
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, srcW);
+    c.height = Math.max(1, srcH);
+    const cctx = c.getContext("2d");
+    cctx.drawImage(sourceDrawable, 0, 0, c.width, c.height);
+
+    if (sourceDrawable && typeof sourceDrawable.close === "function") {
+        sourceDrawable.close();
+    }
+
+    // Simpan sebagai JPEG DataURL terkompresi (100% aman di CSS backgroundImage & Canvas PWA iOS)
+    const cleanDataUrl = c.toDataURL("image/jpeg", 0.90);
+    const finalImg = await loadImage(cleanDataUrl, true);
+    return { image: finalImg, url: cleanDataUrl };
 }
 
         function drawRoundedRect(context, x, y, w, h, radius) {
@@ -1515,23 +1522,24 @@ void main() {
         });
 
         photoInput.addEventListener("change", async (event) => {
-    const files = Array.from(event.target.files || []).filter((file) =>
-        file.type.startsWith("image/")
-    );
-    photoInput.value = "";
+    const input = event.target;
+    const files = Array.from(input.files || []);
     if (!files.length) return;
 
-    const cleanUrls = [];
-    for (const file of files) {
-        try {
-            const { url } = await normalizeGalleryFileToImage(file, 2048);
-            cleanUrls.push(url);
-        } catch (err) {
-            console.error("Gagal memproses foto galeri:", err);
+    try {
+        const cleanUrls = [];
+        for (const file of files) {
+            try {
+                const { url } = await normalizeGalleryFileToImage(file, 2048);
+                cleanUrls.push(url);
+            } catch (err) {
+                console.error("Gagal memproses foto galeri:", err);
+            }
         }
+        await addNewPhotosAndFocus(cleanUrls);
+    } finally {
+        input.value = "";
     }
-
-    await addNewPhotosAndFocus(cleanUrls);
 });
 
         shotBtn.addEventListener("click", () => {
@@ -2658,8 +2666,8 @@ void main() {
 
         // Upload & langsung terapkan Custom Photo ke halaman dan canvas mockup
         customBgPhotoInput.addEventListener("change", async (e) => {
-    const file = e.target.files && e.target.files[0];
-    customBgPhotoInput.value = "";
+    const input = e.target;
+    const file = input.files && input.files[0];
     if (!file) return;
 
     try {
@@ -2674,6 +2682,8 @@ void main() {
         renderDeviceMockup();
     } catch (err) {
         console.error("Gagal memuat foto background:", err);
+    } finally {
+        input.value = "";
     }
 });
 
