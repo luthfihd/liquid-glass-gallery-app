@@ -760,7 +760,7 @@ body {
   </div>
 
   <input type="file" id="photoInput" class="pwa-hidden-input" accept="image/*" multiple>
-  <input type="file" id="customBgPhotoInput" class="pwa-hidden-input" accept="image/*">
+  <input type="file" id="customBgPhotoInput" class="pwa-hidden-input" accept="image/*,.png,.jpg,.jpeg,.webp,.heic">
   <span id="counter" aria-live="polite">1 / 5</span>
 </main>
 
@@ -2607,10 +2607,11 @@ const bgSliderCtrl = createCamelLiquidControl({
     const presets = getBackgroundPresets(capturedPalette);
     const chosen = presets[idx];
     if (!chosen) return;
-    if (chosen.type === "customColor") {
-      openCustomPicker("bgColor");
-    } else if (chosen.type === "customPhoto") {
-      openCustomPicker("bgPhoto");
+
+    if (chosen.type === "customColor" || chosen.type === "customPhoto") {
+      closeCustomPicker();
+      // Langsung buka native file sheet iOS/Android saat jari dilepas
+      customBgPhotoInput.click();
     } else {
       closeCustomPicker();
     }
@@ -2619,6 +2620,14 @@ const bgSliderCtrl = createCamelLiquidControl({
     const presets = getBackgroundPresets(capturedPalette);
     c.fillText(currentBgLabel, w * 0.5, h * 0.5 - 2 * dpr);
     drawSliderIndicators(c, w, h, presets.length, bgPresetIndex, isInsideLens);
+  }
+});
+
+bgSlider.addEventListener("click", () => {
+  const presets = getBackgroundPresets(capturedPalette);
+  const chosen = presets[bgPresetIndex];
+  if (chosen && (chosen.type === "customColor" || chosen.type === "customPhoto")) {
+    customBgPhotoInput.click();
   }
 });
 
@@ -2666,11 +2675,11 @@ customBgPhotoInput.addEventListener("change", async (e) => {
     sessionObjectUrls.push(url);
     customBgImageObj = await loadImage(url, true);
     customBgImageUrl = url;
-    bgPresetIndex = 6;
+    // Pastikan preset menggunakan foto custom yang baru diunggah
+    bgPresetIndex = 6; // atau 5 jika diterapkan pada slot Custom Color
     bgSliderCtrl.sync(bgPresetIndex);
     updateMockupBackgroundDOM();
     renderDeviceMockup();
-    closeCustomPicker();
   } catch (err) {
     console.error("Gagal memuat custom background:", err);
   }
