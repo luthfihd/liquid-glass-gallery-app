@@ -378,120 +378,6 @@
             box-shadow: 0 18px 42px rgba(0, 0, 0, 0.50);
         }
 
-        /* PWA-SAFE CUSTOM POPOVER PICKER (UNTUK WARNA & GALERI DI iOS STANDALONE) */
-        .custom-picker-popover {
-            position: absolute;
-            bottom: max(150px, calc(140px + env(safe-area-inset-bottom, 0px)));
-            left: 50%;
-            transform: translateX(-50%) translateY(10px) scale(0.95);
-            z-index: 25;
-            width: min(350px, calc(100vw - 32px));
-            padding: 12px 14px;
-            border-radius: 22px;
-            background: rgba(16, 26, 38, 0.78);
-            -webkit-backdrop-filter: blur(22px) saturate(1.7);
-            backdrop-filter: blur(22px) saturate(1.7);
-            border: var(--hairline) solid rgba(255, 255, 255, 0.28);
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), inset 0 0.5px 0 rgba(255, 255, 255, 0.42);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .custom-picker-popover.open {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateX(-50%) translateY(0) scale(1);
-        }
-
-        .picker-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.92);
-        }
-
-        .picker-close-btn {
-            border: 0;
-            background: rgba(255, 255, 255, 0.14);
-            color: #fff;
-            border-radius: 999px;
-            padding: 4px 10px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .picker-swatches {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 7px;
-        }
-
-        .swatch-btn {
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 50%;
-            border: 1.5px solid rgba(255, 255, 255, 0.35);
-            cursor: pointer;
-            padding: 0;
-            transition: transform 0.12s ease;
-        }
-
-        .swatch-btn:active {
-            transform: scale(0.88);
-        }
-
-        .picker-hue-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .hue-range {
-            -webkit-appearance: none;
-            appearance: none;
-            flex: 1;
-            height: 14px;
-            border-radius: 999px;
-            background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
-            outline: none;
-            border: var(--hairline) solid rgba(255, 255, 255, 0.35);
-        }
-
-        .hue-range::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: #ffffff;
-            border: 2px solid rgba(0, 0, 0, 0.35);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-            cursor: pointer;
-        }
-
-        .picker-gallery-action {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            height: 38px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.14);
-            border: var(--hairline) solid rgba(255, 255, 255, 0.28);
-            color: #fff;
-            font-size: 0.78rem;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
         /* CAMEL: Sliders (BG & Frame) */
         .mockup-sliders {
             position: relative;
@@ -535,6 +421,27 @@
             height: calc(100% + 72px);
             z-index: 3;
             pointer-events: none;
+        }
+
+        /* NATIVE OS PICKER OVERLAY (iOS / ANDROID COLOR & PHOTO) */
+        .native-overlay-input {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            z-index: 10;
+            cursor: pointer;
+            pointer-events: none;
+            border: 0;
+            padding: 0;
+            margin: 0;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .native-overlay-input.is-armed {
+            pointer-events: auto;
         }
 
         /* CAMERA BLITZ / SHUTTER FLASH OVERLAY */
@@ -732,33 +639,16 @@
                 <canvas id="mockupPreviewCanvas"></canvas>
             </div>
 
-            <!-- POPOVER CUSTOM PICKER (100% NATIVE PWA FRIENDLY) -->
-            <div class="custom-picker-popover" id="customPickerPopover" aria-hidden="true">
-                <div class="picker-header">
-                    <span id="pickerTitle">Custom Warna</span>
-                    <button type="button" class="picker-close-btn" id="pickerCloseBtn">Selesai</button>
-                </div>
-                <div class="picker-swatches" id="pickerSwatches"></div>
-                <div class="picker-hue-row" id="pickerHueRow">
-                    <input type="range" min="0" max="360" value="210" class="hue-range" id="pickerHueRange" aria-label="Geser rona warna">
-                </div>
-                <label class="picker-gallery-action" for="customBgPhotoInput" id="pickerGalleryLabel" style="display:none;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="18" height="18" x="3" y="3" rx="3" ry="3" />
-                        <circle cx="9" cy="9" r="2" />
-                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                    </svg>
-                    <span>Pilih Foto BG dari Galeri</span>
-                </label>
-            </div>
-
             <div class="mockup-sliders">
                 <div class="lg-slider-card" id="bgSlider" aria-label="Geser atau pilih custom background">
                     <canvas class="lg-slider-canvas" id="bgSliderCanvas" aria-hidden="true"></canvas>
+                    <input type="color" id="nativeBgColorInput" class="native-overlay-input" value="#1e3a5f" aria-label="Pilih warna background">
+                    <input type="file" id="customBgPhotoInput" class="native-overlay-input" accept="image/*" aria-label="Pilih foto background">
                 </div>
 
                 <div class="lg-slider-card" id="frameSlider" aria-label="Geser atau pilih custom warna frame perangkat">
                     <canvas class="lg-slider-canvas" id="frameSliderCanvas" aria-hidden="true"></canvas>
+                    <input type="color" id="nativeFrameColorInput" class="native-overlay-input" value="#4a6fa5" aria-label="Pilih warna frame">
                 </div>
             </div>
         </section>
@@ -777,9 +667,6 @@
         </div>
 
         <input type="file" id="photoInput" class="pwa-hidden-input" accept="image/*" multiple>
-        <input type="file" id="customBgPhotoInput" class="pwa-hidden-input" accept="image/*">
-        <input type="color" id="nativeBgColorInput" class="pwa-hidden-input" value="#1e3a5f">
-        <input type="color" id="nativeFrameColorInput" class="pwa-hidden-input" value="#4a6fa5">
         <span id="counter" aria-live="polite">1 / 5</span>
     </main>
 
@@ -833,13 +720,8 @@
         const frameSliderCanvas = document.getElementById("frameSliderCanvas");
 
         const customBgPhotoInput = document.getElementById("customBgPhotoInput");
-        const customPickerPopover = document.getElementById("customPickerPopover");
-        const pickerTitle = document.getElementById("pickerTitle");
-        const pickerCloseBtn = document.getElementById("pickerCloseBtn");
-        const pickerSwatches = document.getElementById("pickerSwatches");
-        const pickerHueRow = document.getElementById("pickerHueRow");
-        const pickerHueRange = document.getElementById("pickerHueRange");
-        const pickerGalleryLabel = document.getElementById("pickerGalleryLabel");
+        const nativeBgColorInput = document.getElementById("nativeBgColorInput");
+        const nativeFrameColorInput = document.getElementById("nativeFrameColorInput");
 
         const sceneCanvas = document.createElement("canvas");
         const ctx = sceneCanvas.getContext("2d");
@@ -967,7 +849,7 @@
         let capturedImageUrl = "";
 
         /* =========================================================
-           STATE PENGATURAN BG & FRAME (PRESET + CUSTOM PWA-SAFE)
+           STATE PENGATURAN BG & FRAME (PRESET + NATIVE OS PICKER)
            ========================================================= */
         let bgPresetIndex = 0;
         let frameFinishIndex = 0;
@@ -978,14 +860,6 @@
         let customBgImageObj = null;
         let customBgImageUrl = "";
         let customFrameColorHex = "#4a6fa5";
-        let activePickerMode = null; // "bgColor" | "bgPhoto" | "frameColor"
-
-        const SWATCH_COLORS = [
-            "#1e3a5f", "#0f766e", "#166534", "#854d0e",
-            "#9a3412", "#9f1239", "#6b21a8", "#334155",
-            "#38bdf8", "#34d399", "#facc15", "#fb923c",
-            "#f472b6", "#a78bfa", "#e2e8f0", "#18181b"
-        ];
 
         function hexToRgb(hex) {
             const clean = (hex || "#4a6fa5").replace("#", "");
@@ -996,10 +870,6 @@
             return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
         }
 
-        function rgbToHex(r, g, b) {
-            return "#" + [r, g, b].map((v) => cl(Math.round(v), 0, 255).toString(16).padStart(2, "0")).join("");
-        }
-
         function adjustRgbTone(rgb, factor) {
             return rgb.map((v) => cl(Math.round(v * factor), 0, 255));
         }
@@ -1007,67 +877,6 @@
         function rgbCss(rgb) {
             return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
         }
-
-        function openCustomPicker(mode) {
-            activePickerMode = mode;
-            pickerSwatches.innerHTML = "";
-
-            if (mode === "bgPhoto") {
-                pickerTitle.textContent = "Custom Background Foto";
-                pickerSwatches.style.display = "none";
-                pickerHueRow.style.display = "none";
-                pickerGalleryLabel.style.display = "flex";
-            } else {
-                pickerTitle.textContent = mode === "bgColor" ? "Warna Background" : "Warna Frame Perangkat";
-                pickerSwatches.style.display = "grid";
-                pickerHueRow.style.display = "flex";
-                pickerGalleryLabel.style.display = "none";
-
-                SWATCH_COLORS.forEach((hex) => {
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.className = "swatch-btn";
-                    btn.style.backgroundColor = hex;
-                    btn.setAttribute("aria-label", hex);
-                    btn.addEventListener("click", () => {
-                        applyPickedColor(hex);
-                    });
-                    pickerSwatches.appendChild(btn);
-                });
-            }
-
-            customPickerPopover.classList.add("open");
-            customPickerPopover.setAttribute("aria-hidden", "false");
-        }
-
-        function closeCustomPicker() {
-            activePickerMode = null;
-            customPickerPopover.classList.remove("open");
-            customPickerPopover.setAttribute("aria-hidden", "true");
-        }
-
-        function applyPickedColor(hex) {
-            if (activePickerMode === "bgColor") {
-                customBgColorHex = hex;
-                bgPresetIndex = 5;
-                bgSliderCtrl.sync(bgPresetIndex);
-                updateMockupBackgroundDOM();
-                renderDeviceMockup();
-            } else if (activePickerMode === "frameColor") {
-                customFrameColorHex = hex;
-                frameFinishIndex = 4;
-                frameSliderCtrl.sync(frameFinishIndex);
-                renderDeviceMockup();
-            }
-        }
-
-        pickerCloseBtn.addEventListener("click", closeCustomPicker);
-
-        pickerHueRange.addEventListener("input", (e) => {
-            const hue = Number(e.target.value);
-            const [r, g, b] = hslToRgb(hue, 0.68, activePickerMode === "bgColor" ? 0.34 : 0.48);
-            applyPickedColor(rgbToHex(r, g, b));
-        });
 
         function getFrameFinishes() {
             const baseRgb = hexToRgb(customFrameColorHex);
@@ -2357,12 +2166,10 @@ void main() {
                 const an = Math.max(-ac, 0);
 
                 const restH = hBase - insetCss * 2;
-                // 1. Perkecil lebar aktif & ALLOW agar tidak terlalu meluber saat mentok
                 const idealActiveW = tW * 1.10;
                 const idealActiveH = hBase + 8;
 
                 const ALLOW = tW * 0.08;
-                const activeHalfLimit = Math.max(insetCss + tW * 0.42, idealActiveW * 0.5 - ALLOW);
                 const minC = lp(insetCss + tW * 0.5, idealActiveW * 0.5 - ALLOW, cl(P.x, 0, 1));
                 const maxC = Math.max(minC, w - minC);
                 const snapCenter = getStepCenterX(getCurrentIndex(), w);
@@ -2383,15 +2190,13 @@ void main() {
                     if (X.v > 0) X.v *= -0.25;
                 }
 
-                sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * -0.20) + ap * (tW * 0.08) - an * (tW * 0.08) + str * 4 * p1, 210, 14.5, dt);
-                sp(Ht, lp(restH, idealActiveH, pp) - st * 15 - ap * 6 + an * 10 + str * 5 * p1, 150, 10.5, dt);
+                sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * -0.50) + ap * (tW * 0.08) - an * (tW * 0.08) + str * 4 * p1, 210, 14.5, dt);
+                sp(Ht, lp(restH, idealActiveH, pp) - st * 10 - ap * 6 + an * 10 + str * 5 * p1, 150, 10.5, dt);
 
-                // 2. Hitung seberapa dekat lensa dengan tepi kiri/kanan (0 = di tengah, 1 = mentok ujung)
                 const halfTrack = Math.max(1, w * 0.5 - minC);
                 const normPos = cl(Math.abs(X.x - w * 0.5) / halfTrack, 0, 1);
                 const edgeFactor = smoothstep(0.65, 1.0, normPos);
 
-                // 3. Pendekkan lebar saat mentok (misal memendek hingga 22% saat pressed di ujung)
                 const edgeShorten = 1 - edgeFactor * 0.03 * p1;
 
                 sp(Z, on_ ? RM * (0.015 + 0.018 * str) : 0, 220, 13.5, dt);
@@ -2573,7 +2378,7 @@ void main() {
                 }
             });
 
-            function endPointer() {
+            function endPointer(e) {
                 if (!down) return;
                 down = false;
                 Z.v -= RM * 0.55;
@@ -2586,10 +2391,14 @@ void main() {
 
                 onSelectIndex(nextIdx, true);
                 if (onCommitIndex) {
-                    onCommitIndex(nextIdx, !didDrag);
+                    onCommitIndex(nextIdx, !didDrag, e);
                 }
             }
 
+            containerEl.addEventListener("pointerup", endPointer);
+            containerEl.addEventListener("touchend", endPointer, {
+                passive: true
+            });
             window.addEventListener("pointerup", endPointer);
             window.addEventListener("pointercancel", endPointer);
 
@@ -2672,12 +2481,6 @@ void main() {
             }
         });
 
-        const nativeBgColorInput = document.getElementById("nativeBgColorInput");
-        const nativeFrameColorInput = document.getElementById("nativeFrameColorInput");
-
-        let lastTriggeredBgIdx = -1;
-        let lastTriggeredFrameIdx = -1;
-
         function triggerNativeInput(inputEl) {
             try {
                 if (typeof inputEl.showPicker === "function") {
@@ -2690,6 +2493,33 @@ void main() {
             }
         }
 
+        function syncNativeInputOverlays() {
+            const bgPresets = getBackgroundPresets(capturedPalette);
+            const bgChosen = bgPresets[bgPresetIndex];
+            nativeBgColorInput.classList.toggle("is-armed", bgChosen?.type === "customColor");
+            customBgPhotoInput.classList.toggle("is-armed", bgChosen?.type === "customPhoto");
+
+            const frameFinishes = getFrameFinishes();
+            const frameChosen = frameFinishes[frameFinishIndex];
+            nativeFrameColorInput.classList.toggle("is-armed", frameChosen?.type === "customColor");
+        }
+
+        [nativeBgColorInput, customBgPhotoInput, nativeFrameColorInput].forEach((inp) => {
+            let startX = 0;
+            inp.addEventListener("touchstart", (e) => {
+                startX = e.touches[0].clientX;
+            }, {
+                passive: true
+            });
+            inp.addEventListener("touchmove", (e) => {
+                if (Math.abs(e.touches[0].clientX - startX) > 8) {
+                    inp.classList.remove("is-armed");
+                }
+            }, {
+                passive: true
+            });
+        });
+
         // CAMEL Slider 1: Background Theme + Native Color + Native Photo
         const bgSliderCtrl = createCamelLiquidControl({
             containerEl: bgSlider,
@@ -2701,41 +2531,21 @@ void main() {
             fontSizeCss: 10.8,
             getStepsCount: () => getBackgroundPresets(capturedPalette).length,
             getCurrentIndex: () => bgPresetIndex,
-            onSelectIndex: (idx, isFinal) => {
-                const changed = bgPresetIndex !== idx;
-                if (changed) {
+            onSelectIndex: (idx) => {
+                if (bgPresetIndex !== idx) {
                     bgPresetIndex = idx;
                     if (navigator.vibrate) navigator.vibrate(6);
                     updateMockupBackgroundDOM();
                     renderDeviceMockup();
-                }
-
-                const presets = getBackgroundPresets(capturedPalette);
-                const chosen = presets[idx];
-                if (!chosen) return;
-
-                // Langsung aktif begitu di-slide masuk ke menu Custom Color atau Custom Photo
-                if (chosen.type === "customColor" && lastTriggeredBgIdx !== idx) {
-                    lastTriggeredBgIdx = idx;
-                    triggerNativeInput(nativeBgColorInput);
-                } else if (chosen.type === "customPhoto" && lastTriggeredBgIdx !== idx) {
-                    lastTriggeredBgIdx = idx;
-                    triggerNativeInput(customBgPhotoInput);
-                } else if (chosen.type !== "customColor" && chosen.type !== "customPhoto") {
-                    lastTriggeredBgIdx = -1;
+                    syncNativeInputOverlays();
                 }
             },
-            onCommitIndex: (idx, isTap) => {
-                const presets = getBackgroundPresets(capturedPalette);
-                const chosen = presets[idx];
-                if (!chosen) return;
-
-                // Jika user melepas jari atau tap ulang saat sudah di Custom Color / Custom Photo
-                if (chosen.type === "customColor") {
-                    lastTriggeredBgIdx = idx;
+            onCommitIndex: (idx) => {
+                syncNativeInputOverlays();
+                const chosen = getBackgroundPresets(capturedPalette)[idx];
+                if (chosen?.type === "customColor") {
                     triggerNativeInput(nativeBgColorInput);
-                } else if (chosen.type === "customPhoto") {
-                    lastTriggeredBgIdx = idx;
+                } else if (chosen?.type === "customPhoto") {
                     triggerNativeInput(customBgPhotoInput);
                 }
             },
@@ -2762,22 +2572,13 @@ void main() {
                     frameFinishIndex = idx;
                     if (navigator.vibrate) navigator.vibrate(6);
                     renderDeviceMockup();
-                }
-
-                const finishes = getFrameFinishes();
-                const chosen = finishes[idx];
-                if (chosen?.type === "customColor" && lastTriggeredFrameIdx !== idx) {
-                    lastTriggeredFrameIdx = idx;
-                    triggerNativeInput(nativeFrameColorInput);
-                } else if (chosen?.type !== "customColor") {
-                    lastTriggeredFrameIdx = -1;
+                    syncNativeInputOverlays();
                 }
             },
             onCommitIndex: (idx) => {
-                const finishes = getFrameFinishes();
-                const chosen = finishes[idx];
+                syncNativeInputOverlays();
+                const chosen = getFrameFinishes()[idx];
                 if (chosen?.type === "customColor") {
-                    lastTriggeredFrameIdx = idx;
                     triggerNativeInput(nativeFrameColorInput);
                 }
             },
@@ -2793,6 +2594,7 @@ void main() {
             customBgColorHex = e.target.value;
             bgPresetIndex = 5;
             bgSliderCtrl.sync(bgPresetIndex);
+            syncNativeInputOverlays();
             updateMockupBackgroundDOM();
             renderDeviceMockup();
         });
@@ -2801,6 +2603,7 @@ void main() {
             customFrameColorHex = e.target.value;
             frameFinishIndex = 4;
             frameSliderCtrl.sync(frameFinishIndex);
+            syncNativeInputOverlays();
             renderDeviceMockup();
         });
 
@@ -2818,8 +2621,9 @@ void main() {
                     customBgImageObj = loadedImg;
                     customBgImageUrl = dataUrl;
 
-                    bgPresetIndex = 6; // Paksa ke slot "Custom Photo"
+                    bgPresetIndex = 6;
                     bgSliderCtrl.sync(bgPresetIndex);
+                    syncNativeInputOverlays();
                     updateMockupBackgroundDOM();
                     renderDeviceMockup();
                 } catch (err) {
@@ -2858,10 +2662,6 @@ void main() {
             const clamped = cl(tabIndex, 0, 2);
             const prevTab = activeTab;
 
-            if (clamped !== 2) {
-                closeCustomPicker();
-            }
-
             if (clamped === 2 && !options.skipCapture && (prevTab === 0 || !capturedRawScene)) {
                 triggerCameraBlitz();
                 captureCurrentExploreScreen();
@@ -2890,6 +2690,7 @@ void main() {
                     navToggleCtrl.sync(includeNavInSS ? 0 : 1);
                     bgSliderCtrl.sync(bgPresetIndex);
                     frameSliderCtrl.sync(frameFinishIndex);
+                    syncNativeInputOverlays();
                 });
             }
         }
@@ -3000,7 +2801,6 @@ void main() {
             const wdC = on_ ? 18 : 14.5;
             const htC = on_ ? 12 : 10.2;
 
-            // Ubah 2 baris di bawah untuk atur Lebar & Tinggi Lensa Saat Drag
             sp(navWd, lp(restW, idealActiveW, pp) + st * -40 + ap * 2 - an * 14, 210, wdC, dt);
             sp(navHt, lp(restH, idealActiveH, pp) - st * 20 - ap * 14 + an * 18 + navStr * 8 * p1, 145, htC, dt);
 
@@ -3131,6 +2931,7 @@ void main() {
                 navToggleCtrl.sync(includeNavInSS ? 0 : 1);
                 bgSliderCtrl.sync(bgPresetIndex);
                 frameSliderCtrl.sync(frameFinishIndex);
+                syncNativeInputOverlays();
             }
         }
 
