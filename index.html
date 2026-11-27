@@ -1740,7 +1740,7 @@ function updateMockupBackgroundDOM() {
   const preset = presets[bgPresetIndex] || presets[0];
   currentBgLabel = `BG: ${preset.name}`;
 
-  if (preset.type === "customPhoto" && customBgImageUrl) {
+  if ((preset.type === "customColor" || preset.type === "customPhoto") && customBgImageUrl) {
     mockupBg.style.backgroundImage = `url("${customBgImageUrl}")`;
     mockupBg.style.filter = "none";
   } else if ((preset.type === "photo" || preset.type === "customPhoto") && capturedImageUrl) {
@@ -1763,7 +1763,7 @@ function drawBackgroundOnExportCanvas(mctx, outW, outH) {
   const presets = getBackgroundPresets(capturedPalette);
   const preset = presets[bgPresetIndex] || presets[0];
 
-  if (preset.type === "customPhoto" && customBgImageObj) {
+  if ((preset.type === "customColor" || preset.type === "customPhoto") && customBgImageObj) {
     drawImageToContext(mctx, customBgImageObj, 0, 0, outW, outH);
     return;
   }
@@ -1778,6 +1778,14 @@ function drawBackgroundOnExportCanvas(mctx, outW, outH) {
       return;
     }
   }
+
+  const grad = mctx.createLinearGradient(0, 0, outW, outH);
+  grad.addColorStop(0, preset.c1 || "#1d2d3b");
+  grad.addColorStop(0.52, preset.c2 || "#121e2b");
+  grad.addColorStop(1, preset.c3 || "#071019");
+  mctx.fillStyle = grad;
+  mctx.fillRect(0, 0, outW, outH);
+}
 
   const grad = mctx.createLinearGradient(0, 0, outW, outH);
   grad.addColorStop(0, preset.c1 || "#1d2d3b");
@@ -2668,16 +2676,21 @@ const frameSliderCtrl = createCamelLiquidControl({
 customBgPhotoInput.addEventListener("change", async (e) => {
   const file = e.target.files && e.target.files[0];
   customBgPhotoInput.value = "";
-  if (!file || !file.type.startsWith("image/")) return;
+  if (!file) return;
 
   try {
     const url = URL.createObjectURL(file);
     sessionObjectUrls.push(url);
-    customBgImageObj = await loadImage(url, true);
+    const loaded = await loadImage(url, true);
+    customBgImageObj = loaded;
     customBgImageUrl = url;
-    // Pastikan preset menggunakan foto custom yang baru diunggah
-    bgPresetIndex = 6; // atau 5 jika diterapkan pada slot Custom Color
-    bgSliderCtrl.sync(bgPresetIndex);
+
+    // Pastikan tetap berada di slot Custom (indeks 5) atau sesuaikan dengan posisi aktif
+    if (bgPresetIndex !== 5 && bgPresetIndex !== 6) {
+      bgPresetIndex = 5;
+      bgSliderCtrl.sync(bgPresetIndex);
+    }
+
     updateMockupBackgroundDOM();
     renderDeviceMockup();
   } catch (err) {
