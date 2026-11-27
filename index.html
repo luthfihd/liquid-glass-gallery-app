@@ -2295,8 +2295,8 @@ function createCamelLiquidControl(options) {
       if (X.v > 0) X.v *= -0.25;
     }
 
-    sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * -0.30) + ap * (tW * 0.08) - an * (tW * 0.08) + str * 4 * p1, 210, 14.5, dt);
-    sp(Ht, lp(restH, idealActiveH, pp) - st * -10 - ap * 6 + an * 10 + str * 5 * p1, 150, 10.5, dt);
+    sp(Wd, lp(tW, idealActiveW, pp) + st * (tW * -0.20) + ap * (tW * 0.08) - an * (tW * 0.08) + str * 4 * p1, 210, 14.5, dt);
+    sp(Ht, lp(restH, idealActiveH, pp) - st * 15 - ap * 6 + an * 10 + str * 5 * p1, 150, 10.5, dt);
 
     // 2. Hitung seberapa dekat lensa dengan tepi kiri/kanan (0 = di tengah, 1 = mentok ujung)
     const halfTrack = Math.max(1, w * 0.5 - minC);
